@@ -1,7 +1,7 @@
-{
+﻿{
   "name": "padre-father",
   "version": "1.0.0",
-  "description": "$PADRE — Father of Pump.fun church website and OBS overlay",
+  "description": "$PADRE — Father of Trenches church website and OBS overlay",
   "private": true,
   "scripts": {
     "dev": "vercel dev",
