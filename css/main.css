@@ -1332,6 +1332,19 @@ img { max-width: 100%; display: block; }
   background: rgba(201,168,76,0.07);
 }
 
+.social-coming-soon {
+  font-family: var(--font-heading);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  border: 1px solid var(--bg-border);
+  border-radius: var(--radius);
+  padding: 6px 12px;
+  display: inline-block;
+}
+
 .footer-col-title {
   font-family: var(--font-heading);
   font-size: 11px;
