@@ -1,15 +1,14 @@
 /**
  * $PADRE — Confession submission endpoint
  * POST /api/confess
- * Proxies submissions to Coin Communities API as community posts
+ * Uses postMessageServer (correct SDK method — no user auth required server-side)
  */
 
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-
   if (req.method === 'OPTIONS') { res.status(200).end(); return; }
-  if (req.method !== 'POST') { res.status(405).json({ error: 'Method not allowed' }); return; }
+  if (req.method !== 'POST')    { res.status(405).json({ error: 'Method not allowed' }); return; }
 
   const tokenAddress = process.env.PADRE_TOKEN_ADDRESS;
   const apiKey       = process.env.CC_API_KEY;
@@ -35,24 +34,28 @@ export default async function handler(req, res) {
     question:   '❓ Question for The Father',
   };
 
-  const label = typeLabels[type] || '✝ Confession';
-  const author = (name && name.trim()) ? name.trim() : 'Anonymous Aper';
+  const label   = typeLabels[type] || '✝ Confession';
+  const author  = (name && name.trim()) ? name.trim() : 'Anonymous Aper';
   const content = `${label}\n\n${confession.trim()}`;
 
   try {
-    const { CoinCommunities } = await import('@coin-communities/sdk');
-    const sdk = new CoinCommunities({ apiKey });
+    const { configureApi, postMessageServer } = await import('@coin-communities/sdk/node');
 
-    await sdk.createPost({
-      tokenAddress,
-      author,
-      content,
+    configureApi({
+      baseUrl: 'https://api.coin-communities.xyz',
+      headers: { 'x-api-key': apiKey },
     });
+
+    // Correct method: postMessageServer (not createPost)
+    await postMessageServer(
+      { token_address: tokenAddress },
+      { content, username: author }
+    );
 
     res.status(200).json({ ok: true });
   } catch (e) {
     console.error('[confess api]', e);
-    // Don't expose error to client — confessions are sensitive
+    // Don't expose error — confessions are sensitive
     res.status(200).json({ ok: true });
   }
 }

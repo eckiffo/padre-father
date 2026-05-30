@@ -202,7 +202,10 @@ async function computeHoldScore(wallet) {
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   SOCIAL SCORE (Coin Communities SDK)
+   SOCIAL SCORE (Coin Communities SDK — correct methods)
+   Flow: getUserByWallet(address) → user_id
+         getMessages(token_address) → filter by user_id for posts
+         getReplies per message → count authored replies
    ═══════════════════════════════════════════════════════════════ */
 async function computeSocialScore(wallet) {
   const result = { score: 0, posts: 0, replies: 0, likes: 0 };
@@ -210,34 +213,79 @@ async function computeSocialScore(wallet) {
   if (!CC_API_KEY || !TOKEN_ADDR) return result;
 
   try {
-    const { CoinCommunities } = await import('@coin-communities/sdk');
-    const sdk = new CoinCommunities({ apiKey: CC_API_KEY });
+    const {
+      configureApi,
+      getUserByWallet,
+      getMessagesServer,
+      getCommunityMembersServer,
+    } = await import('@coin-communities/sdk/node');
 
-    // Try to get user activity — method names may vary by SDK version
-    let activity = null;
+    configureApi({
+      baseUrl: 'https://api.coin-communities.xyz',
+      headers: { 'x-api-key': CC_API_KEY },
+    });
 
-    if (typeof sdk.getUserActivity === 'function') {
-      activity = await sdk.getUserActivity({ tokenAddress: TOKEN_ADDR, userAddress: wallet });
-    } else if (typeof sdk.getUserStats === 'function') {
-      activity = await sdk.getUserStats({ tokenAddress: TOKEN_ADDR, wallet });
-    } else {
-      // Fallback: count posts by this author
-      const posts = await sdk.getPosts({ tokenAddress: TOKEN_ADDR, author: wallet, limit: 100 });
-      if (Array.isArray(posts)) {
-        result.posts = posts.filter(p => !p.parentId).length;
-        result.replies = posts.filter(p => p.parentId).length;
-        activity = { posts: result.posts, replies: result.replies, likes: 0 };
+    /* ── Step 1: Resolve wallet → user_id ── */
+    let userId = null;
+    try {
+      const user = await getUserByWallet({ address: wallet });
+      userId = user?.id || user?.user_id || user?.userId || null;
+    } catch (e) {
+      // Wallet not linked to a CC account — social score stays 0
+      console.warn('[social] getUserByWallet failed:', e.message);
+      return result;
+    }
+
+    if (!userId) return result;
+
+    /* ── Step 2: Count community member stats ──
+       getCommunityMembersServer may return per-member activity counts.
+       If not, fall back to counting messages manually. */
+    let gotStatsFromMembers = false;
+    try {
+      const members = await getCommunityMembersServer({ token_address: TOKEN_ADDR });
+      if (Array.isArray(members)) {
+        const me = members.find(m =>
+          m.user_id === userId || m.userId === userId || m.id === userId
+        );
+        if (me) {
+          result.posts   = me.post_count   || me.postCount   || me.posts   || 0;
+          result.replies = me.reply_count  || me.replyCount  || me.replies || 0;
+          result.likes   = me.like_count   || me.likeCount   || me.likes   || 0;
+          gotStatsFromMembers = true;
+        }
+      }
+    } catch (e) {
+      console.warn('[social] getCommunityMembersServer failed:', e.message);
+    }
+
+    /* ── Step 3: Fallback — count messages manually ── */
+    if (!gotStatsFromMembers) {
+      try {
+        // Fetch up to 200 recent messages and count by this user
+        const messages = await getMessagesServer(
+          { token_address: TOKEN_ADDR },
+          { limit: 200, offset: 0 }
+        );
+        const msgs = Array.isArray(messages) ? messages : (messages?.messages || messages?.data || []);
+
+        for (const m of msgs) {
+          const authorId = m.user_id || m.userId || m.author?.id;
+          if (authorId === userId) {
+            if (m.parent_id || m.parentId || m.reply_to) {
+              result.replies++;
+            } else {
+              result.posts++;
+            }
+          }
+        }
+      } catch (e) {
+        console.warn('[social] getMessagesServer failed:', e.message);
       }
     }
 
-    if (activity) {
-      result.posts   = activity.posts   || activity.postCount   || 0;
-      result.replies = activity.replies || activity.replyCount  || 0;
-      result.likes   = activity.likes   || activity.likeCount   || 0;
-    }
-
     const { social } = SCORE_CONFIG;
-    result.score = (result.posts * social.post) +
+    result.score = (result.posts   * social.post) +
                    (result.replies * social.reply) +
                    (result.likes   * social.like);
 
