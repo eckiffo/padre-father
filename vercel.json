@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "buildCommand": "echo 'No build needed'",
+  "buildCommand": "echo done",
   "outputDirectory": ".",
   "installCommand": "npm install",
   "functions": {
@@ -14,12 +14,6 @@
     { "src": "/([^.]+)", "dest": "/$1.html" },
     { "src": "/(.*)", "dest": "/$1" }
   ],
-  "env": {
-    "CC_API_KEY":          "@cc_api_key",
-    "PADRE_TOKEN_ADDRESS": "@padre_token_address",
-    "SOLANA_RPC_URL":      "@solana_rpc_url",
-    "ADMIN_KEY":           "@admin_key"
-  },
   "headers": [
     {
       "source": "/overlay(.*)",
