@@ -5,6 +5,17 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>$PADRE — Father of Trenches | The Last Coin You Will Ever Need</title>
   <meta name="description" content="$PADRE is The Father of Trenches. Find Gains in a Life of $PADRE. The Last Coin You Will Ever Need.">
+  <meta property="og:title" content="$PADRE — Father of Trenches">
+  <meta property="og:description" content="The Priest Who Pays You Back. 50% of fees split weekly among holders.">
+  <meta property="og:image" content="https://trenchfather.fun/img/padre-banner.jpg">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:url" content="https://trenchfather.fun">
+  <meta property="og:type" content="website">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:image" content="https://trenchfather.fun/img/padre-banner.jpg">
+  <meta name="twitter:title" content="$PADRE — Father of Trenches">
+  <meta name="twitter:description" content="The Priest Who Pays You Back. 50% of fees split weekly among holders.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700;900&family=Cinzel:wght@400;600;700;900&family=IM+Fell+English:ital@0;1&family=UnifrakturMaguntia&display=swap" rel="stylesheet">
@@ -85,7 +96,13 @@
 
   <!-- ═══════════════════════════════ HERO ═══════════════════════════════ -->
   <section class="hero" id="hero">
-    <!-- Stained glass overlay -->
+    <!-- ── Video background — drop padre-hero-1.mp4 / padre-hero-2.mp4 into videos/ ── -->
+    <video class="hero-video-bg" id="heroBgVideo" autoplay muted loop playsinline preload="auto">
+      <source src="videos/padre-hero-1.mp4" type="video/mp4">
+      <source src="videos/padre-hero-2.mp4" type="video/mp4">
+    </video>
+    <div class="hero-video-overlay"></div>
+    <!-- Stained glass overlay (on top of video, gives gothic tint) -->
     <div class="hero-stained-glass"></div>
     <!-- Candle row bottom -->
     <div class="candle-row" id="candleRow"></div>
@@ -328,11 +345,17 @@
         <a href="about.html" class="btn btn-outline">Learn More About The Father</a>
       </div>
       <div class="about-image">
-        <div class="stained-glass-window">
-          <div class="sgw-cross">✝</div>
-          <div class="sgw-ticker">$PADRE</div>
-          <div class="sgw-subtitle">FATHER OF<br>TRENCHES</div>
-          <div class="sgw-glow"></div>
+        <div class="about-photo-wrap">
+          <img
+            src="img/padre-priest-ocean.jpg"
+            alt="$PADRE — The Father of Trenches"
+            class="about-photo"
+            loading="lazy"
+          >
+          <div class="about-photo-caption">
+            <span class="about-photo-ticker">$PADRE</span>
+            <span class="about-photo-sub">Father of Trenches</span>
+          </div>
         </div>
       </div>
     </div>
@@ -505,5 +528,36 @@
   </script>
   <script src="js/main.js"></script>
   <script src="js/roadmap.js"></script>
+  <script>
+    /* ── Hero video background ── */
+    (function () {
+      const vid = document.getElementById('heroBgVideo');
+      if (!vid) return;
+
+      function tryPlay() {
+        if (vid.readyState >= 3) {          // HAVE_FUTURE_DATA or better
+          vid.classList.add('is-loaded');
+        }
+      }
+
+      vid.addEventListener('canplaythrough', () => vid.classList.add('is-loaded'));
+      vid.addEventListener('loadeddata',     tryPlay);
+
+      // If both sources 404, hide gracefully — the dark bg-deep shows instead
+      vid.addEventListener('error', () => { vid.style.display = 'none'; }, true);
+
+      // Cycle sources: after current video ends, switch to the next source
+      vid.addEventListener('ended', () => {
+        const sources = vid.querySelectorAll('source');
+        if (sources.length < 2) { vid.play(); return; }
+        const current = vid.currentSrc;
+        const next = [...sources].find(s => !current.includes(s.getAttribute('src')));
+        if (next) {
+          vid.src = next.getAttribute('src');
+          vid.play().catch(() => {});
+        }
+      });
+    })();
+  </script>
 </body>
 </html>

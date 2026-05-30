@@ -6,3 +6,15 @@ dist/
 *.log
 .DS_Store
 Thumbs.db
+
+# Raw source images (keep only img/ versions)
+703f8e3b-c932-4098-8897-416fa2b2f610.png
+ChatGPT Image May 30, 2026, 04_54_53 PM.png
+photo_2026-05-30_16-43-50.jpg
+convert-images.mjs
+package*.json
+
+# Videos are too large for git — upload to hosting directly
+videos/*.mp4
+videos/*.mov
+videos/*.webm
