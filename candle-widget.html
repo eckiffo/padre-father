@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>$PADRE Candle Widget</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700;900&family=Cinzel:wght@600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/candle-widget.css">
+</head>
+<body>
+  <!--
+    OBS SETUP:
+      Add as a Browser Source: 320 × 420 px
+      URL: https://yoursite.com/candle-widget.html
+      Test:  https://yoursite.com/candle-widget.html?test
+      Force stage: ?stage=0..5  (e.g. ?stage=4 to preview God Candle)
+      Custom position: place the source wherever you want in OBS
+  -->
+
+  <div class="widget" id="widget">
+
+    <!-- Stage label top -->
+    <div class="stage-eyebrow" id="stageEyebrow">✝ THE FATHER'S CANDLE ✝</div>
+
+    <!-- Candle visual -->
+    <div class="candle-scene" id="candleScene">
+
+      <!-- Particles / rays (for high stages) -->
+      <div class="rays" id="rays"></div>
+      <div class="particles" id="particles"></div>
+
+      <!-- The flame -->
+      <div class="flame-wrap" id="flameWrap">
+        <div class="flame-outer" id="flameOuter"></div>
+        <div class="flame-mid"   id="flameMid"></div>
+        <div class="flame-inner" id="flameInner"></div>
+        <div class="flame-core"  id="flameCore"></div>
+        <!-- ember glow underneath -->
+        <div class="ember-glow" id="emberGlow"></div>
+      </div>
+
+      <!-- Wick -->
+      <div class="wick" id="wick"></div>
+
+      <!-- Wax drips -->
+      <div class="drips" id="drips"></div>
+
+      <!-- Candle body -->
+      <div class="candle-body" id="candleBody">
+        <div class="candle-shine"></div>
+        <div class="candle-label" id="candleLabel">$PADRE</div>
+      </div>
+
+      <!-- Base -->
+      <div class="candle-base"></div>
+
+      <!-- Ground glow -->
+      <div class="ground-glow" id="groundGlow"></div>
+    </div>
+
+    <!-- Stage name -->
+    <div class="stage-name" id="stageName">Ember</div>
+    <div class="stage-verse" id="stageVerse">"The Father Prepares His Light"</div>
+
+    <!-- Progress bar -->
+    <div class="progress-wrap">
+      <div class="progress-label">
+        <span id="progressCurrent">$0</span>
+        <span class="progress-arrow">→</span>
+        <span id="progressNext">Next: Red Candle</span>
+      </div>
+      <div class="progress-track">
+        <div class="progress-fill" id="progressFill" style="width:0%"></div>
+        <div class="progress-glow" id="progressGlow"></div>
+      </div>
+      <div class="progress-threshold" id="progressThreshold">$10K needed</div>
+    </div>
+
+    <!-- Live stats -->
+    <div class="stats-row">
+      <div class="stat">
+        <div class="stat-val" id="statMC">—</div>
+        <div class="stat-lbl">Market Cap</div>
+      </div>
+      <div class="stat-divider">◆</div>
+      <div class="stat">
+        <div class="stat-val" id="statPrice">—</div>
+        <div class="stat-lbl">Price USD</div>
+      </div>
+      <div class="stat-divider">◆</div>
+      <div class="stat">
+        <div class="stat-val" id="statHolders">—</div>
+        <div class="stat-lbl">Holders</div>
+      </div>
+    </div>
+
+    <!-- Test mode badge -->
+    <div class="test-badge" id="testBadge" style="display:none">TEST MODE</div>
+  </div>
+
+  <script src="js/candle-widget.js"></script>
+</body>
+</html>

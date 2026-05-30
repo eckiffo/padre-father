@@ -1,0 +1,586 @@
+/* ═══════════════════════════════════════════════════════════════
+   $PADRE — Live Candle Roadmap Widget
+   Transparent OBS overlay · 320 × 420 px browser source
+   ═══════════════════════════════════════════════════════════════ */
+
+:root {
+  --font-d:  'Cinzel Decorative', serif;
+  --font-h:  'Cinzel', serif;
+
+  /* Stage color tokens — overridden per stage class */
+  --flame-tip:     #888888;
+  --flame-mid:     #666666;
+  --flame-base:    #444444;
+  --flame-core:    #FFFFFF;
+  --glow-color:    rgba(120,120,120,0.2);
+  --glow-strong:   rgba(120,120,120,0.4);
+  --wax-color:     #D4C4A0;
+  --wax-shadow:    #9A8C6C;
+  --label-color:   rgba(201,168,76,0.6);
+  --progress-fill: #C9A84C;
+  --stage-accent:  #C9A84C;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  background: transparent !important;
+  width: 320px;
+  height: 420px;
+  overflow: hidden;
+  font-family: var(--font-h);
+}
+
+/* ═══════════════════ WIDGET CONTAINER ═══════════════════ */
+.widget {
+  width: 320px;
+  padding: 16px 20px 14px;
+  background: rgba(0, 0, 0, 0.78);
+  border: 1px solid rgba(201, 168, 76, 0.3);
+  border-radius: 6px;
+  backdrop-filter: blur(8px);
+  box-shadow:
+    0 4px 30px rgba(0,0,0,0.8),
+    inset 0 0 0 1px rgba(201,168,76,0.05);
+  position: relative;
+  overflow: hidden;
+  transition: border-color 0.8s ease;
+}
+
+.widget::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 1px;
+  background: linear-gradient(to right, transparent, var(--stage-accent), transparent);
+  opacity: 0.5;
+  transition: background 0.8s ease;
+}
+
+/* ─── EYEBROW ─── */
+.stage-eyebrow {
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  color: rgba(201,168,76,0.45);
+  text-align: center;
+  margin-bottom: 10px;
+}
+
+/* ═══════════════════ CANDLE SCENE ═══════════════════ */
+.candle-scene {
+  position: relative;
+  height: 160px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  margin-bottom: 10px;
+}
+
+/* ─── RAYS (Holy stage) ─── */
+.rays {
+  position: absolute;
+  top: 0; left: 50%; transform: translateX(-50%);
+  width: 200px; height: 200px;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 1.5s ease;
+}
+
+.ray {
+  position: absolute;
+  top: 50%; left: 50%;
+  width: 2px;
+  background: linear-gradient(to bottom, rgba(255,255,255,0.8), transparent);
+  transform-origin: top center;
+  border-radius: 1px;
+  animation: rayPulse 2s ease-in-out infinite alternate;
+}
+
+@keyframes rayPulse {
+  from { opacity: 0.3; transform: scaleY(0.8) translateX(-50%); }
+  to   { opacity: 0.9; transform: scaleY(1.1) translateX(-50%); }
+}
+
+/* ─── PARTICLES ─── */
+.particles {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.spark {
+  position: absolute;
+  bottom: 60px;
+  width: 3px; height: 3px;
+  border-radius: 50%;
+  background: var(--flame-tip);
+  opacity: 0;
+  animation: sparkFloat var(--dur, 2s) var(--delay, 0s) ease-in infinite;
+}
+
+@keyframes sparkFloat {
+  0%   { opacity: 0; transform: translateY(0) translateX(0) scale(1); }
+  20%  { opacity: 1; }
+  80%  { opacity: 0.6; }
+  100% { opacity: 0; transform: translateY(-80px) translateX(var(--drift, 10px)) scale(0.3); }
+}
+
+/* ─── FLAME ─── */
+.flame-wrap {
+  position: absolute;
+  bottom: 92px; /* sits on top of wick */
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  pointer-events: none;
+  transition: all 0.8s ease;
+}
+
+.flame-outer {
+  width: var(--flame-w, 24px);
+  height: var(--flame-h, 36px);
+  background: radial-gradient(ellipse at 50% 80%, var(--flame-base) 0%, var(--flame-mid) 40%, var(--flame-tip) 70%, transparent 100%);
+  border-radius: 50% 50% 35% 35%;
+  animation: flameWobble var(--wobble-speed, 0.2s) ease-in-out infinite alternate;
+  filter: blur(0.8px);
+  transition: width 0.8s ease, height 0.8s ease, background 0.8s ease;
+}
+
+.flame-mid {
+  position: absolute;
+  bottom: 4px;
+  width: calc(var(--flame-w, 24px) * 0.65);
+  height: calc(var(--flame-h, 36px) * 0.7);
+  background: radial-gradient(ellipse at 50% 80%, var(--flame-base) 0%, var(--flame-mid) 50%, transparent 100%);
+  border-radius: 50% 50% 35% 35%;
+  animation: flameWobble var(--wobble-speed, 0.2s) 0.05s ease-in-out infinite alternate-reverse;
+  filter: blur(0.4px);
+  opacity: 0.85;
+  transition: all 0.8s ease;
+}
+
+.flame-inner {
+  position: absolute;
+  bottom: 6px;
+  width: calc(var(--flame-w, 24px) * 0.4);
+  height: calc(var(--flame-h, 36px) * 0.55);
+  background: radial-gradient(ellipse at 50% 70%, #FFFFFF 0%, var(--flame-core) 30%, var(--flame-mid) 70%, transparent 100%);
+  border-radius: 50% 50% 30% 30%;
+  animation: flameWobble var(--wobble-speed, 0.2s) 0.1s ease-in-out infinite alternate;
+  filter: blur(0.2px);
+  transition: all 0.8s ease;
+}
+
+.flame-core {
+  position: absolute;
+  bottom: 8px;
+  width: calc(var(--flame-w, 24px) * 0.18);
+  height: calc(var(--flame-h, 36px) * 0.3);
+  background: radial-gradient(ellipse, #FFFFFF 0%, rgba(255,255,255,0.6) 100%);
+  border-radius: 50%;
+  filter: blur(0.5px);
+  transition: all 0.8s ease;
+}
+
+.ember-glow {
+  position: absolute;
+  bottom: -6px;
+  width: calc(var(--flame-w, 24px) * 1.8);
+  height: 16px;
+  background: radial-gradient(ellipse, var(--glow-strong) 0%, transparent 70%);
+  border-radius: 50%;
+  filter: blur(4px);
+  transition: all 0.8s ease;
+}
+
+@keyframes flameWobble {
+  0%   { transform: scaleX(1)    scaleY(1)    rotate(-1deg); }
+  25%  { transform: scaleX(0.92) scaleY(1.05) rotate(0.5deg); }
+  50%  { transform: scaleX(1.05) scaleY(0.96) rotate(-0.5deg); }
+  75%  { transform: scaleX(0.96) scaleY(1.04) rotate(1deg); }
+  100% { transform: scaleX(1.02) scaleY(0.98) rotate(0deg); }
+}
+
+/* ─── WICK ─── */
+.wick {
+  position: absolute;
+  bottom: 85px;
+  left: calc(50% - 1px);
+  width: 2px;
+  height: 10px;
+  background: linear-gradient(to bottom, #333, #1A1A1A);
+  border-radius: 1px;
+  transition: all 0.8s ease;
+}
+
+/* ─── DRIPS ─── */
+.drips {
+  position: absolute;
+  bottom: 55px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 40px;
+  pointer-events: none;
+}
+
+.drip {
+  position: absolute;
+  width: 4px;
+  background: var(--wax-color);
+  border-radius: 0 0 3px 3px;
+  top: 0;
+  animation: dripDown 4s ease-in-out infinite;
+  opacity: 0.7;
+}
+
+@keyframes dripDown {
+  0%   { height: 0; opacity: 0.7; }
+  50%  { height: var(--drip-h, 12px); opacity: 0.8; }
+  100% { height: var(--drip-h, 8px); opacity: 0.5; }
+}
+
+/* ─── CANDLE BODY ─── */
+.candle-body {
+  width: var(--candle-w, 40px);
+  height: var(--candle-h, 70px);
+  background: linear-gradient(to bottom,
+    var(--wax-color) 0%,
+    color-mix(in srgb, var(--wax-color) 85%, var(--stage-accent)) 30%,
+    var(--wax-shadow) 100%
+  );
+  border-radius: 2px 2px 1px 1px;
+  position: relative;
+  box-shadow:
+    inset -4px 0 8px rgba(0,0,0,0.3),
+    0 2px 8px rgba(0,0,0,0.5),
+    0 0 var(--candle-glow-size, 8px) var(--glow-color);
+  transition: width 0.8s ease, height 0.8s ease, box-shadow 0.8s ease;
+}
+
+.candle-shine {
+  position: absolute;
+  top: 4px; left: 4px;
+  width: 4px;
+  height: 70%;
+  background: rgba(255,255,255,0.12);
+  border-radius: 2px;
+}
+
+.candle-label {
+  position: absolute;
+  bottom: 12px;
+  left: 0; right: 0;
+  text-align: center;
+  font-family: var(--font-h);
+  font-size: 7px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  color: var(--label-color);
+  text-shadow: none;
+  transition: all 0.8s ease;
+}
+
+/* ─── BASE ─── */
+.candle-base {
+  width: var(--base-w, 52px);
+  height: 6px;
+  background: linear-gradient(to bottom, var(--stage-accent), rgba(201,168,76,0.4));
+  border-radius: 1px;
+  opacity: 0.6;
+  transition: all 0.8s ease;
+}
+
+/* ─── GROUND GLOW ─── */
+.ground-glow {
+  position: absolute;
+  bottom: 0; left: 50%;
+  transform: translateX(-50%);
+  width: 120px; height: 20px;
+  background: radial-gradient(ellipse, var(--glow-color) 0%, transparent 70%);
+  filter: blur(6px);
+  transition: background 0.8s ease, width 0.8s ease;
+}
+
+/* ═══════════════════ STAGE INFO ═══════════════════ */
+.stage-name {
+  font-family: var(--font-d);
+  font-size: 16px;
+  font-weight: 900;
+  color: var(--stage-accent);
+  text-align: center;
+  letter-spacing: 0.05em;
+  text-shadow: 0 0 12px var(--glow-color), 0 0 24px var(--glow-color);
+  margin-bottom: 4px;
+  transition: color 0.8s ease, text-shadow 0.8s ease;
+}
+
+.stage-verse {
+  font-size: 9.5px;
+  color: rgba(245,237,208,0.45);
+  text-align: center;
+  font-style: italic;
+  letter-spacing: 0.05em;
+  margin-bottom: 12px;
+  line-height: 1.4;
+}
+
+/* ═══════════════════ PROGRESS BAR ═══════════════════ */
+.progress-wrap { margin-bottom: 12px; }
+
+.progress-label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(201,168,76,0.55);
+  margin-bottom: 5px;
+}
+
+.progress-arrow { color: rgba(201,168,76,0.3); font-size: 10px; }
+
+.progress-track {
+  height: 5px;
+  background: rgba(255,255,255,0.06);
+  border-radius: 3px;
+  overflow: visible;
+  position: relative;
+}
+
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(to right, var(--progress-fill), color-mix(in srgb, var(--progress-fill) 60%, white));
+  border-radius: 3px;
+  transition: width 1.5s cubic-bezier(0.25, 1, 0.5, 1), background 0.8s ease;
+  position: relative;
+}
+
+.progress-fill::after {
+  content: '';
+  position: absolute;
+  right: -1px; top: -2px;
+  width: 9px; height: 9px;
+  background: white;
+  border-radius: 50%;
+  box-shadow: 0 0 8px var(--progress-fill), 0 0 16px var(--progress-fill);
+  transition: box-shadow 0.8s ease;
+}
+
+.progress-threshold {
+  font-size: 8.5px;
+  color: rgba(201,168,76,0.35);
+  text-align: right;
+  letter-spacing: 0.1em;
+  margin-top: 4px;
+}
+
+/* ═══════════════════ STATS ROW ═══════════════════ */
+.stats-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(201,168,76,0.1);
+  border-radius: 4px;
+  padding: 8px 12px;
+}
+
+.stat { text-align: center; flex: 1; }
+
+.stat-val {
+  font-family: var(--font-h);
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--stage-accent);
+  letter-spacing: 0.04em;
+  text-shadow: 0 0 8px var(--glow-color);
+  transition: color 0.8s ease;
+}
+
+.stat-lbl {
+  font-size: 8px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(201,168,76,0.35);
+  margin-top: 2px;
+}
+
+.stat-divider {
+  color: rgba(201,168,76,0.2);
+  font-size: 8px;
+  flex-shrink: 0;
+}
+
+/* ═══════════════════ TEST BADGE ═══════════════════ */
+.test-badge {
+  position: absolute;
+  top: 8px; right: 10px;
+  font-size: 7px;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  color: rgba(201,168,76,0.5);
+  text-transform: uppercase;
+}
+
+/* ═══════════════════════════════════════════════════
+   STAGE THEMES — applied to .widget
+   ═══════════════════════════════════════════════════ */
+
+/* ── Stage 0: EMBER (pre-launch) ── */
+.stage-0 {
+  --flame-tip:         rgba(255,180,60,0.6);
+  --flame-mid:         rgba(200,100,20,0.5);
+  --flame-base:        rgba(150,60,10,0.4);
+  --flame-core:        rgba(255,220,150,0.8);
+  --glow-color:        rgba(200,120,40,0.15);
+  --glow-strong:       rgba(200,120,40,0.25);
+  --wax-color:         #C8B89A;
+  --wax-shadow:        #8A7A60;
+  --stage-accent:      #C9A84C;
+  --progress-fill:     #C9A84C;
+  --flame-w:           14px;
+  --flame-h:           20px;
+  --candle-w:          36px;
+  --candle-h:          60px;
+  --base-w:            48px;
+  --candle-glow-size:  6px;
+  --wobble-speed:      0.25s;
+}
+
+/* ── Stage 1: RED CANDLE ── */
+.stage-1 {
+  --flame-tip:         rgba(255,60,20,0.9);
+  --flame-mid:         rgba(220,30,10,0.8);
+  --flame-base:        rgba(160,20,5,0.7);
+  --flame-core:        rgba(255,200,100,1);
+  --glow-color:        rgba(255,60,20,0.3);
+  --glow-strong:       rgba(255,60,20,0.5);
+  --wax-color:         #CC8880;
+  --wax-shadow:        #8A4440;
+  --stage-accent:      #FF6644;
+  --progress-fill:     #FF5533;
+  --flame-w:           20px;
+  --flame-h:           32px;
+  --candle-w:          38px;
+  --candle-h:          65px;
+  --base-w:            50px;
+  --candle-glow-size:  12px;
+  --wobble-speed:      0.18s;
+}
+.stage-1 .widget { border-color: rgba(255,80,40,0.35); }
+
+/* ── Stage 2: GREEN CANDLE ── */
+.stage-2 {
+  --flame-tip:         rgba(80,255,120,0.9);
+  --flame-mid:         rgba(40,200,80,0.85);
+  --flame-base:        rgba(20,140,50,0.8);
+  --flame-core:        rgba(200,255,220,1);
+  --glow-color:        rgba(60,220,100,0.3);
+  --glow-strong:       rgba(60,220,100,0.5);
+  --wax-color:         #88CC98;
+  --wax-shadow:        #446650;
+  --stage-accent:      #44DD88;
+  --progress-fill:     #33CC77;
+  --flame-w:           24px;
+  --flame-h:           42px;
+  --candle-w:          40px;
+  --candle-h:          68px;
+  --base-w:            52px;
+  --candle-glow-size:  16px;
+  --wobble-speed:      0.16s;
+}
+.stage-2 .widget { border-color: rgba(60,220,100,0.35); }
+
+/* ── Stage 3: GOLD CANDLE ── */
+.stage-3 {
+  --flame-tip:         rgba(255,220,60,0.95);
+  --flame-mid:         rgba(255,180,20,0.9);
+  --flame-base:        rgba(200,130,0,0.85);
+  --flame-core:        rgba(255,255,200,1);
+  --glow-color:        rgba(255,200,40,0.4);
+  --glow-strong:       rgba(255,200,40,0.65);
+  --wax-color:         #E8D890;
+  --wax-shadow:        #A89840;
+  --stage-accent:      #FFD700;
+  --progress-fill:     #FFD700;
+  --flame-w:           30px;
+  --flame-h:           54px;
+  --candle-w:          42px;
+  --candle-h:          72px;
+  --base-w:            56px;
+  --candle-glow-size:  22px;
+  --wobble-speed:      0.14s;
+}
+.stage-3 .widget { border-color: rgba(255,200,40,0.5); }
+
+/* ── Stage 4: GOD CANDLE ── */
+.stage-4 {
+  --flame-tip:         rgba(255,240,180,1);
+  --flame-mid:         rgba(255,220,100,0.95);
+  --flame-base:        rgba(255,180,20,0.9);
+  --flame-core:        rgba(255,255,255,1);
+  --glow-color:        rgba(255,220,80,0.55);
+  --glow-strong:       rgba(255,220,80,0.8);
+  --wax-color:         #F5EAB0;
+  --wax-shadow:        #C8B840;
+  --stage-accent:      #FFE566;
+  --progress-fill:     #FFE040;
+  --flame-w:           40px;
+  --flame-h:           72px;
+  --candle-w:          44px;
+  --candle-h:          76px;
+  --base-w:            60px;
+  --candle-glow-size:  32px;
+  --wobble-speed:      0.11s;
+}
+.stage-4 .widget {
+  border-color: rgba(255,220,80,0.6);
+  animation: godShake 0.08s ease-in-out infinite alternate;
+}
+@keyframes godShake {
+  from { transform: translateX(0); }
+  to   { transform: translateX(0.5px) translateY(0.3px); }
+}
+
+/* ── Stage 5: HOLY CANDLE ── */
+.stage-5 {
+  --flame-tip:         rgba(255,255,255,1);
+  --flame-mid:         rgba(240,240,255,1);
+  --flame-base:        rgba(200,220,255,0.95);
+  --flame-core:        rgba(255,255,255,1);
+  --glow-color:        rgba(220,230,255,0.6);
+  --glow-strong:       rgba(220,230,255,0.9);
+  --wax-color:         #F8F4FF;
+  --wax-shadow:        #D0C8F0;
+  --stage-accent:      #FFFFFF;
+  --progress-fill:     #FFFFFF;
+  --flame-w:           50px;
+  --flame-h:           90px;
+  --candle-w:          46px;
+  --candle-h:          80px;
+  --base-w:            62px;
+  --candle-glow-size:  50px;
+  --wobble-speed:      0.09s;
+}
+.stage-5 .widget {
+  border-color: rgba(220,230,255,0.7);
+  box-shadow:
+    0 4px 30px rgba(0,0,0,0.8),
+    0 0 60px rgba(220,230,255,0.2),
+    inset 0 0 40px rgba(220,230,255,0.05);
+}
+.stage-5 .stage-name {
+  animation: holyNamePulse 2s ease-in-out infinite alternate;
+}
+@keyframes holyNamePulse {
+  from { text-shadow: 0 0 10px rgba(255,255,255,0.5), 0 0 20px rgba(220,230,255,0.3); }
+  to   { text-shadow: 0 0 20px rgba(255,255,255,0.9), 0 0 40px rgba(220,230,255,0.6), 0 0 60px rgba(200,210,255,0.3); }
+}
+.stage-5 .rays { opacity: 1; }
