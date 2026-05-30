@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Blessing Leaderboard — $PADRE Father of Trenches</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700;900&family=Cinzel:wght@400;600;700;900&family=IM+Fell+English:ital@0;1&family=UnifrakturMaguntia&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/main.css">
+  <link rel="stylesheet" href="css/blessing.css">
+</head>
+<body>
+
+  <div class="top-bar">
+    <div class="top-bar-inner">
+      <span class="top-bar-item">trenchfather.fun</span>
+      <span class="top-bar-divider">✦</span>
+      <a href="dashboard.html" class="top-bar-item top-bar-link">My Dashboard</a>
+      <span class="top-bar-divider">✦</span>
+      <a href="rewards.html" class="top-bar-item top-bar-link">Rewards</a>
+    </div>
+  </div>
+
+  <header class="site-header">
+    <div class="header-inner">
+      <div class="header-logo">
+        <a href="index.html" class="logo-link">
+          <div class="logo-cross">✝</div>
+          <div class="logo-text">
+            <span class="logo-ticker">$PADRE</span>
+            <span class="logo-tagline">Father of Trenches</span>
+          </div>
+        </a>
+      </div>
+      <button class="mobile-menu-toggle" id="menuToggle"><span></span><span></span><span></span></button>
+      <nav class="main-nav" id="mainNav">
+        <ul class="nav-list">
+          <li><a href="about.html" class="nav-link">About The Father</a></li>
+          <li><a href="plan-to-ape.html" class="nav-link">Plan to Ape</a></li>
+          <li><a href="sermons.html" class="nav-link">The Sermons</a></li>
+          <li><a href="scripture.html" class="nav-link">Holy Scripture</a></li>
+          <li><a href="roadmap.html" class="nav-link">Roadmap</a></li>
+          <li><a href="dashboard.html" class="nav-link">Dashboard</a></li>
+          <li><a href="leaderboard.html" class="nav-link" style="color:var(--gold-primary)">Leaderboard</a></li>
+          <li><a href="offerings.html" class="nav-link nav-highlight">Offerings</a></li>
+          <li><a href="connect-wallet.html" class="nav-link nav-wallet">Connect Wallet</a></li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+
+  <!-- HERO -->
+  <section class="blessing-hero">
+    <div class="section-cross">📿</div>
+    <h1 class="section-title">The Congregation Leaderboard</h1>
+    <p class="section-subtitle">The most faithful holders · Ranked by Blessing Score · Updated every 30 minutes</p>
+    <div class="title-ornament">◆────────────────────────◆</div>
+  </section>
+
+  <!-- MAIN -->
+  <div class="leaderboard-layout">
+
+    <!-- Stats bar -->
+    <div style="display:flex;gap:24px;flex-wrap:wrap;margin-bottom:32px;padding:16px 20px;background:var(--bg-card);border:1px solid var(--bg-border);border-radius:var(--radius-lg);">
+      <div class="roadmap-mc-item">Total Wallets <strong id="lbTotalWallets" style="color:var(--gold-primary);font-size:16px;">—</strong></div>
+      <span style="color:var(--gold-deep);font-size:10px;">◆</span>
+      <div class="roadmap-mc-item">Last Updated <strong id="lbUpdatedAt" style="color:var(--gold-primary);font-size:13px;">—</strong></div>
+      <span style="color:var(--gold-deep);font-size:10px;">◆</span>
+      <div class="roadmap-mc-item" style="margin-left:auto;">
+        <a href="dashboard.html" class="btn btn-primary" style="font-size:11px;padding:8px 18px;">
+          <span class="btn-cross">✝</span> Check My Score
+        </a>
+      </div>
+    </div>
+
+    <!-- Main leaderboard -->
+    <div class="lb-section">
+      <div class="lb-section-header">
+        <span class="lb-section-title">✝ &nbsp; Top 50 by Blessing Score</span>
+        <span class="lb-update-note" id="lbUpdateNote">Refreshes every 30 min</span>
+      </div>
+
+      <div id="lbLoading" class="blessing-loading">
+        <div class="blessing-spinner"></div>
+        <div class="blessing-loading-text">Summoning the congregation…</div>
+      </div>
+
+      <div id="lbError" class="blessing-error" style="display:none;"></div>
+
+      <div id="lbTableWrap" style="display:none;background:var(--bg-card);border:1px solid var(--bg-border);border-radius:var(--radius-lg);overflow:hidden;">
+        <table class="lb-table">
+          <thead>
+            <tr>
+              <th style="width:48px;">#</th>
+              <th>Wallet</th>
+              <th>Tier</th>
+              <th>Hold Days</th>
+              <th style="text-align:right;">Blessing Score</th>
+            </tr>
+          </thead>
+          <tbody id="lbBody">
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Saints & Cardinals callout -->
+    <div class="lb-section" id="eliteSection" style="display:none;">
+      <div class="lb-section-header">
+        <span class="lb-section-title">✝ &nbsp; Saints & Cardinals</span>
+        <span class="lb-update-note">The most blessed in the congregation</span>
+      </div>
+      <div id="eliteGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:16px;"></div>
+    </div>
+
+    <!-- CTA -->
+    <div style="text-align:center;padding:40px 0 0;border-top:1px solid var(--bg-border);">
+      <div class="section-cross">✝</div>
+      <h2 class="section-title" style="font-size:22px;margin-bottom:8px;">Not on the Board Yet?</h2>
+      <p style="font-size:14px;color:var(--text-secondary);margin-bottom:24px;">Connect your wallet and compute your Blessing Score to appear on the leaderboard.</p>
+      <a href="dashboard.html" class="btn btn-primary btn-lg">
+        <span class="btn-cross">✝</span> Compute My Blessing Score
+      </a>
+    </div>
+  </div>
+
+  <footer class="site-footer">
+    <div class="footer-top-ornament">
+      <span class="ornament-line-wide"></span>
+      <span class="ornament-cross-lg">✝</span>
+      <span class="ornament-line-wide"></span>
+    </div>
+    <div class="footer-bottom">
+      <p>© 2025 $PADRE — Father of Trenches · trenchfather.fun</p>
+      <p class="footer-disclaimer">Leaderboard updates every 30 minutes. Scores recalculate on dashboard visits.</p>
+    </div>
+  </footer>
+
+  <script src="js/main.js"></script>
+  <script src="js/blessing-leaderboard.js"></script>
+</body>
+</html>

@@ -7,25 +7,25 @@
     }
   ],
   "routes": [
-    {
-      "src": "/api/(.*)",
-      "dest": "/api/$1"
-    },
-    {
-      "src": "/(.*)",
-      "dest": "/$1"
-    }
+    { "src": "/api/(.*)", "dest": "/api/$1" },
+    { "src": "/(.*)", "dest": "/$1" }
   ],
   "env": {
-    "CC_API_KEY": "@cc_api_key",
-    "PADRE_TOKEN_ADDRESS": "@padre_token_address"
+    "CC_API_KEY":           "@cc_api_key",
+    "PADRE_TOKEN_ADDRESS":  "@padre_token_address",
+    "SOLANA_RPC_URL":       "@solana_rpc_url",
+    "ADMIN_KEY":            "@admin_key",
+    "KV_REST_API_URL":      "@kv_rest_api_url",
+    "KV_REST_API_TOKEN":    "@kv_rest_api_token"
   },
   "headers": [
     {
-      "source": "/overlay",
-      "headers": [
-        { "key": "X-Frame-Options", "value": "ALLOWALL" }
-      ]
+      "source": "/overlay(.*)",
+      "headers": [{ "key": "X-Frame-Options", "value": "ALLOWALL" }]
+    },
+    {
+      "source": "/candle-widget(.*)",
+      "headers": [{ "key": "X-Frame-Options", "value": "ALLOWALL" }]
     }
   ]
 }

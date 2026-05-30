@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Blessing Score Dashboard — $PADRE Father of Trenches</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700;900&family=Cinzel:wght@400;600;700;900&family=IM+Fell+English:ital@0;1&family=UnifrakturMaguntia&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/main.css">
+  <link rel="stylesheet" href="css/blessing.css">
+</head>
+<body>
+
+  <div class="top-bar">
+    <div class="top-bar-inner">
+      <span class="top-bar-item">trenchfather.fun</span>
+      <span class="top-bar-divider">✦</span>
+      <a href="leaderboard.html" class="top-bar-item top-bar-link">Leaderboard</a>
+      <span class="top-bar-divider">✦</span>
+      <a href="rewards.html" class="top-bar-item top-bar-link">Rewards</a>
+    </div>
+  </div>
+
+  <header class="site-header">
+    <div class="header-inner">
+      <div class="header-logo">
+        <a href="index.html" class="logo-link">
+          <div class="logo-cross">✝</div>
+          <div class="logo-text">
+            <span class="logo-ticker">$PADRE</span>
+            <span class="logo-tagline">Father of Trenches</span>
+          </div>
+        </a>
+      </div>
+      <button class="mobile-menu-toggle" id="menuToggle"><span></span><span></span><span></span></button>
+      <nav class="main-nav" id="mainNav">
+        <ul class="nav-list">
+          <li><a href="about.html" class="nav-link">About The Father</a></li>
+          <li><a href="plan-to-ape.html" class="nav-link">Plan to Ape</a></li>
+          <li><a href="sermons.html" class="nav-link">The Sermons</a></li>
+          <li><a href="scripture.html" class="nav-link">Holy Scripture</a></li>
+          <li><a href="roadmap.html" class="nav-link">Roadmap</a></li>
+          <li><a href="dashboard.html" class="nav-link" style="color:var(--gold-primary)">Dashboard</a></li>
+          <li><a href="leaderboard.html" class="nav-link">Leaderboard</a></li>
+          <li><a href="offerings.html" class="nav-link nav-highlight">Offerings</a></li>
+          <li><a href="connect-wallet.html" class="nav-link nav-wallet">Connect Wallet</a></li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+
+  <!-- HERO -->
+  <section class="blessing-hero">
+    <div class="section-cross">🙏</div>
+    <h1 class="section-title">Blessing Score Dashboard</h1>
+    <p class="section-subtitle">Hold · Participate · Earn · Be Rewarded by The Father</p>
+    <div class="title-ornament">◆────────────────────────◆</div>
+  </section>
+
+  <!-- WALLET BAR (hidden until connected) -->
+  <div class="wallet-bar" id="walletBar" style="display:none;">
+    <div class="wallet-bar-addr">
+      <div class="wallet-bar-dot"></div>
+      <span id="walletAddrShort">—</span>
+    </div>
+    <div class="wallet-bar-actions">
+      <button class="btn-sm" id="refreshBtn">↻ Refresh Score</button>
+      <button class="btn-sm danger" id="disconnectBtn">Disconnect</button>
+    </div>
+  </div>
+
+  <!-- CONNECT GATE (shown until wallet connected) -->
+  <div id="connectGate">
+    <div class="connect-gate">
+      <div class="connect-gate-icon">✝</div>
+      <h2 class="connect-gate-title">Connect Your Wallet</h2>
+      <p class="connect-gate-sub">
+        Connect your Solana wallet to see your Blessing Score, rank, and rewards.
+        The Father sees all — your holding time, your community contributions, and your faith.
+      </p>
+      <div class="connect-btns">
+        <button class="btn-wallet phantom" id="connectPhantom">
+          <span class="btn-wallet-icon">👻</span>
+          Connect Phantom
+        </button>
+        <button class="btn-wallet solflare" id="connectSolflare">
+          <span class="btn-wallet-icon">🔆</span>
+          Connect Solflare
+        </button>
+      </div>
+      <p style="margin-top:24px;font-family:var(--font-heading);font-size:10px;color:var(--text-dim);letter-spacing:.08em;">
+        Read-only connection · No transactions requested · Your keys stay yours
+      </p>
+      <div id="connectError" style="display:none;margin-top:16px;" class="blessing-error"></div>
+    </div>
+
+    <!-- RANK TIERS PREVIEW -->
+    <div style="max-width:960px;margin:0 auto;padding:0 24px 80px;">
+      <div class="section-header">
+        <div class="section-cross">✦</div>
+        <h2 class="section-title">The Ranks of The Congregation</h2>
+        <div class="title-ornament">◆────────────────◆</div>
+      </div>
+      <div class="tier-cards">
+        <div class="tier-card" style="border-color:#333;"><div class="tier-card-icon">😈</div><div class="tier-card-name" style="color:#666;">Sinner</div><div class="tier-card-range">0 – 99 pts</div><div class="tier-card-reward">Repent first. No rewards yet.</div></div>
+        <div class="tier-card" style="border-color:#5C4405;"><div class="tier-card-icon">🙏</div><div class="tier-card-name" style="color:#8B6914;">Believer</div><div class="tier-card-range">100 – 499 pts</div><div class="tier-card-reward">Father shoutout during stream</div></div>
+        <div class="tier-card" style="border-color:var(--gold-dark);"><div class="tier-card-icon">⛪</div><div class="tier-card-name" style="color:var(--gold-primary);">Congregation</div><div class="tier-card-range">500 – 1,999 pts</div><div class="tier-card-reward">Fee share eligible</div></div>
+        <div class="tier-card" style="border-color:#C9A84C;"><div class="tier-card-icon">📿</div><div class="tier-card-name" style="color:#FFD700;">Disciple</div><div class="tier-card-range">2,000 – 4,999 pts</div><div class="tier-card-reward">Cardinal badge + fee share</div></div>
+        <div class="tier-card" style="border-color:#CC0000;"><div class="tier-card-icon">🔴</div><div class="tier-card-name" style="color:#FF4444;">Cardinal</div><div class="tier-card-range">5,000 – 14,999 pts</div><div class="tier-card-reward">Top fee split priority</div></div>
+        <div class="tier-card" style="border-color:rgba(255,255,255,0.3);box-shadow:0 0 20px rgba(255,255,255,0.05);"><div class="tier-card-icon">✝</div><div class="tier-card-name" style="color:#fff;text-shadow:0 0 10px rgba(255,255,255,0.5);">Saint</div><div class="tier-card-range">15,000+ pts</div><div class="tier-card-reward">Legendary status · Biggest fee share</div></div>
+      </div>
+      <div style="text-align:center;">
+        <a href="rewards.html" class="btn btn-outline">Learn How Rewards Work →</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- DASHBOARD (hidden until connected + loaded) -->
+  <div id="dashboardLoading" style="display:none;" class="blessing-loading">
+    <div class="blessing-spinner"></div>
+    <div class="blessing-loading-text">The Father is calculating your blessing…</div>
+  </div>
+
+  <div id="dashboardContent" style="display:none;">
+    <div class="dashboard-grid">
+
+      <!-- LEFT: Score card (sticky) -->
+      <div>
+        <div class="score-card">
+          <!-- Score -->
+          <div class="score-card-top">
+            <div class="score-label">✝ &nbsp; Blessing Score &nbsp; ✝</div>
+            <div class="score-value" id="scoreValue">0</div>
+            <div class="score-pts">Points</div>
+            <div class="rank-badge-inline" id="rankBadge">
+              <span class="rank-badge-icon" id="rankIcon">😈</span>
+              <span class="rank-badge-name" id="rankName">Sinner</span>
+            </div>
+          </div>
+
+          <!-- Progress to next rank -->
+          <div class="score-progress">
+            <div class="score-progress-label">
+              <span id="progressCurRank">Sinner</span>
+              <span id="progressNextRank">Believer</span>
+            </div>
+            <div class="progress-track-sm">
+              <div class="progress-fill-sm" id="rankProgressFill" style="width:0%"></div>
+            </div>
+            <div class="score-progress-sub" id="progressSub">100 pts to reach Believer</div>
+          </div>
+
+          <!-- Breakdown -->
+          <div class="score-breakdown">
+            <div style="font-family:var(--font-heading);font-size:9px;letter-spacing:.2em;text-transform:uppercase;color:var(--text-dim);margin-bottom:12px;">Score Breakdown</div>
+            <div class="breakdown-row">
+              <span class="breakdown-label">Hold</span>
+              <div class="breakdown-bar"><div class="breakdown-fill hold" id="holdBar" style="width:0%"></div></div>
+              <span class="breakdown-pts" id="holdPts">0</span>
+            </div>
+            <div class="breakdown-row">
+              <span class="breakdown-label">Social</span>
+              <div class="breakdown-bar"><div class="breakdown-fill social" id="socialBar" style="width:0%"></div></div>
+              <span class="breakdown-pts" id="socialPts">0</span>
+            </div>
+            <div class="breakdown-row">
+              <span class="breakdown-label">Referral</span>
+              <div class="breakdown-bar"><div class="breakdown-fill referral" id="referralBar" style="width:0%"></div></div>
+              <span class="breakdown-pts" id="referralPts">0</span>
+            </div>
+          </div>
+
+          <!-- Claim -->
+          <div class="score-card-actions">
+            <div class="claim-box" id="claimBox">
+              <div class="claim-box-amount" id="claimAmount">0 $PADRE</div>
+              <div class="claim-box-label">Available to Claim</div>
+              <button class="btn btn-primary" id="claimBtn" style="width:100%;justify-content:center;">
+                <span class="btn-cross">✝</span> Claim My Blessing <span class="btn-cross">✝</span>
+              </button>
+              <div class="claim-success" id="claimSuccess">✝ Claim recorded · The Father will distribute shortly ✝</div>
+              <p class="claim-box-note">Rewards distributed manually each week to all eligible ranks. Congregation and above.</p>
+            </div>
+          </div>
+
+          <!-- Referral link -->
+          <div class="referral-box">
+            <div class="referral-label">Your Referral Link · +200 pts per new soul</div>
+            <div class="referral-link-row">
+              <input class="referral-input" id="referralInput" readonly value="Connect wallet to generate">
+              <button class="btn-sm" id="copyRefBtn">Copy</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Share badge -->
+        <div class="share-badge" style="margin-top:20px;" id="shareBadgeWrap">
+          <div style="font-family:var(--font-heading);font-size:9px;letter-spacing:.15em;text-transform:uppercase;color:var(--text-muted);margin-bottom:12px;">Share Your Rank Badge</div>
+          <div class="share-badge-card" id="shareBadgeCard">
+            <span class="share-badge-cross" id="badgeCross">✝</span>
+            <div class="share-badge-rank" id="badgeRankName">Sinner</div>
+            <div class="share-badge-score" id="badgeScore">0 Blessing Points</div>
+            <div class="share-badge-site">trenchfather.fun</div>
+          </div>
+          <button class="btn btn-outline" id="screenshotBtn" style="width:100%;justify-content:center;font-size:11px;padding:10px;">
+            📸 Screenshot to Share
+          </button>
+        </div>
+      </div>
+
+      <!-- RIGHT: Details -->
+      <div>
+
+        <!-- Hold Details -->
+        <div class="detail-panel">
+          <div class="panel-header">
+            <span class="panel-title">🕯️ &nbsp; Hold Details</span>
+            <span style="font-family:var(--font-heading);font-size:9px;letter-spacing:.1em;color:var(--text-dim);" id="lastUpdated">—</span>
+          </div>
+          <div class="panel-body">
+            <div class="hold-detail-row">
+              <span class="hold-detail-key">$PADRE Balance</span>
+              <span class="hold-detail-val gold" id="detailBalance">—</span>
+            </div>
+            <div class="hold-detail-row">
+              <span class="hold-detail-key">Holding Since</span>
+              <span class="hold-detail-val" id="detailHoldStart">—</span>
+            </div>
+            <div class="hold-detail-row">
+              <span class="hold-detail-key">Days Held</span>
+              <span class="hold-detail-val gold" id="detailHoldDays">—</span>
+            </div>
+            <div class="hold-detail-row">
+              <span class="hold-detail-key">Holder Rank</span>
+              <span class="hold-detail-val" id="detailHolderRank">—</span>
+            </div>
+            <div class="hold-detail-row">
+              <span class="hold-detail-key">Hold Score</span>
+              <span class="hold-detail-val gold" id="detailHoldScore">—</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Community Activity -->
+        <div class="detail-panel">
+          <div class="panel-header">
+            <span class="panel-title">✦ &nbsp; Community Activity</span>
+          </div>
+          <div class="panel-body">
+            <div class="stats-mini" style="margin-bottom:16px;">
+              <div class="stat-mini">
+                <div class="stat-mini-val" id="actPosts">—</div>
+                <div class="stat-mini-lbl">Posts<br>×25 pts</div>
+              </div>
+              <div class="stat-mini">
+                <div class="stat-mini-val" id="actReplies">—</div>
+                <div class="stat-mini-lbl">Replies<br>×10 pts</div>
+              </div>
+              <div class="stat-mini">
+                <div class="stat-mini-val" id="actLikes">—</div>
+                <div class="stat-mini-lbl">Likes<br>×5 pts</div>
+              </div>
+            </div>
+            <div class="hold-detail-row">
+              <span class="hold-detail-key">Social Score</span>
+              <span class="hold-detail-val gold" id="detailSocialScore">—</span>
+            </div>
+            <div style="margin-top:12px;">
+              <a href="confessional.html" class="btn btn-outline" style="font-size:11px;padding:9px 18px;">
+                Post in Community → +25 pts
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <!-- Referrals -->
+        <div class="detail-panel">
+          <div class="panel-header">
+            <span class="panel-title">📿 &nbsp; Referrals</span>
+          </div>
+          <div class="panel-body">
+            <div class="hold-detail-row">
+              <span class="hold-detail-key">Souls Referred</span>
+              <span class="hold-detail-val gold" id="detailReferrals">—</span>
+            </div>
+            <div class="hold-detail-row">
+              <span class="hold-detail-key">Referral Score</span>
+              <span class="hold-detail-val gold" id="detailReferralScore">—</span>
+            </div>
+            <p style="font-size:12px;color:var(--text-secondary);line-height:1.7;margin-top:12px;">
+              Share your referral link. When a new wallet connects with your link and holds $PADRE, you earn 200 points.
+            </p>
+          </div>
+        </div>
+
+        <!-- How to earn more -->
+        <div class="detail-panel">
+          <div class="panel-header">
+            <span class="panel-title">✝ &nbsp; Earn More Points</span>
+          </div>
+          <div class="panel-body">
+            <div class="hold-detail-row"><span class="hold-detail-key">Hold 1 day</span><span class="hold-detail-val">+10 pts</span></div>
+            <div class="hold-detail-row"><span class="hold-detail-key">Hold 1 week</span><span class="hold-detail-val">+100 pts</span></div>
+            <div class="hold-detail-row"><span class="hold-detail-key">Hold 1 month</span><span class="hold-detail-val">+500 pts</span></div>
+            <div class="hold-detail-row"><span class="hold-detail-key">Top 10% holder</span><span class="hold-detail-val">+200 pts</span></div>
+            <div class="hold-detail-row"><span class="hold-detail-key">Top 1% holder</span><span class="hold-detail-val">+500 pts</span></div>
+            <div class="hold-detail-row"><span class="hold-detail-key">Post in community</span><span class="hold-detail-val">+25 pts each</span></div>
+            <div class="hold-detail-row"><span class="hold-detail-key">Reply to post</span><span class="hold-detail-val">+10 pts each</span></div>
+            <div class="hold-detail-row"><span class="hold-detail-key">Like a post</span><span class="hold-detail-val">+5 pts each</span></div>
+            <div class="hold-detail-row"><span class="hold-detail-key">Refer a wallet</span><span class="hold-detail-val">+200 pts each</span></div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <footer class="site-footer">
+    <div class="footer-top-ornament">
+      <span class="ornament-line-wide"></span>
+      <span class="ornament-cross-lg">✝</span>
+      <span class="ornament-line-wide"></span>
+    </div>
+    <div class="footer-bottom">
+      <p>© 2025 $PADRE — Father of Trenches · trenchfather.fun</p>
+      <p class="footer-disclaimer">$PADRE is a meme coin. Blessing Score is for community recognition only. Not financial advice.</p>
+    </div>
+  </footer>
+
+  <script src="js/main.js"></script>
+  <script src="js/blessing-dashboard.js"></script>
+</body>
+</html>

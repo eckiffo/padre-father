@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Rewards — $PADRE Father of Trenches</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700;900&family=Cinzel:wght@400;600;700;900&family=IM+Fell+English:ital@0;1&family=UnifrakturMaguntia&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/main.css">
+  <link rel="stylesheet" href="css/blessing.css">
+</head>
+<body>
+
+  <div class="top-bar">
+    <div class="top-bar-inner">
+      <span class="top-bar-item">trenchfather.fun</span>
+      <span class="top-bar-divider">✦</span>
+      <a href="dashboard.html" class="top-bar-item top-bar-link">My Dashboard</a>
+      <span class="top-bar-divider">✦</span>
+      <a href="leaderboard.html" class="top-bar-item top-bar-link">Leaderboard</a>
+    </div>
+  </div>
+
+  <header class="site-header">
+    <div class="header-inner">
+      <div class="header-logo">
+        <a href="index.html" class="logo-link">
+          <div class="logo-cross">✝</div>
+          <div class="logo-text">
+            <span class="logo-ticker">$PADRE</span>
+            <span class="logo-tagline">Father of Trenches</span>
+          </div>
+        </a>
+      </div>
+      <button class="mobile-menu-toggle" id="menuToggle"><span></span><span></span><span></span></button>
+      <nav class="main-nav" id="mainNav">
+        <ul class="nav-list">
+          <li><a href="about.html" class="nav-link">About The Father</a></li>
+          <li><a href="plan-to-ape.html" class="nav-link">Plan to Ape</a></li>
+          <li><a href="sermons.html" class="nav-link">The Sermons</a></li>
+          <li><a href="scripture.html" class="nav-link">Holy Scripture</a></li>
+          <li><a href="roadmap.html" class="nav-link">Roadmap</a></li>
+          <li><a href="dashboard.html" class="nav-link">Dashboard</a></li>
+          <li><a href="leaderboard.html" class="nav-link">Leaderboard</a></li>
+          <li><a href="rewards.html" class="nav-link" style="color:var(--gold-primary)">Rewards</a></li>
+          <li><a href="connect-wallet.html" class="nav-link nav-wallet">Connect Wallet</a></li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+
+  <!-- HERO -->
+  <section class="blessing-hero">
+    <div class="section-cross">💰</div>
+    <h1 class="section-title">The Reward System</h1>
+    <p class="section-subtitle">How the congregation shares in The Father's earnings</p>
+    <div class="title-ornament">◆────────────────────────◆</div>
+  </section>
+
+  <div class="rewards-layout">
+
+    <!-- FEE SPLIT EXPLAINER — the most important section -->
+    <div class="section-header" style="margin-bottom:32px;">
+      <div class="section-cross">✝</div>
+      <h2 class="section-title">The Tithe System</h2>
+      <div class="title-ornament">◆────────────────◆</div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:48px;">
+      <div style="background:var(--bg-card);border:1px solid var(--bg-border);border-radius:var(--radius-lg);padding:28px;text-align:center;position:relative;overflow:hidden;">
+        <div style="position:absolute;inset:0;background:radial-gradient(ellipse at 50% 0%,rgba(201,168,76,0.04),transparent 60%);pointer-events:none;"></div>
+        <div style="font-size:40px;margin-bottom:12px;">✝</div>
+        <div style="font-family:var(--font-display);font-size:42px;font-weight:900;color:var(--gold-primary);text-shadow:0 0 20px rgba(201,168,76,0.4);margin-bottom:6px;">50%</div>
+        <div style="font-family:var(--font-heading);font-size:11px;letter-spacing:.15em;text-transform:uppercase;color:var(--text-muted);margin-bottom:16px;">The Father's Share</div>
+        <p style="font-size:13px;color:var(--text-secondary);line-height:1.7;">Goes to The Father to fund operations, marketing, development, and the church's mission. Fuels everything you see at trenchfather.fun.</p>
+      </div>
+      <div style="background:var(--bg-card);border:1px solid var(--gold-dark);border-radius:var(--radius-lg);padding:28px;text-align:center;position:relative;overflow:hidden;">
+        <div style="position:absolute;inset:0;background:radial-gradient(ellipse at 50% 0%,rgba(201,168,76,0.07),transparent 60%);pointer-events:none;"></div>
+        <div style="font-size:40px;margin-bottom:12px;">🙏</div>
+        <div style="font-family:var(--font-display);font-size:42px;font-weight:900;color:var(--gold-bright);text-shadow:0 0 30px rgba(255,215,0,0.5);margin-bottom:6px;">50%</div>
+        <div style="font-family:var(--font-heading);font-size:11px;letter-spacing:.15em;text-transform:uppercase;color:var(--text-muted);margin-bottom:16px;">The Congregation's Share</div>
+        <p style="font-size:13px;color:var(--text-secondary);line-height:1.7;">Split among <strong style="color:var(--text-white);">Congregation rank and above</strong>, proportionally by Blessing Score. The more you hold and contribute, the bigger your cut.</p>
+      </div>
+    </div>
+
+    <!-- HOW THE SPLIT WORKS -->
+    <div class="detail-panel" style="margin-bottom:40px;">
+      <div class="panel-header">
+        <span class="panel-title">⚖ &nbsp; How Your Share Is Calculated</span>
+      </div>
+      <div class="panel-body">
+        <p style="font-size:14px;color:var(--text-secondary);line-height:1.9;margin-bottom:20px;">
+          Your cut of the 50% holder pool is <strong style="color:var(--text-white);">proportional to your Blessing Score</strong> relative to all eligible wallets combined.
+        </p>
+        <div style="background:var(--bg-dark);border:1px solid var(--bg-border);border-radius:var(--radius);padding:16px 20px;margin-bottom:20px;">
+          <div style="font-family:var(--font-heading);font-size:10px;letter-spacing:.15em;text-transform:uppercase;color:var(--text-muted);margin-bottom:10px;">Formula</div>
+          <code style="font-size:14px;color:var(--gold-primary);display:block;line-height:1.8;">
+            Your Share = (Your Score ÷ Total Eligible Scores) × Holder Pool
+          </code>
+        </div>
+        <div style="background:var(--bg-dark);border:1px solid var(--bg-border);border-radius:var(--radius);padding:16px 20px;">
+          <div style="font-family:var(--font-heading);font-size:10px;letter-spacing:.15em;text-transform:uppercase;color:var(--text-muted);margin-bottom:12px;">Example</div>
+          <div class="hold-detail-row"><span class="hold-detail-key">Your Score</span><span class="hold-detail-val gold">2,000 pts</span></div>
+          <div class="hold-detail-row"><span class="hold-detail-key">Total Eligible Scores</span><span class="hold-detail-val">50,000 pts</span></div>
+          <div class="hold-detail-row"><span class="hold-detail-key">Weekly Holder Pool</span><span class="hold-detail-val">10,000,000 $PADRE</span></div>
+          <div class="hold-detail-row" style="border-top:2px solid var(--bg-border);margin-top:4px;padding-top:12px;">
+            <span class="hold-detail-key" style="color:var(--gold-primary);">Your Reward</span>
+            <span class="hold-detail-val gold" style="font-size:16px;">400,000 $PADRE</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TIER REWARDS -->
+    <div class="section-header" style="margin-bottom:24px;">
+      <div class="section-cross">📿</div>
+      <h2 class="section-title">Rank Tiers & Benefits</h2>
+      <div class="title-ornament">◆────────────────◆</div>
+    </div>
+
+    <div class="tier-cards" style="margin-bottom:48px;">
+      <div class="tier-card" style="border-color:#333;">
+        <div class="tier-card-icon">😈</div>
+        <div class="tier-card-name" style="color:#666;">Sinner</div>
+        <div class="tier-card-range">0 – 99 pts</div>
+        <div class="tier-card-reward">Repent first. No rewards until you hold and participate.</div>
+      </div>
+      <div class="tier-card" style="border-color:#5C4405;">
+        <div class="tier-card-icon">🙏</div>
+        <div class="tier-card-name" style="color:#8B6914;">Believer</div>
+        <div class="tier-card-range">100 – 499 pts</div>
+        <div class="tier-card-reward">Father shoutout on stream. Not yet fee share eligible.</div>
+      </div>
+      <div class="tier-card" style="border-color:var(--gold-dark);">
+        <div class="tier-card-icon">⛪</div>
+        <div class="tier-card-name" style="color:var(--gold-primary);">Congregation</div>
+        <div class="tier-card-range">500 – 1,999 pts</div>
+        <div class="tier-card-reward">✅ Fee share eligible · Proportional slice of the 50% pool.</div>
+      </div>
+      <div class="tier-card" style="border-color:#C9A84C;">
+        <div class="tier-card-icon">📿</div>
+        <div class="tier-card-name" style="color:#FFD700;">Disciple</div>
+        <div class="tier-card-range">2,000 – 4,999 pts</div>
+        <div class="tier-card-reward">✅ Bigger fee share · Cardinal badge on leaderboard.</div>
+      </div>
+      <div class="tier-card" style="border-color:#CC0000;background:linear-gradient(135deg,var(--bg-card),#1A0505);">
+        <div class="tier-card-icon">🔴</div>
+        <div class="tier-card-name" style="color:#FF4444;">Cardinal</div>
+        <div class="tier-card-range">5,000 – 14,999 pts</div>
+        <div class="tier-card-reward">✅ Priority top fee split · Featured on leaderboard.</div>
+      </div>
+      <div class="tier-card" style="border-color:rgba(255,255,255,0.3);box-shadow:0 0 20px rgba(255,255,255,0.04);">
+        <div class="tier-card-icon">✝</div>
+        <div class="tier-card-name" style="color:#fff;text-shadow:0 0 10px rgba(255,255,255,0.5);">Saint</div>
+        <div class="tier-card-range">15,000+ pts</div>
+        <div class="tier-card-reward">✅ Legendary · Largest proportional share of all holders.</div>
+      </div>
+    </div>
+
+    <!-- DISTRIBUTION SCHEDULE -->
+    <div class="detail-panel" style="margin-bottom:40px;">
+      <div class="panel-header">
+        <span class="panel-title">📅 &nbsp; Distribution Schedule</span>
+      </div>
+      <div class="panel-body">
+        <div class="hold-detail-row">
+          <span class="hold-detail-key">Frequency</span>
+          <span class="hold-detail-val">Weekly · Every Sunday</span>
+        </div>
+        <div class="hold-detail-row">
+          <span class="hold-detail-key">Snapshot Time</span>
+          <span class="hold-detail-val">Sunday 11:59 PM EST</span>
+        </div>
+        <div class="hold-detail-row">
+          <span class="hold-detail-key">Distribution</span>
+          <span class="hold-detail-val">Manual · Within 24 hours of snapshot</span>
+        </div>
+        <div class="hold-detail-row">
+          <span class="hold-detail-key">Minimum Rank</span>
+          <span class="hold-detail-val gold">Congregation (500 pts)</span>
+        </div>
+        <div class="hold-detail-row">
+          <span class="hold-detail-key">Claim Window</span>
+          <span class="hold-detail-val">7 days to claim each distribution</span>
+        </div>
+        <p style="font-size:13px;color:var(--text-secondary);line-height:1.7;margin-top:16px;padding-top:16px;border-top:1px solid var(--bg-border);">
+          To receive rewards: visit your <a href="dashboard.html" style="color:var(--gold-primary);">Dashboard</a>, connect your wallet, and click <strong>Claim My Blessing</strong> once rewards are available. The Father distributes within 24 hours of the weekly snapshot.
+        </p>
+      </div>
+    </div>
+
+    <!-- CHURCH TREASURY -->
+    <div class="detail-panel" style="margin-bottom:40px;">
+      <div class="panel-header">
+        <span class="panel-title">⛪ &nbsp; Church Treasury</span>
+      </div>
+      <div class="panel-body">
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:16px;">
+          <div class="stat-mini">
+            <div class="stat-mini-val" id="treasuryBalance">Coming<br>Soon</div>
+            <div class="stat-mini-lbl">This Week's Pool</div>
+          </div>
+          <div class="stat-mini">
+            <div class="stat-mini-val" id="totalDistributed">—</div>
+            <div class="stat-mini-lbl">Total Distributed</div>
+          </div>
+          <div class="stat-mini">
+            <div class="stat-mini-val" id="eligibleHolders">—</div>
+            <div class="stat-mini-lbl">Eligible Wallets</div>
+          </div>
+        </div>
+        <p style="font-size:12px;color:var(--text-dim);font-style:italic;">Treasury balance and distribution amounts are updated after each weekly snapshot.</p>
+      </div>
+    </div>
+
+    <!-- DISTRIBUTION HISTORY -->
+    <div class="detail-panel" style="margin-bottom:40px;">
+      <div class="panel-header">
+        <span class="panel-title">📜 &nbsp; Distribution History</span>
+      </div>
+      <div class="panel-body">
+        <div id="historyLoading" class="blessing-loading" style="padding:30px;">
+          <div class="blessing-spinner"></div>
+        </div>
+        <div id="historyEmpty" style="display:none;text-align:center;padding:24px;font-family:var(--font-heading);font-size:11px;letter-spacing:.1em;color:var(--text-dim);">
+          No distributions yet. The first distribution happens after launch.
+        </div>
+        <div id="historyTable" style="display:none;">
+          <table class="history-table" style="width:100%;border-collapse:collapse;">
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Pool Size</th>
+                <th>Wallets</th>
+                <th style="text-align:right;">Distributed</th>
+              </tr>
+            </thead>
+            <tbody id="historyBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- HOW TO EARN MORE -->
+    <div class="section-header" style="margin-bottom:24px;">
+      <div class="section-cross">✦</div>
+      <h2 class="section-title">How to Earn More Points</h2>
+      <div class="title-ornament">◆────────────────◆</div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:20px;margin-bottom:48px;">
+      <div class="detail-panel">
+        <div class="panel-header"><span class="panel-title">🕯️ &nbsp; Holding Bonuses</span></div>
+        <div class="panel-body">
+          <div class="hold-detail-row"><span class="hold-detail-key">Hold 1 day</span><span class="hold-detail-val gold">+10 pts</span></div>
+          <div class="hold-detail-row"><span class="hold-detail-key">Hold 1 week</span><span class="hold-detail-val gold">+100 pts</span></div>
+          <div class="hold-detail-row"><span class="hold-detail-key">Hold 1 month</span><span class="hold-detail-val gold">+500 pts</span></div>
+          <div class="hold-detail-row"><span class="hold-detail-key">Top 10% holder</span><span class="hold-detail-val gold">+200 pts</span></div>
+          <div class="hold-detail-row"><span class="hold-detail-key">Top 1% holder</span><span class="hold-detail-val gold">+500 pts</span></div>
+        </div>
+      </div>
+      <div class="detail-panel">
+        <div class="panel-header"><span class="panel-title">✦ &nbsp; Community Activity</span></div>
+        <div class="panel-body">
+          <div class="hold-detail-row"><span class="hold-detail-key">Post in community</span><span class="hold-detail-val gold">+25 pts each</span></div>
+          <div class="hold-detail-row"><span class="hold-detail-key">Reply to a post</span><span class="hold-detail-val gold">+10 pts each</span></div>
+          <div class="hold-detail-row"><span class="hold-detail-key">Like a post</span><span class="hold-detail-val gold">+5 pts each</span></div>
+          <div class="hold-detail-row"><span class="hold-detail-key">Refer a wallet</span><span class="hold-detail-val gold">+200 pts each</span></div>
+          <div style="margin-top:14px;">
+            <a href="confessional.html" class="btn btn-outline" style="font-size:11px;padding:8px 16px;">Post in Community →</a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div style="text-align:center;">
+      <a href="dashboard.html" class="btn btn-primary btn-lg">
+        <span class="btn-cross">✝</span> Open My Blessing Dashboard <span class="btn-cross">✝</span>
+      </a>
+    </div>
+
+  </div><!-- /rewards-layout -->
+
+  <footer class="site-footer">
+    <div class="footer-top-ornament">
+      <span class="ornament-line-wide"></span>
+      <span class="ornament-cross-lg">✝</span>
+      <span class="ornament-line-wide"></span>
+    </div>
+    <div class="footer-bottom">
+      <p>© 2025 $PADRE — Father of Trenches · trenchfather.fun</p>
+      <p class="footer-disclaimer">$PADRE is a meme coin. Rewards are community distributions, not financial returns. Not financial advice.</p>
+    </div>
+  </footer>
+
+  <script src="js/main.js"></script>
+  <script>
+    // Load distribution history
+    async function loadHistory() {
+      try {
+        const res = await fetch('/api/blessing/leaderboard?limit=1');
+        const data = await res.json();
+        if (data.total) $('eligibleHolders').textContent = data.total.toLocaleString();
+      } catch (_) {}
+
+      // TODO: wire up /api/blessing/history when distributions start
+      document.getElementById('historyLoading').style.display = 'none';
+      document.getElementById('historyEmpty').style.display   = 'block';
+    }
+    const $ = id => document.getElementById(id);
+    document.addEventListener('DOMContentLoaded', loadHistory);
+  </script>
+</body>
+</html>
