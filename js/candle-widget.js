@@ -4,13 +4,15 @@
    URL params:
      ?test         → demo mode, cycles all stages automatically
      ?stage=0..5   → lock to a specific stage (preview in OBS)
+     ?ca=ADDRESS   → test with any live Solana token address
    ═══════════════════════════════════════════════════════════════ */
 
 (function () {
   'use strict';
 
   /* ─── CONFIG ─── */
-  const TOKEN_ADDRESS  = window.__PADRE_TOKEN || null;
+  // Priority: ?ca= URL param → window.__PADRE_TOKEN env var → null (demo mode)
+  const TOKEN_ADDRESS  = new URLSearchParams(location.search).get('ca') || window.__PADRE_TOKEN || null;
   const POLL_INTERVAL  = 30_000;  // ms between Dexscreener polls
   const FAKE_HOLDERS   = 1247;    // test mode starting holder count
 

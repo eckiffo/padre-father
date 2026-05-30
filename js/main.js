@@ -69,15 +69,19 @@
     });
   }
 
+  /* ─── RESOLVE TOKEN ADDRESS (env var OR ?ca= URL param) ─── */
+  const _urlCA = new URLSearchParams(location.search).get('ca');
+  const RESOLVED_CA = _urlCA
+    || (typeof window.PADRE_TOKEN_ADDRESS !== 'undefined' ? window.PADRE_TOKEN_ADDRESS : null)
+    || null;
+
   /* ─── COPY CA ─── */
   function initCopyCA() {
     const btn = document.getElementById('caCopy');
     const val = document.getElementById('caValue');
     if (!btn || !val) return;
 
-    const ca = (typeof window.PADRE_TOKEN_ADDRESS !== 'undefined' && window.PADRE_TOKEN_ADDRESS)
-      ? window.PADRE_TOKEN_ADDRESS
-      : null;
+    const ca = RESOLVED_CA;
 
     if (ca) {
       val.textContent = ca;
@@ -113,14 +117,10 @@
     const container = document.getElementById('dexscreener-embed');
     if (!container) return;
 
-    const tokenAddr = (typeof window.PADRE_TOKEN_ADDRESS !== 'undefined')
-      ? window.PADRE_TOKEN_ADDRESS
-      : null;
-
-    if (tokenAddr) {
+    if (RESOLVED_CA) {
       container.innerHTML = `
         <iframe
-          src="https://dexscreener.com/solana/${tokenAddr}?embed=1&loadChartSettings=0&tabs=0&info=0&chartLeftToolbar=0&chartTheme=dark&theme=dark&chartStyle=0&chartType=usd&interval=15"
+          src="https://dexscreener.com/solana/${RESOLVED_CA}?embed=1&loadChartSettings=0&tabs=0&info=0&chartLeftToolbar=0&chartTheme=dark&theme=dark&chartStyle=0&chartType=usd&interval=15"
           style="width:100%;height:64px;border:none;background:transparent;"
           allow="clipboard-write"
         ></iframe>
@@ -130,9 +130,7 @@
 
   /* ─── STATS — Fetch from Dexscreener API ─── */
   async function loadStats() {
-    const tokenAddr = (typeof window.PADRE_TOKEN_ADDRESS !== 'undefined' && window.PADRE_TOKEN_ADDRESS)
-      ? window.PADRE_TOKEN_ADDRESS
-      : null;
+    const tokenAddr = RESOLVED_CA;
 
     if (!tokenAddr) return;
 

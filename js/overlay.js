@@ -7,13 +7,15 @@
 (function () {
   'use strict';
 
-  const TOKEN_ADDRESS  = window.__PADRE_TOKEN || null;
+  // Priority: ?ca= URL param → window.__PADRE_TOKEN env var → null (demo mode)
+  const _p             = new URLSearchParams(location.search);
+  const TOKEN_ADDRESS  = _p.get('ca') || window.__PADRE_TOKEN || null;
   const MAX_TOASTS     = 5;
   const TOAST_DURATION = 7000;   // ms before auto-dismiss
   const PRICE_INTERVAL = 30000;  // poll live price every 30s
 
   // Force test mode via ?test in URL, or automatically when no token
-  const IS_TEST = new URLSearchParams(location.search).has('test') || !TOKEN_ADDRESS;
+  const IS_TEST = _p.has('test') || !TOKEN_ADDRESS;
 
   const toastStack = document.getElementById('toastStack');
   const otPrice    = document.getElementById('otPrice');
