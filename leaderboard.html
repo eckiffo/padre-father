@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
+    <meta name="description" content="The $PADRE Congregation Leaderboard. Top holders by Blessing Score. Hourly and all-time rankings.">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Blessing Leaderboard — $PADRE Father of Trenches</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -35,9 +36,11 @@
       </div>
       <button class="mobile-menu-toggle" id="menuToggle"><span></span><span></span><span></span></button>
       <nav class="main-nav" id="mainNav">
+        
         <ul class="nav-list">
           <li><a href="about.html" class="nav-link">About The Father</a></li>
           <li><a href="plan-to-ape.html" class="nav-link">Plan to Ape</a></li>
+          <li><a href="livestream.html" class="nav-link">Father's Livestream</a></li>
           <li><a href="sermons.html" class="nav-link">The Sermons</a></li>
           <li><a href="scripture.html" class="nav-link">Holy Scripture</a></li>
           <li><a href="roadmap.html" class="nav-link">Roadmap</a></li>
@@ -89,23 +92,23 @@
     <!-- HOURLY RACE PANEL -->
     <div id="hourlyPanel" style="display:none;">
       <!-- Countdown -->
-      <div style="text-align:center;padding:28px;background:linear-gradient(135deg,var(--bg-card),#141414);border:1px solid rgba(255,180,0,0.2);border-radius:var(--radius-lg);margin-bottom:24px;">
-        <div style="font-family:var(--font-heading);font-size:9px;letter-spacing:.2em;text-transform:uppercase;color:rgba(255,184,0,0.5);margin-bottom:8px;">Next Reward In</div>
-        <div id="lbCountdown" style="font-family:var(--font-display);font-size:52px;font-weight:900;color:#FFB800;text-shadow:0 0 30px rgba(255,184,0,0.5);line-height:1;">00:00:00</div>
+      <div style="text-align:center;padding:28px;background:linear-gradient(135deg,var(--bg-card),#141414);border:1px solid rgba(0,230,118,0.12);border-radius:var(--radius-lg);margin-bottom:24px;">
+        <div style="font-family:var(--font-heading);font-size:9px;letter-spacing:.2em;text-transform:uppercase;color:rgba(0,230,118,0.4);margin-bottom:8px;">Next Reward In</div>
+        <div id="lbCountdown" style="font-family:var(--font-display);font-size:52px;font-weight:900;color:#00E676;text-shadow:0 0 30px rgba(0,230,118,0.4);line-height:1;">00:00:00</div>
         <div style="margin:14px auto 0;max-width:300px;height:5px;background:rgba(255,255,255,0.05);border-radius:3px;overflow:hidden;">
-          <div id="lbHourlyBar" style="height:100%;background:linear-gradient(to right,#00962E,#FFB800);border-radius:3px;transition:width 1s linear;width:0%;"></div>
+          <div id="lbHourlyBar" style="height:100%;background:linear-gradient(to right,#00962E,#00E676);border-radius:3px;transition:width 1s linear;width:0%;"></div>
         </div>
-        <div id="lbHourlyRewards" style="font-family:var(--font-heading);font-size:11px;letter-spacing:.1em;color:rgba(255,184,0,0.5);margin-top:10px;">🥇 0.05 SOL &nbsp;·&nbsp; 🥈 0.03 SOL &nbsp;·&nbsp; 🥉 0.02 SOL</div>
+        <div id="lbHourlyRewards" style="font-family:var(--font-heading);font-size:11px;letter-spacing:.1em;color:rgba(0,230,118,0.4);margin-top:10px;">🥇 0.05 SOL &nbsp;·&nbsp; 🥈 0.03 SOL &nbsp;·&nbsp; 🥉 0.02 SOL</div>
       </div>
 
       <!-- This hour top 10 -->
       <div class="lb-section">
         <div class="lb-section-header">
-          <span class="lb-section-title" style="color:#FFB800;">⚡ &nbsp; This Hour — Top 10 Most Active</span>
+          <span class="lb-section-title" style="color:#00E676;">⚡ &nbsp; This Hour — Top 10 Most Active</span>
           <span class="lb-update-note">Updates every 60s</span>
         </div>
         <div id="hourlyLbLoading" class="blessing-loading"><div class="blessing-spinner"></div></div>
-        <div id="hourlyLbTable" style="display:none;background:var(--bg-card);border:1px solid rgba(255,180,0,0.2);border-radius:var(--radius-lg);overflow:hidden;">
+        <div id="hourlyLbTable" style="display:none;background:var(--bg-card);border:1px solid rgba(0,230,118,0.12);border-radius:var(--radius-lg);overflow:hidden;">
           <table class="lb-table">
             <thead>
               <tr>
@@ -206,8 +209,8 @@
       document.getElementById('hourlyPanel').style.display   = isHourly ? 'block' : 'none';
       document.getElementById('tabAllTime').style.background = isHourly ? 'transparent' : 'rgba(0,230,118,0.08)';
       document.getElementById('tabAllTime').style.color      = isHourly ? 'var(--text-muted)' : 'var(--gold-primary)';
-      document.getElementById('tabHourly').style.background  = isHourly ? 'rgba(255,184,0,0.08)' : 'transparent';
-      document.getElementById('tabHourly').style.color       = isHourly ? '#FFB800' : 'var(--text-muted)';
+      document.getElementById('tabHourly').style.background  = isHourly ? 'rgba(0,230,118,0.05)' : 'transparent';
+      document.getElementById('tabHourly').style.color       = isHourly ? '#00E676' : 'var(--text-muted)';
     }
 
     /* ─── Hourly countdown ─── */
@@ -254,10 +257,10 @@
           tbody.innerHTML = entries.map((e, i) => {
             const isMe = connectedWallet && e.wallet === connectedWallet;
             const prize = i < 3 ? `<span style="color:#4CAF50;font-weight:700;">${r[i] || '—'}</span>` : '—';
-            return `<tr class="lb-row${isMe ? ' is-me' : ''}" style="${i < 3 ? 'border-left:2px solid #FFB80044;' : ''}">
+            return `<tr class="lb-row${isMe ? ' is-me' : ''}" style="${i < 3 ? 'border-left:2px solid #00E67644;' : ''}">
               <td><span style="font-size:${i<3?'20px':'14px'}">${medals[i] || i+1}</span></td>
-              <td><span class="lb-wallet${isMe?' is-me':''}" style="${isMe?'color:#FFB800;':''}">${e.walletShort}</span>${isMe?'<span class="lb-wallet-tag">YOU</span>':''}</td>
-              <td style="text-align:right;"><span style="font-family:var(--font-heading);font-size:13px;font-weight:700;color:#FFB800;">${e.activityScore} pts</span></td>
+              <td><span class="lb-wallet${isMe?' is-me':''}" style="${isMe?'color:#00E676;':''}">${e.walletShort}</span>${isMe?'<span class="lb-wallet-tag">YOU</span>':''}</td>
+              <td style="text-align:right;"><span style="font-family:var(--font-heading);font-size:13px;font-weight:700;color:#00E676;">${e.activityScore} pts</span></td>
               <td style="text-align:right;">${prize}</td>
             </tr>`;
           }).join('');
@@ -271,7 +274,7 @@
             lastGrid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:24px;font-family:var(--font-heading);font-size:12px;color:var(--text-dim);">First hourly reward coming soon after launch!</div>`;
           } else {
             lastGrid.innerHTML = winners.map((w, i) => `
-              <div style="background:var(--bg-card);border:1px solid rgba(255,180,0,0.2);border-radius:var(--radius-lg);padding:20px;text-align:center;">
+              <div style="background:var(--bg-card);border:1px solid rgba(0,230,118,0.12);border-radius:var(--radius-lg);padding:20px;text-align:center;">
                 <div style="font-size:32px;margin-bottom:8px;">${w.medal}</div>
                 <div style="font-family:'Courier New',monospace;font-size:11px;color:var(--text-secondary);margin-bottom:6px;">${w.walletShort}</div>
                 <div style="font-family:var(--font-heading);font-size:16px;font-weight:700;color:#4CAF50;">${r[i] || '—'}</div>

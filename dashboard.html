@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
+    <meta name="description" content="Your $PADRE Blessing Score. Connect wallet, earn points for holding and community activity, claim rewards.">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Blessing Score Dashboard — $PADRE Father of Trenches</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -35,9 +36,11 @@
       </div>
       <button class="mobile-menu-toggle" id="menuToggle"><span></span><span></span><span></span></button>
       <nav class="main-nav" id="mainNav">
+        
         <ul class="nav-list">
           <li><a href="about.html" class="nav-link">About The Father</a></li>
           <li><a href="plan-to-ape.html" class="nav-link">Plan to Ape</a></li>
+          <li><a href="livestream.html" class="nav-link">Father's Livestream</a></li>
           <li><a href="sermons.html" class="nav-link">The Sermons</a></li>
           <li><a href="scripture.html" class="nav-link">Holy Scripture</a></li>
           <li><a href="roadmap.html" class="nav-link">Roadmap</a></li>
@@ -213,34 +216,34 @@
       <div>
 
         <!-- ⚡ HOURLY RACE WIDGET -->
-        <div class="detail-panel" id="hourlyPanel" style="border-color:rgba(255,180,0,0.25);background:linear-gradient(135deg,var(--bg-card),#141414);">
-          <div class="panel-header" style="background:rgba(255,180,0,0.06);border-bottom-color:rgba(255,180,0,0.2);">
-            <span class="panel-title" style="color:#FFB800;">⚡ &nbsp; Hourly Blessing Race</span>
-            <span id="hourlyLiveDot" style="width:7px;height:7px;background:#FFB800;border-radius:50%;display:inline-block;box-shadow:0 0 8px #FFB800;animation:livePulse 1.5s ease-in-out infinite;"></span>
+        <div class="detail-panel" id="hourlyPanel" style="border-color:rgba(0,230,118,0.15);background:linear-gradient(135deg,var(--bg-card),#141414);">
+          <div class="panel-header" style="background:rgba(255,180,0,0.06);border-bottom-color:rgba(0,230,118,0.12);">
+            <span class="panel-title" style="color:#00E676;">⚡ &nbsp; Hourly Blessing Race</span>
+            <span id="hourlyLiveDot" style="width:7px;height:7px;background:#00E676;border-radius:50%;display:inline-block;box-shadow:0 0 8px #00E676;animation:livePulse 1.5s ease-in-out infinite;"></span>
           </div>
           <div class="panel-body">
 
             <!-- Countdown -->
             <div style="text-align:center;padding:16px 0 20px;border-bottom:1px solid var(--bg-border);margin-bottom:20px;">
-              <div style="font-family:var(--font-heading);font-size:9px;letter-spacing:.2em;text-transform:uppercase;color:rgba(255,184,0,0.6);margin-bottom:8px;">Next Reward In</div>
-              <div id="hourlyCountdown" style="font-family:var(--font-display);font-size:38px;font-weight:900;color:#FFB800;text-shadow:0 0 20px rgba(255,184,0,0.5);letter-spacing:.05em;line-height:1;">00:00:00</div>
+              <div style="font-family:var(--font-heading);font-size:9px;letter-spacing:.2em;text-transform:uppercase;color:rgba(0,230,118,0.5);margin-bottom:8px;">Next Reward In</div>
+              <div id="hourlyCountdown" style="font-family:var(--font-display);font-size:38px;font-weight:900;color:#00E676;text-shadow:0 0 20px rgba(0,230,118,0.4);letter-spacing:.05em;line-height:1;">00:00:00</div>
               <div style="margin-top:12px;height:4px;background:rgba(255,255,255,0.05);border-radius:2px;overflow:hidden;">
-                <div id="hourlyProgressBar" style="height:100%;background:linear-gradient(to right,#00962E,#FFB800);border-radius:2px;transition:width 1s linear;width:0%;"></div>
+                <div id="hourlyProgressBar" style="height:100%;background:linear-gradient(to right,#00962E,#00E676);border-radius:2px;transition:width 1s linear;width:0%;"></div>
               </div>
-              <div id="hourlyRewards" style="font-family:var(--font-heading);font-size:10px;letter-spacing:.1em;color:rgba(255,184,0,0.5);margin-top:8px;">🥇 0.05 SOL &nbsp;·&nbsp; 🥈 0.03 SOL &nbsp;·&nbsp; 🥉 0.02 SOL</div>
+              <div id="hourlyRewards" style="font-family:var(--font-heading);font-size:10px;letter-spacing:.1em;color:rgba(0,230,118,0.4);margin-top:8px;">🥇 0.05 SOL &nbsp;·&nbsp; 🥈 0.03 SOL &nbsp;·&nbsp; 🥉 0.02 SOL</div>
             </div>
 
             <!-- This hour's top 3 -->
             <div style="margin-bottom:20px;">
-              <div style="font-family:var(--font-heading);font-size:9px;letter-spacing:.2em;text-transform:uppercase;color:rgba(255,184,0,0.5);margin-bottom:12px;">⚡ This Hour's Top 3</div>
+              <div style="font-family:var(--font-heading);font-size:9px;letter-spacing:.2em;text-transform:uppercase;color:rgba(0,230,118,0.4);margin-bottom:12px;">⚡ This Hour's Top 3</div>
               <div id="hourlyTop3">
                 <div style="font-family:var(--font-heading);font-size:11px;color:var(--text-dim);letter-spacing:.1em;text-align:center;padding:12px;">Loading…</div>
               </div>
             </div>
 
             <!-- Last hour winner -->
-            <div style="background:rgba(255,184,0,0.04);border:1px solid rgba(255,184,0,0.15);border-radius:var(--radius);padding:14px;">
-              <div style="font-family:var(--font-heading);font-size:9px;letter-spacing:.2em;text-transform:uppercase;color:rgba(255,184,0,0.5);margin-bottom:10px;">🏆 Last Hour's Winners</div>
+            <div style="background:rgba(0,230,118,0.03);border:1px solid rgba(0,230,118,0.1);border-radius:var(--radius);padding:14px;">
+              <div style="font-family:var(--font-heading);font-size:9px;letter-spacing:.2em;text-transform:uppercase;color:rgba(0,230,118,0.4);margin-bottom:10px;">🏆 Last Hour's Winners</div>
               <div id="lastHourWinners">
                 <div style="font-family:var(--font-heading);font-size:11px;color:var(--text-dim);letter-spacing:.1em;">Loading…</div>
               </div>
@@ -248,9 +251,9 @@
 
             <!-- My rank this hour -->
             <div style="margin-top:16px;padding-top:16px;border-top:1px solid var(--bg-border);">
-              <div style="font-family:var(--font-heading);font-size:9px;letter-spacing:.2em;text-transform:uppercase;color:rgba(255,184,0,0.5);margin-bottom:8px;">Your Position This Hour</div>
-              <div id="myHourlyRank" style="font-family:var(--font-heading);font-size:13px;font-weight:700;color:#FFB800;">Not ranked yet — post in the community!</div>
-              <a href="confessional.html" style="display:inline-block;margin-top:10px;font-family:var(--font-heading);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:#FFB800;border:1px solid rgba(255,184,0,0.3);border-radius:2px;padding:6px 14px;text-decoration:none;transition:all .2s;">Post Now → +25 pts ⚡</a>
+              <div style="font-family:var(--font-heading);font-size:9px;letter-spacing:.2em;text-transform:uppercase;color:rgba(0,230,118,0.4);margin-bottom:8px;">Your Position This Hour</div>
+              <div id="myHourlyRank" style="font-family:var(--font-heading);font-size:13px;font-weight:700;color:#00E676;">Not ranked yet — post in the community!</div>
+              <a href="confessional.html" style="display:inline-block;margin-top:10px;font-family:var(--font-heading);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:#00E676;border:1px solid rgba(255,184,0,0.3);border-radius:2px;padding:6px 14px;text-decoration:none;transition:all .2s;">Post Now → +25 pts ⚡</a>
             </div>
           </div>
         </div>
