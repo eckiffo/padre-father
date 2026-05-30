@@ -1,4 +1,4 @@
-/* ═══════════════════════════════════════════════════════════════
+﻿/* ═══════════════════════════════════════════════════════════════
    $PADRE — Blessing Score & Rewards System
    Shared styles: dashboard, leaderboard, rewards
    ═══════════════════════════════════════════════════════════════ */
@@ -16,7 +16,7 @@
   content: '✝';
   position: absolute;
   font-size: 480px;
-  color: rgba(201,168,76,0.025);
+  color: rgba(0,230,118,0.025);
   top: 50%; left: 50%;
   transform: translate(-50%, -50%);
   pointer-events: none;
@@ -70,7 +70,7 @@
 .btn-wallet:hover {
   border-color: var(--gold-dark);
   color: var(--gold-primary);
-  background: rgba(201,168,76,0.07);
+  background: rgba(0,230,118,0.06);
   transform: translateY(-2px);
 }
 .btn-wallet-icon { font-size: 18px; }
@@ -165,7 +165,7 @@
   font-weight: 900;
   color: var(--gold-primary);
   line-height: 1;
-  text-shadow: 0 0 30px rgba(201,168,76,0.4);
+  text-shadow: 0 0 30px rgba(0,230,118,0.3);
   margin-bottom: 6px;
   transition: all 0.5s ease;
 }
@@ -275,7 +275,7 @@
   transition: width 1s ease;
 }
 .breakdown-fill.hold    { background: var(--gold-primary); }
-.breakdown-fill.social  { background: #44DD88; }
+.breakdown-fill.social  { background: #39FF14; }
 .breakdown-fill.referral{ background: #AB72F7; }
 .breakdown-pts {
   font-family: var(--font-heading);
@@ -418,7 +418,7 @@
   content: '';
   position: absolute;
   inset: 0;
-  background: radial-gradient(ellipse at 50% 0%, rgba(201,168,76,0.06) 0%, transparent 60%);
+  background: radial-gradient(ellipse at 50% 0%, rgba(0,230,118,0.06) 0%, transparent 60%);
   pointer-events: none;
 }
 .claim-box-amount {
@@ -426,7 +426,7 @@
   font-size: 36px;
   font-weight: 900;
   color: var(--gold-primary);
-  text-shadow: 0 0 20px rgba(201,168,76,0.4);
+  text-shadow: 0 0 20px rgba(0,230,118,0.3);
   margin-bottom: 4px;
 }
 .claim-box-label {
@@ -462,13 +462,13 @@
   padding: 20px;
 }
 .share-badge-card {
-  background: linear-gradient(135deg, #0A0A0A, #161408);
+  background: linear-gradient(135deg, #080808, #161408);
   border: 2px solid var(--rank-color, var(--gold-dark));
   border-radius: var(--radius);
   padding: 20px;
   text-align: center;
   margin-bottom: 14px;
-  box-shadow: 0 0 20px rgba(201,168,76,0.1), inset 0 0 30px rgba(0,0,0,0.5);
+  box-shadow: 0 0 20px rgba(0,230,118,0.08), inset 0 0 30px rgba(0,0,0,0.5);
   position: relative;
   overflow: hidden;
 }
@@ -558,10 +558,10 @@
   border-bottom: 1px solid var(--bg-border);
   transition: background 0.2s;
 }
-.lb-row:hover { background: rgba(201,168,76,0.03); }
+.lb-row:hover { background: rgba(0,230,118,0.03); }
 .lb-row.is-saint  { background: rgba(255,255,255,0.02); border-left: 2px solid #FFFFFF44; }
 .lb-row.is-cardinal { border-left: 2px solid rgba(200,0,0,0.4); }
-.lb-row.is-me     { background: rgba(201,168,76,0.05); border-left: 2px solid var(--gold-dark); }
+.lb-row.is-me     { background: rgba(0,230,118,0.05); border-left: 2px solid var(--gold-dark); }
 
 .lb-table td {
   padding: 12px 14px;
@@ -589,7 +589,7 @@
 .lb-wallet-tag {
   font-family: var(--font-heading);
   font-size: 8px;
-  background: rgba(201,168,76,0.1);
+  background: rgba(0,230,118,0.08);
   border: 1px solid var(--gold-deep);
   color: var(--gold-primary);
   padding: 2px 6px;
@@ -620,9 +620,9 @@
   white-space: nowrap;
 }
 .tier-sinner      { color: #666; border-color: #333; }
-.tier-believer    { color: #8B6914; border-color: #5C4405; }
+.tier-believer    { color: #00962E; border-color: #00581A; }
 .tier-congregation{ color: var(--gold-primary); border-color: var(--gold-dark); }
-.tier-disciple    { color: #FFD700; border-color: #C9A84C; }
+.tier-disciple    { color: #39FF14; border-color: #00E676; }
 .tier-cardinal    { color: #FF4444; border-color: #CC0000; background: rgba(200,0,0,0.06); }
 .tier-saint       { color: #FFFFFF; border-color: rgba(255,255,255,0.4); background: rgba(255,255,255,0.04); text-shadow: 0 0 8px rgba(255,255,255,0.5); }
 

@@ -1,4 +1,4 @@
-/* ═══════════════════════════════════════════════════════════════
+﻿/* ═══════════════════════════════════════════════════════════════
    $PADRE — Live Candle Roadmap Widget
    Transparent OBS overlay · 320 × 420 px browser source
    ═══════════════════════════════════════════════════════════════ */
@@ -16,9 +16,9 @@
   --glow-strong:   rgba(120,120,120,0.4);
   --wax-color:     #D4C4A0;
   --wax-shadow:    #9A8C6C;
-  --label-color:   rgba(201,168,76,0.6);
-  --progress-fill: #C9A84C;
-  --stage-accent:  #C9A84C;
+  --label-color:   rgba(0,230,118,0.5);
+  --progress-fill: #00E676;
+  --stage-accent:  #00E676;
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -36,12 +36,12 @@ html, body {
   width: 320px;
   padding: 16px 20px 14px;
   background: rgba(0, 0, 0, 0.78);
-  border: 1px solid rgba(201, 168, 76, 0.3);
+  border: 1px solid rgba(0, 230, 118, 0.3);
   border-radius: 6px;
   backdrop-filter: blur(8px);
   box-shadow:
     0 4px 30px rgba(0,0,0,0.8),
-    inset 0 0 0 1px rgba(201,168,76,0.05);
+    inset 0 0 0 1px rgba(0,230,118,0.05);
   position: relative;
   overflow: hidden;
   transition: border-color 0.8s ease;
@@ -63,7 +63,7 @@ html, body {
   font-weight: 700;
   letter-spacing: 0.25em;
   text-transform: uppercase;
-  color: rgba(201,168,76,0.45);
+  color: rgba(0,230,118,0.45);
   text-align: center;
   margin-bottom: 10px;
 }
@@ -289,7 +289,7 @@ html, body {
 .candle-base {
   width: var(--base-w, 52px);
   height: 6px;
-  background: linear-gradient(to bottom, var(--stage-accent), rgba(201,168,76,0.4));
+  background: linear-gradient(to bottom, var(--stage-accent), rgba(0,230,118,0.3));
   border-radius: 1px;
   opacity: 0.6;
   transition: all 0.8s ease;
@@ -340,11 +340,11 @@ html, body {
   font-weight: 700;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: rgba(201,168,76,0.55);
+  color: rgba(0,230,118,0.55);
   margin-bottom: 5px;
 }
 
-.progress-arrow { color: rgba(201,168,76,0.3); font-size: 10px; }
+.progress-arrow { color: rgba(0,230,118,0.22); font-size: 10px; }
 
 .progress-track {
   height: 5px;
@@ -375,7 +375,7 @@ html, body {
 
 .progress-threshold {
   font-size: 8.5px;
-  color: rgba(201,168,76,0.35);
+  color: rgba(0,230,118,0.3);
   text-align: right;
   letter-spacing: 0.1em;
   margin-top: 4px;
@@ -387,7 +387,7 @@ html, body {
   align-items: center;
   justify-content: space-between;
   background: rgba(255,255,255,0.03);
-  border: 1px solid rgba(201,168,76,0.1);
+  border: 1px solid rgba(0,230,118,0.08);
   border-radius: 4px;
   padding: 8px 12px;
 }
@@ -408,12 +408,12 @@ html, body {
   font-size: 8px;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: rgba(201,168,76,0.35);
+  color: rgba(0,230,118,0.3);
   margin-top: 2px;
 }
 
 .stat-divider {
-  color: rgba(201,168,76,0.2);
+  color: rgba(0,230,118,0.15);
   font-size: 8px;
   flex-shrink: 0;
 }
@@ -425,7 +425,7 @@ html, body {
   font-size: 7px;
   font-weight: 700;
   letter-spacing: 0.2em;
-  color: rgba(201,168,76,0.5);
+  color: rgba(0,230,118,0.4);
   text-transform: uppercase;
 }
 
@@ -443,8 +443,8 @@ html, body {
   --glow-strong:       rgba(200,120,40,0.25);
   --wax-color:         #C8B89A;
   --wax-shadow:        #8A7A60;
-  --stage-accent:      #C9A84C;
-  --progress-fill:     #C9A84C;
+  --stage-accent:      #00E676;
+  --progress-fill:     #00E676;
   --flame-w:           14px;
   --flame-h:           20px;
   --candle-w:          36px;
@@ -486,8 +486,8 @@ html, body {
   --glow-strong:       rgba(60,220,100,0.5);
   --wax-color:         #88CC98;
   --wax-shadow:        #446650;
-  --stage-accent:      #44DD88;
-  --progress-fill:     #33CC77;
+  --stage-accent:      #39FF14;
+  --progress-fill:     #00C853;
   --flame-w:           24px;
   --flame-h:           42px;
   --candle-w:          40px;
@@ -508,8 +508,8 @@ html, body {
   --glow-strong:       rgba(255,200,40,0.65);
   --wax-color:         #E8D890;
   --wax-shadow:        #A89840;
-  --stage-accent:      #FFD700;
-  --progress-fill:     #FFD700;
+  --stage-accent:      #39FF14;
+  --progress-fill:     #39FF14;
   --flame-w:           30px;
   --flame-h:           54px;
   --candle-w:          42px;

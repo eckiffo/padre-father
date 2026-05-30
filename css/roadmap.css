@@ -1,4 +1,4 @@
-/* ═══════════════════════════════════════════════════════════════
+﻿/* ═══════════════════════════════════════════════════════════════
    $PADRE — Live Roadmap Section
    Six growing candles · current stage highlighted live
    ═══════════════════════════════════════════════════════════════ */
@@ -17,7 +17,7 @@
   position: absolute;
   inset: 0;
   background:
-    radial-gradient(ellipse 80% 60% at 50% 100%, rgba(201,168,76,0.04) 0%, transparent 70%);
+    radial-gradient(ellipse 80% 60% at 50% 100%, rgba(0,230,118,0.04) 0%, transparent 70%);
   pointer-events: none;
 }
 
@@ -37,9 +37,9 @@
   font-weight: 700;
   letter-spacing: 0.2em;
   text-transform: uppercase;
-  color: rgba(201,168,76,0.7);
-  background: rgba(201,168,76,0.07);
-  border: 1px solid rgba(201,168,76,0.2);
+  color: rgba(0,230,118,0.7);
+  background: rgba(0,230,118,0.06);
+  border: 1px solid rgba(0,230,118,0.15);
   border-radius: 2px;
   padding: 5px 14px;
   margin-bottom: 20px;
@@ -75,7 +75,7 @@
   font-size: 15px;
   font-weight: 700;
   color: var(--gold-primary);
-  text-shadow: 0 0 12px rgba(201,168,76,0.3);
+  text-shadow: 0 0 12px rgba(0,230,118,0.22);
 }
 .roadmap-mc-divider { color: var(--gold-deep); font-size: 10px; }
 
@@ -112,7 +112,7 @@
   z-index: 1;
   width: 0%;
   transition: width 1.8s cubic-bezier(0.25, 1, 0.5, 1);
-  box-shadow: 0 0 8px rgba(201,168,76,0.4);
+  box-shadow: 0 0 8px rgba(0,230,118,0.3);
 }
 
 /* ─── INDIVIDUAL STAGE ─── */
@@ -294,12 +294,12 @@
 .rm-stage.is-active .rm-node {
   background: var(--gold-primary);
   border-color: var(--gold-bright);
-  box-shadow: 0 0 0 4px rgba(201,168,76,0.2), 0 0 12px rgba(201,168,76,0.5);
+  box-shadow: 0 0 0 4px rgba(0,230,118,0.15), 0 0 12px rgba(0,230,118,0.4);
   animation: nodeRing 1.8s ease-in-out infinite;
 }
 @keyframes nodeRing {
-  0%,100% { box-shadow: 0 0 0 3px rgba(201,168,76,0.15), 0 0 10px rgba(201,168,76,0.4); }
-  50%     { box-shadow: 0 0 0 7px rgba(201,168,76,0.05), 0 0 20px rgba(201,168,76,0.6); }
+  0%,100% { box-shadow: 0 0 0 3px rgba(0,230,118,0.1), 0 0 10px rgba(0,230,118,0.3); }
+  50%     { box-shadow: 0 0 0 7px rgba(0,230,118,0.05), 0 0 20px rgba(0,230,118,0.5); }
 }
 
 /* ─── STAGE INFO BELOW CANDLE ─── */
@@ -366,21 +366,21 @@
 .rm-stage.is-done .rm-badge {
   color: var(--gold-dark);
   border-color: var(--gold-deep);
-  background: rgba(201,168,76,0.06);
+  background: rgba(0,230,118,0.06);
   opacity: 1;
 }
 .rm-stage.is-done .rm-badge::before { content: '✓ '; }
 .rm-stage.is-active .rm-badge {
   color: var(--gold-primary);
   border-color: var(--gold-dark);
-  background: rgba(201,168,76,0.1);
+  background: rgba(0,230,118,0.08);
   opacity: 1;
   animation: badgePulse 2s ease-in-out infinite;
 }
 .rm-stage.is-active .rm-badge::before { content: '● '; }
 @keyframes badgePulse {
   0%,100% { box-shadow: none; }
-  50%     { box-shadow: 0 0 8px rgba(201,168,76,0.3); }
+  50%     { box-shadow: 0 0 8px rgba(0,230,118,0.22); }
 }
 
 /* ─── ACTIVE STAGE EXTRA GLOW on card ─── */
@@ -388,7 +388,7 @@
   content: '';
   position: absolute;
   inset: -20px;
-  background: radial-gradient(ellipse at 50% 70%, rgba(201,168,76,0.06) 0%, transparent 70%);
+  background: radial-gradient(ellipse at 50% 70%, rgba(0,230,118,0.06) 0%, transparent 70%);
   pointer-events: none;
   border-radius: 50%;
 }

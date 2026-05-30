@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -77,7 +77,7 @@
     <!-- TAB SWITCHER -->
     <div style="display:flex;gap:0;margin-bottom:32px;background:var(--bg-card);border:1px solid var(--bg-border);border-radius:var(--radius-lg);overflow:hidden;">
       <button class="lb-tab active" id="tabAllTime" onclick="switchTab('alltime')"
-        style="flex:1;padding:14px;font-family:var(--font-heading);font-size:11px;font-weight:700;letter-spacing:.15em;text-transform:uppercase;border:none;cursor:pointer;transition:all .2s;background:rgba(201,168,76,0.1);color:var(--gold-primary);border-right:1px solid var(--bg-border);">
+        style="flex:1;padding:14px;font-family:var(--font-heading);font-size:11px;font-weight:700;letter-spacing:.15em;text-transform:uppercase;border:none;cursor:pointer;transition:all .2s;background:rgba(0,230,118,0.08);color:var(--gold-primary);border-right:1px solid var(--bg-border);">
         ✝ All-Time Rankings
       </button>
       <button class="lb-tab" id="tabHourly" onclick="switchTab('hourly')"
@@ -89,11 +89,11 @@
     <!-- HOURLY RACE PANEL -->
     <div id="hourlyPanel" style="display:none;">
       <!-- Countdown -->
-      <div style="text-align:center;padding:28px;background:linear-gradient(135deg,var(--bg-card),#1A1400);border:1px solid rgba(255,180,0,0.2);border-radius:var(--radius-lg);margin-bottom:24px;">
+      <div style="text-align:center;padding:28px;background:linear-gradient(135deg,var(--bg-card),#141414);border:1px solid rgba(255,180,0,0.2);border-radius:var(--radius-lg);margin-bottom:24px;">
         <div style="font-family:var(--font-heading);font-size:9px;letter-spacing:.2em;text-transform:uppercase;color:rgba(255,184,0,0.5);margin-bottom:8px;">Next Reward In</div>
         <div id="lbCountdown" style="font-family:var(--font-display);font-size:52px;font-weight:900;color:#FFB800;text-shadow:0 0 30px rgba(255,184,0,0.5);line-height:1;">00:00:00</div>
         <div style="margin:14px auto 0;max-width:300px;height:5px;background:rgba(255,255,255,0.05);border-radius:3px;overflow:hidden;">
-          <div id="lbHourlyBar" style="height:100%;background:linear-gradient(to right,#8B6914,#FFB800);border-radius:3px;transition:width 1s linear;width:0%;"></div>
+          <div id="lbHourlyBar" style="height:100%;background:linear-gradient(to right,#00962E,#FFB800);border-radius:3px;transition:width 1s linear;width:0%;"></div>
         </div>
         <div id="lbHourlyRewards" style="font-family:var(--font-heading);font-size:11px;letter-spacing:.1em;color:rgba(255,184,0,0.5);margin-top:10px;">🥇 0.05 SOL &nbsp;·&nbsp; 🥈 0.03 SOL &nbsp;·&nbsp; 🥉 0.02 SOL</div>
       </div>
@@ -204,7 +204,7 @@
       document.getElementById('alltimePanel').style.display  = isHourly ? 'none' : 'block';
       document.getElementById('eliteSection').style.display  = isHourly ? 'none' : '';
       document.getElementById('hourlyPanel').style.display   = isHourly ? 'block' : 'none';
-      document.getElementById('tabAllTime').style.background = isHourly ? 'transparent' : 'rgba(201,168,76,0.1)';
+      document.getElementById('tabAllTime').style.background = isHourly ? 'transparent' : 'rgba(0,230,118,0.08)';
       document.getElementById('tabAllTime').style.color      = isHourly ? 'var(--text-muted)' : 'var(--gold-primary)';
       document.getElementById('tabHourly').style.background  = isHourly ? 'rgba(255,184,0,0.08)' : 'transparent';
       document.getElementById('tabHourly').style.color       = isHourly ? '#FFB800' : 'var(--text-muted)';

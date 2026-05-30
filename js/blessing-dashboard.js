@@ -1,4 +1,4 @@
-/* ═══════════════════════════════════════════════════════════════
+﻿/* ═══════════════════════════════════════════════════════════════
    $PADRE — Blessing Score Dashboard
    Vanilla JS · Detects Phantom / Solflare · Calls /api/blessing/*
    ═══════════════════════════════════════════════════════════════ */
@@ -9,9 +9,9 @@
   /* ─── RANK CONFIG (mirrors server) ─── */
   const RANKS = [
     { name: 'Sinner',       min: 0,     max: 99,       icon: '😈', color: '#555555' },
-    { name: 'Believer',     min: 100,   max: 499,      icon: '🙏', color: '#8B6914' },
-    { name: 'Congregation', min: 500,   max: 1999,     icon: '⛪', color: '#C9A84C' },
-    { name: 'Disciple',     min: 2000,  max: 4999,     icon: '📿', color: '#FFD700' },
+    { name: 'Believer',     min: 100,   max: 499,      icon: '🙏', color: '#00962E' },
+    { name: 'Congregation', min: 500,   max: 1999,     icon: '⛪', color: '#00E676' },
+    { name: 'Disciple',     min: 2000,  max: 4999,     icon: '📿', color: '#39FF14' },
     { name: 'Cardinal',     min: 5000,  max: 14999,    icon: '🔴', color: '#FF4444' },
     { name: 'Saint',        min: 15000, max: Infinity, icon: '✝',  color: '#FFFFFF' },
   ];
