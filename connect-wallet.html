@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Connect Wallet — $PADRE</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700;900&family=Cinzel:wght@400;600;700;900&family=IM+Fell+English:ital@0;1&family=UnifrakturMaguntia&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/main.css">
+  <style>
+    .wallet-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;max-width:700px;margin:0 auto 40px;}
+    .wallet-card{background:var(--bg-card);border:1px solid var(--bg-border);border-radius:var(--radius-lg);padding:28px 20px;text-align:center;cursor:pointer;transition:all .25s;}
+    .wallet-card:hover{border-color:var(--gold-dark);transform:translateY(-3px);box-shadow:0 0 20px var(--gold-glow-sm);}
+    .wallet-icon{font-size:40px;margin-bottom:12px;}
+    .wallet-name{font-family:var(--font-heading);font-size:14px;font-weight:700;color:var(--text-white);}
+    .wallet-desc{font-size:12px;color:var(--text-muted);margin-top:6px;}
+    #walletStatus{text-align:center;padding:20px;font-family:var(--font-heading);font-size:13px;color:var(--text-secondary);display:none;}
+  </style>
+</head>
+<body>
+  <div class="top-bar"><div class="top-bar-inner"><span class="top-bar-item">fatherofpump.fun</span><span class="top-bar-divider">✦</span><a href="index.html" class="top-bar-item top-bar-link">← Back to The Church</a></div></div>
+  <header class="site-header"><div class="header-inner">
+    <div class="header-logo"><a href="index.html" class="logo-link"><div class="logo-cross">✝</div><div class="logo-text"><span class="logo-ticker">$PADRE</span><span class="logo-tagline">Father of Pump.fun</span></div></a></div>
+    <button class="mobile-menu-toggle" id="menuToggle"><span></span><span></span><span></span></button>
+    <nav class="main-nav" id="mainNav"><ul class="nav-list">
+      <li><a href="about.html" class="nav-link">About The Father</a></li>
+      <li><a href="plan-to-ape.html" class="nav-link">Plan to Ape</a></li>
+      <li><a href="livestream.html" class="nav-link">Father's Livestream</a></li>
+      <li><a href="sermons.html" class="nav-link">The Sermons</a></li>
+      <li><a href="scripture.html" class="nav-link">Holy Scripture</a></li>
+      <li><a href="confessional.html" class="nav-link">Confessional</a></li>
+      <li><a href="offerings.html" class="nav-link nav-highlight">Offerings</a></li>
+      <li><a href="request-blessing.html" class="nav-link">Request Blessing</a></li>
+      <li><a href="connect-wallet.html" class="nav-link nav-wallet" style="background:var(--gold-bright);">Connected</a></li>
+    </ul></nav>
+  </div></header>
+
+  <section style="background:var(--bg-deep);text-align:center;padding:80px 24px 60px;border-bottom:1px solid var(--bg-border);">
+    <div class="section-cross">🔗</div>
+    <h1 class="section-title">Connect Your Wallet</h1>
+    <p class="section-subtitle">Join the congregation — verify your $PADRE holdings</p>
+    <div class="title-ornament">◆────────────────────────◆</div>
+  </section>
+
+  <div class="section-inner" style="text-align:center;">
+    <p style="font-size:15px;color:var(--text-secondary);max-width:500px;margin:0 auto 40px;line-height:1.8;">Connect your Solana wallet to verify your $PADRE holdings, display your congregation rank, and access member-only features.</p>
+    <div class="wallet-grid">
+      <div class="wallet-card" id="connectPhantom">
+        <div class="wallet-icon">👻</div>
+        <div class="wallet-name">Phantom</div>
+        <div class="wallet-desc">Recommended</div>
+      </div>
+      <div class="wallet-card" id="connectSolflare">
+        <div class="wallet-icon">🔆</div>
+        <div class="wallet-name">Solflare</div>
+        <div class="wallet-desc">Solana native</div>
+      </div>
+      <div class="wallet-card" id="connectBackpack">
+        <div class="wallet-icon">🎒</div>
+        <div class="wallet-name">Backpack</div>
+        <div class="wallet-desc">xNFT wallet</div>
+      </div>
+    </div>
+    <div id="walletStatus"></div>
+    <p style="font-size:11px;color:var(--text-dim);max-width:400px;margin:0 auto;font-family:var(--font-heading);letter-spacing:.05em;">We never request transactions or ask for your seed phrase. Read-only balance check only.</p>
+  </div>
+
+  <footer class="site-footer"><div class="footer-top-ornament"><span class="ornament-line-wide"></span><span class="ornament-cross-lg">✝</span><span class="ornament-line-wide"></span></div><div class="footer-bottom"><p>© 2025 $PADRE — Father of Pump.fun</p></div></footer>
+  <script src="js/main.js"></script>
+  <script>
+    async function connectWallet(type) {
+      const status = document.getElementById('walletStatus');
+      status.style.display = 'block';
+      status.textContent = 'Connecting…';
+      try {
+        let provider;
+        if (type === 'phantom' && window.solana?.isPhantom) provider = window.solana;
+        else if (type === 'solflare' && window.solflare) provider = window.solflare;
+        else { status.textContent = `${type} wallet not detected. Please install it first.`; return; }
+        const resp = await provider.connect({ onlyIfTrusted: false });
+        const addr = resp.publicKey.toString();
+        const short = addr.slice(0,4)+'…'+addr.slice(-4);
+        status.innerHTML = `✝ Wallet connected: <strong style="color:var(--gold-primary)">${short}</strong><br>Welcome to the congregation.`;
+      } catch(e) {
+        status.textContent = 'Connection declined or wallet locked.';
+      }
+    }
+    document.getElementById('connectPhantom').addEventListener('click', () => connectWallet('phantom'));
+    document.getElementById('connectSolflare').addEventListener('click', () => connectWallet('solflare'));
+    document.getElementById('connectBackpack').addEventListener('click', () => connectWallet('backpack'));
+  </script>
+</body>
+</html>

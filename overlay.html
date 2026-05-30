@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>$PADRE OBS Overlay</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700;900&family=Cinzel:wght@600;700&family=UnifrakturMaguntia&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/overlay.css">
+</head>
+<body>
+
+  <!-- Toast container — bottom-left for OBS -->
+  <div class="overlay-root" id="overlayRoot">
+
+    <!-- Persistent ticker at bottom -->
+    <div class="overlay-ticker" id="overlayTicker">
+      <span class="ot-cross">✝</span>
+      <span class="ot-label">$PADRE</span>
+      <span class="ot-divider">◆</span>
+      <span class="ot-price" id="otPrice">Loading…</span>
+      <span class="ot-divider">◆</span>
+      <span class="ot-holders" id="otHolders">— Souls Saved</span>
+      <span class="ot-cross">✝</span>
+    </div>
+
+    <!-- Toast stack -->
+    <div class="toast-stack" id="toastStack"></div>
+
+  </div>
+
+  <script src="js/overlay.js"></script>
+</body>
+</html>

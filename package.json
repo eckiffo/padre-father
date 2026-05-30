@@ -1,0 +1,20 @@
+{
+  "name": "padre-father",
+  "version": "1.0.0",
+  "description": "$PADRE — Father of Pump.fun church website and OBS overlay",
+  "private": true,
+  "scripts": {
+    "dev": "vercel dev",
+    "build": "echo 'Static site — no build step required'",
+    "deploy": "vercel --prod"
+  },
+  "dependencies": {
+    "@coin-communities/sdk": "latest"
+  },
+  "devDependencies": {
+    "vercel": "latest"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

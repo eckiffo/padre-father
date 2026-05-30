@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Father's Livestream — $PADRE</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700;900&family=Cinzel:wght@400;600;700;900&family=IM+Fell+English:ital@0;1&family=UnifrakturMaguntia&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/main.css">
+  <style>
+    .stream-full { background:#000; aspect-ratio:16/9; max-width:1200px; margin:0 auto 32px; display:block; width:100%; border:1px solid var(--bg-border); }
+    .stream-full iframe { width:100%; height:100%; border:none; display:block; }
+    .stream-offline-full { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:16px; height:400px; }
+  </style>
+</head>
+<body>
+  <div class="top-bar"><div class="top-bar-inner"><span class="top-bar-item">fatherofpump.fun</span><span class="top-bar-divider">✦</span><a href="index.html" class="top-bar-item top-bar-link">← Back to The Church</a></div></div>
+  <header class="site-header"><div class="header-inner">
+    <div class="header-logo"><a href="index.html" class="logo-link"><div class="logo-cross">✝</div><div class="logo-text"><span class="logo-ticker">$PADRE</span><span class="logo-tagline">Father of Pump.fun</span></div></a></div>
+    <button class="mobile-menu-toggle" id="menuToggle"><span></span><span></span><span></span></button>
+    <nav class="main-nav" id="mainNav"><ul class="nav-list">
+      <li><a href="about.html" class="nav-link">About The Father</a></li>
+      <li><a href="plan-to-ape.html" class="nav-link">Plan to Ape</a></li>
+      <li><a href="livestream.html" class="nav-link" style="color:var(--gold-primary)">Father's Livestream</a></li>
+      <li><a href="sermons.html" class="nav-link">The Sermons</a></li>
+      <li><a href="scripture.html" class="nav-link">Holy Scripture</a></li>
+      <li><a href="confessional.html" class="nav-link">Confessional</a></li>
+      <li><a href="offerings.html" class="nav-link nav-highlight">Offerings</a></li>
+      <li><a href="request-blessing.html" class="nav-link">Request Blessing</a></li>
+      <li><a href="connect-wallet.html" class="nav-link nav-wallet">Connect Wallet</a></li>
+    </ul></nav>
+  </div></header>
+
+  <section style="background:var(--bg-deep);text-align:center;padding:60px 24px 40px;border-bottom:1px solid var(--bg-border);">
+    <div class="section-cross">🔴</div>
+    <h1 class="section-title">Father's Livestream</h1>
+    <p class="section-subtitle">The sermon is live — join the congregation</p>
+    <div class="title-ornament">◆────────────────────────◆</div>
+  </section>
+
+  <div class="section-inner" style="padding-top:40px;">
+    <div class="stream-full" id="streamFull">
+      <!-- Replace TWITCH_CHANNEL_NAME with actual Twitch channel -->
+      <div class="stream-offline-full">
+        <div style="font-size:64px;color:var(--gold-deep);animation:crossPulse 3s ease-in-out infinite;">✝</div>
+        <p style="font-family:var(--font-heading);font-size:13px;letter-spacing:.1em;color:var(--text-muted);text-align:center;">The Father is not yet live<br>Check the Stream Schedule for upcoming sermons</p>
+        <a href="#schedule" class="btn btn-outline" style="margin-top:12px;">View Schedule</a>
+      </div>
+    </div>
+    <p style="text-align:center;font-size:12px;color:var(--text-dim);font-family:var(--font-heading);letter-spacing:.08em;margin-bottom:40px;">Live Mon–Fri 9PM EST · Sat 8PM EST · Sun 7PM EST</p>
+
+    <div id="schedule" class="section-header"><div class="section-cross">📅</div><h2 class="section-title">Stream Schedule</h2><div class="title-ornament">◆────────────────◆</div></div>
+    <div class="schedule-grid">
+      <div class="schedule-card"><div class="schedule-day">Mon — Fri</div><div class="schedule-time">9:00 PM EST</div><div class="schedule-name">Evening Mass</div><div class="schedule-desc">Daily market sermon & chart reading</div></div>
+      <div class="schedule-card schedule-card--live"><div class="schedule-badge">MAIN EVENT</div><div class="schedule-day">Saturday</div><div class="schedule-time">8:00 PM EST</div><div class="schedule-name">Grand Sunday Service</div><div class="schedule-desc">High Mass — full congregation, special guests</div></div>
+      <div class="schedule-card"><div class="schedule-day">Sunday</div><div class="schedule-time">7:00 PM EST</div><div class="schedule-name">The Weekly Gospel</div><div class="schedule-desc">Weekly recap and prayers for the fallen</div></div>
+    </div>
+  </div>
+
+  <footer class="site-footer"><div class="footer-top-ornament"><span class="ornament-line-wide"></span><span class="ornament-cross-lg">✝</span><span class="ornament-line-wide"></span></div><div class="footer-bottom"><p>© 2025 $PADRE — Father of Pump.fun</p></div></footer>
+  <script src="js/main.js"></script>
+  <script>
+    // Set your Twitch channel here or inject via server
+    const TWITCH_CHANNEL = ''; // e.g. 'fatherofpump'
+    if (TWITCH_CHANNEL) {
+      document.getElementById('streamFull').innerHTML =
+        `<iframe src="https://player.twitch.tv/?channel=${TWITCH_CHANNEL}&parent=${location.hostname}&muted=true" allowfullscreen></iframe>`;
+    }
+  </script>
+</body>
+</html>

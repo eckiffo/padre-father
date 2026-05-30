@@ -1,0 +1,241 @@
+/* ═══════════════════════════════════════════════════════════════
+   $PADRE — OBS Overlay
+   Transparent background · Gold & White gothic · Fade animations
+   ═══════════════════════════════════════════════════════════════ */
+
+:root {
+  --gold:       #C9A84C;
+  --gold-bright:#FFD700;
+  --white:      #F5EDD0;
+  --white-dim:  rgba(245, 237, 208, 0.85);
+  --shadow:     0 2px 20px rgba(0,0,0,0.9), 0 0 40px rgba(0,0,0,0.7);
+  --gold-glow:  0 0 12px rgba(201,168,76,0.6);
+  --font-d:     'Cinzel Decorative', serif;
+  --font-h:     'Cinzel', serif;
+  --font-f:     'UnifrakturMaguntia', cursive;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+/* Transparent body for OBS */
+html, body {
+  background: transparent !important;
+  overflow: hidden;
+  width: 1920px;
+  height: 1080px;
+  position: relative;
+}
+
+/* ─── ROOT ─── */
+.overlay-root {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  padding: 24px 32px;
+  gap: 12px;
+}
+
+/* ─── BOTTOM TICKER ─── */
+.overlay-ticker {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  background: rgba(0,0,0,0.72);
+  border: 1px solid rgba(201,168,76,0.4);
+  border-radius: 3px;
+  padding: 10px 20px;
+  backdrop-filter: blur(6px);
+  box-shadow: var(--shadow), inset 0 0 0 1px rgba(201,168,76,0.05);
+  align-self: flex-start;
+  min-width: 420px;
+}
+
+.ot-cross {
+  color: var(--gold);
+  font-size: 16px;
+  text-shadow: var(--gold-glow);
+  animation: crossPulse 3s ease-in-out infinite;
+}
+
+@keyframes crossPulse {
+  0%,100% { opacity: 0.8; text-shadow: 0 0 10px rgba(201,168,76,0.5); }
+  50%      { opacity: 1;   text-shadow: 0 0 20px rgba(201,168,76,0.9); }
+}
+
+.ot-label {
+  font-family: var(--font-d);
+  font-size: 18px;
+  font-weight: 900;
+  color: var(--gold);
+  text-shadow: var(--gold-glow);
+  letter-spacing: 0.05em;
+}
+
+.ot-divider {
+  color: rgba(201,168,76,0.4);
+  font-size: 10px;
+}
+
+.ot-price {
+  font-family: var(--font-h);
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--white);
+  letter-spacing: 0.08em;
+}
+
+.ot-holders {
+  font-family: var(--font-h);
+  font-size: 13px;
+  color: rgba(245,237,208,0.6);
+  letter-spacing: 0.06em;
+}
+
+/* ─── TOAST STACK ─── */
+.toast-stack {
+  display: flex;
+  flex-direction: column-reverse;
+  gap: 10px;
+  align-items: flex-start;
+  margin-bottom: 8px;
+}
+
+/* ─── INDIVIDUAL TOAST ─── */
+.toast {
+  background: rgba(0, 0, 0, 0.80);
+  border: 1px solid rgba(201,168,76,0.5);
+  border-left: 3px solid var(--gold);
+  border-radius: 3px;
+  padding: 14px 20px;
+  max-width: 480px;
+  min-width: 300px;
+  box-shadow: var(--shadow), 0 0 20px rgba(201,168,76,0.1);
+  backdrop-filter: blur(8px);
+  animation: toastIn 0.4s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  position: relative;
+  overflow: hidden;
+}
+
+.toast::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 1px;
+  background: linear-gradient(to right, transparent, rgba(201,168,76,0.6), transparent);
+}
+
+.toast.toast-exit {
+  animation: toastOut 0.5s ease-in forwards;
+}
+
+@keyframes toastIn {
+  from {
+    opacity: 0;
+    transform: translateX(-20px) scale(0.96);
+    filter: blur(2px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+    filter: blur(0);
+  }
+}
+
+@keyframes toastOut {
+  from {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+    filter: blur(0);
+    max-height: 200px;
+  }
+  to {
+    opacity: 0;
+    transform: translateX(-16px) scale(0.95);
+    filter: blur(2px);
+    max-height: 0;
+    padding: 0 20px;
+    margin: 0;
+  }
+}
+
+/* ─── TOAST TYPES ─── */
+.toast-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.toast-icon {
+  font-size: 18px;
+  flex-shrink: 0;
+}
+
+.toast-type {
+  font-family: var(--font-h);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--gold);
+  text-shadow: var(--gold-glow);
+}
+
+.toast-time {
+  font-family: var(--font-h);
+  font-size: 9px;
+  color: rgba(201,168,76,0.4);
+  margin-left: auto;
+  letter-spacing: 0.1em;
+}
+
+.toast-body {
+  font-family: var(--font-h);
+  font-size: 14px;
+  color: var(--white-dim);
+  line-height: 1.5;
+  letter-spacing: 0.03em;
+}
+
+.toast-author {
+  font-weight: 700;
+  color: var(--gold);
+}
+
+/* ─── SOUL SAVED TOAST (special) ─── */
+.toast--soul {
+  border-left-color: var(--gold-bright);
+  background: rgba(10, 8, 0, 0.85);
+}
+
+.toast--soul .toast-type {
+  color: var(--gold-bright);
+  text-shadow: 0 0 15px rgba(255,215,0,0.7);
+}
+
+.toast--soul .toast-icon {
+  animation: divineShine 0.6s ease-out;
+}
+
+@keyframes divineShine {
+  0%   { transform: scale(0.5) rotate(-20deg); filter: brightness(3); }
+  60%  { transform: scale(1.2) rotate(5deg); filter: brightness(1.5); }
+  100% { transform: scale(1) rotate(0deg); filter: brightness(1); }
+}
+
+/* ─── GLOW PULSE on new soul ─── */
+.toast--soul::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at 0% 50%, rgba(255,215,0,0.08) 0%, transparent 60%);
+  animation: soulGlow 2s ease-out forwards;
+}
+
+@keyframes soulGlow {
+  0%   { opacity: 1; }
+  100% { opacity: 0; }
+}

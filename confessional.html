@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>The Confessional — $PADRE Father of Pump.fun</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700;900&family=Cinzel:wght@400;600;700;900&family=IM+Fell+English:ital@0;1&family=UnifrakturMaguntia&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/main.css">
+  <style>
+    .confess-hero {
+      background: var(--bg-deep);
+      text-align: center;
+      padding: 80px 24px 60px;
+      border-bottom: 1px solid var(--bg-border);
+      position: relative;
+      overflow: hidden;
+    }
+    .confess-layout {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 60px 24px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 60px;
+      align-items: start;
+    }
+    @media (max-width: 900px) { .confess-layout { grid-template-columns: 1fr; } }
+
+    /* Stream embed */
+    .stream-box {
+      background: var(--bg-card);
+      border: 1px solid var(--bg-border);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+    }
+    .stream-header {
+      background: var(--bg-dark);
+      border-bottom: 1px solid var(--bg-border);
+      padding: 14px 20px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .live-dot {
+      width: 8px; height: 8px;
+      background: #ff4444;
+      border-radius: 50%;
+      animation: liveBlink 1.5s ease-in-out infinite;
+    }
+    @keyframes liveBlink { 0%,100%{opacity:1;} 50%{opacity:0.3;} }
+    .stream-label {
+      font-family: var(--font-heading);
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--text-secondary);
+    }
+    .stream-embed {
+      aspect-ratio: 16/9;
+      background: #000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .stream-embed iframe { width: 100%; height: 100%; border: none; }
+    .stream-offline {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      height: 200px;
+      color: var(--text-muted);
+    }
+    .stream-offline-cross {
+      font-size: 48px;
+      color: var(--gold-deep);
+      animation: crossPulse 3s ease-in-out infinite;
+    }
+    .stream-offline p {
+      font-family: var(--font-heading);
+      font-size: 12px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      text-align: center;
+    }
+
+    /* Confession form */
+    .confess-form-wrap {
+      background: var(--bg-card);
+      border: 1px solid var(--bg-border);
+      border-radius: var(--radius-lg);
+      padding: 32px 28px;
+    }
+    .confess-form-title {
+      font-family: var(--font-display);
+      font-size: 20px;
+      color: var(--gold-primary);
+      margin-bottom: 6px;
+    }
+    .confess-form-subtitle {
+      font-size: 14px;
+      color: var(--text-secondary);
+      margin-bottom: 28px;
+      font-style: italic;
+    }
+    .form-group { margin-bottom: 20px; }
+    .form-label {
+      display: block;
+      font-family: var(--font-heading);
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: 8px;
+    }
+    .form-input, .form-textarea, .form-select {
+      width: 100%;
+      background: var(--bg-dark);
+      border: 1px solid var(--bg-border);
+      border-radius: var(--radius);
+      padding: 12px 16px;
+      color: var(--text-white);
+      font-family: var(--font-body);
+      font-size: 14px;
+      transition: border-color 0.25s;
+      outline: none;
+      appearance: none;
+    }
+    .form-input:focus, .form-textarea:focus, .form-select:focus {
+      border-color: var(--gold-dark);
+    }
+    .form-textarea {
+      resize: vertical;
+      min-height: 120px;
+      line-height: 1.7;
+    }
+    .form-select option { background: var(--bg-dark); }
+    .form-submit {
+      width: 100%;
+      padding: 14px;
+      text-align: center;
+    }
+    .form-note {
+      font-family: var(--font-heading);
+      font-size: 10px;
+      color: var(--text-dim);
+      text-align: center;
+      margin-top: 12px;
+      letter-spacing: 0.08em;
+    }
+
+    /* Posts feed */
+    .community-feed {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 24px 80px;
+    }
+    .feed-header {
+      text-align: center;
+      margin-bottom: 40px;
+    }
+  </style>
+</head>
+<body>
+  <div class="top-bar">
+    <div class="top-bar-inner">
+      <span class="top-bar-item">fatherofpump.fun</span>
+      <span class="top-bar-divider">✦</span>
+      <a href="index.html" class="top-bar-item top-bar-link">← Back to The Church</a>
+    </div>
+  </div>
+
+  <header class="site-header">
+    <div class="header-inner">
+      <div class="header-logo">
+        <a href="index.html" class="logo-link">
+          <div class="logo-cross">✝</div>
+          <div class="logo-text">
+            <span class="logo-ticker">$PADRE</span>
+            <span class="logo-tagline">Father of Pump.fun</span>
+          </div>
+        </a>
+      </div>
+      <button class="mobile-menu-toggle" id="menuToggle"><span></span><span></span><span></span></button>
+      <nav class="main-nav" id="mainNav">
+        <ul class="nav-list">
+          <li><a href="about.html" class="nav-link">About The Father</a></li>
+          <li><a href="plan-to-ape.html" class="nav-link">Plan to Ape</a></li>
+          <li><a href="livestream.html" class="nav-link">Father's Livestream</a></li>
+          <li><a href="sermons.html" class="nav-link">The Sermons</a></li>
+          <li><a href="scripture.html" class="nav-link">Holy Scripture</a></li>
+          <li><a href="confessional.html" class="nav-link" style="color:var(--gold-primary)">Confessional</a></li>
+          <li><a href="offerings.html" class="nav-link nav-highlight">Offerings</a></li>
+          <li><a href="request-blessing.html" class="nav-link">Request Blessing</a></li>
+          <li><a href="connect-wallet.html" class="nav-link nav-wallet">Connect Wallet</a></li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+
+  <!-- HERO -->
+  <section class="confess-hero">
+    <div class="section-cross">🕯️</div>
+    <h1 class="section-title">The Confessional</h1>
+    <p class="section-subtitle">Speak thy truth to The Father · Watch the stream · Join the congregation's voice</p>
+    <div class="title-ornament">◆────────────────────────◆</div>
+  </section>
+
+  <!-- MAIN LAYOUT: stream + form -->
+  <div class="confess-layout">
+
+    <!-- Stream -->
+    <div>
+      <div class="stream-box">
+        <div class="stream-header">
+          <div class="live-dot"></div>
+          <span class="stream-label">Father's Livestream</span>
+        </div>
+        <div class="stream-embed" id="streamEmbed">
+          <!-- Replace TWITCH_CHANNEL with actual channel name -->
+          <div class="stream-offline">
+            <div class="stream-offline-cross">✝</div>
+            <p>The Father is preparing His sermon<br>Check back during stream hours</p>
+            <a href="stream-schedule.html" class="btn btn-outline" style="font-size:11px; padding:8px 20px; margin-top:8px;">View Schedule</a>
+          </div>
+        </div>
+      </div>
+      <p style="font-size:12px; color:var(--text-dim); text-align:center; margin-top:12px; font-family:var(--font-heading); letter-spacing:0.08em;">
+        Live at 9PM EST Mon–Fri · 8PM EST Sat · 7PM EST Sun
+      </p>
+    </div>
+
+    <!-- Confession form -->
+    <div class="confess-form-wrap">
+      <div class="confess-form-title">✝ Make Your Confession</div>
+      <p class="confess-form-subtitle">Speak your truth to the congregation. The Father hears all.</p>
+
+      <form id="confessionForm">
+        <div class="form-group">
+          <label class="form-label" for="confessName">Your Name / Wallet (Optional)</label>
+          <input class="form-input" type="text" id="confessName" name="name"
+            placeholder="Anonymous Aper, 0x1234…, etc." autocomplete="off">
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="confessType">Confession Type</label>
+          <select class="form-select" id="confessType" name="type">
+            <option value="sin">I have sinned (paper handed)</option>
+            <option value="faith">Declaration of faith</option>
+            <option value="testimonial">Gainful testimonial</option>
+            <option value="prayer">Prayer request</option>
+            <option value="question">Question for The Father</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="confessText">Your Confession</label>
+          <textarea class="form-textarea" id="confessText" name="confession"
+            placeholder="Speak freely, child. The Father is listening…" required></textarea>
+        </div>
+        <button type="submit" class="btn btn-primary form-submit">
+          <span class="btn-cross">✝</span>
+          Submit to The Father
+          <span class="btn-cross">✝</span>
+        </button>
+        <p class="form-note">Your confession will be visible to the congregation below.</p>
+      </form>
+      <div id="confessSuccess" style="display:none; text-align:center; padding:20px; color:var(--gold-primary); font-family:var(--font-heading); font-size:13px; letter-spacing:0.1em;">
+        ✝ Your confession has been received. The Father is pleased. ✝
+      </div>
+    </div>
+  </div>
+
+  <!-- Community posts feed -->
+  <div class="community-feed">
+    <div class="feed-header">
+      <div class="section-cross">✦</div>
+      <h2 class="section-title">The Congregation Confesses</h2>
+      <div class="title-ornament">◆────────────────◆</div>
+    </div>
+    <div class="posts-grid" id="postsGrid">
+      <div class="post-card post-placeholder">
+        <div class="post-header">
+          <span class="post-avatar">✝</span>
+          <span class="post-author">Awaiting Congregation…</span>
+          <span class="post-time">—</span>
+        </div>
+        <p class="post-body">Be the first to confess. The Father's confessional is open.</p>
+      </div>
+    </div>
+  </div>
+
+  <footer class="site-footer">
+    <div class="footer-top-ornament">
+      <span class="ornament-line-wide"></span>
+      <span class="ornament-cross-lg">✝</span>
+      <span class="ornament-line-wide"></span>
+    </div>
+    <div class="footer-bottom">
+      <p>© 2025 $PADRE — Father of Pump.fun · fatherofpump.fun</p>
+      <p class="footer-disclaimer">$PADRE is a meme coin with no intrinsic value. Not financial advice. DYOR.</p>
+    </div>
+  </footer>
+
+  <script src="js/main.js"></script>
+  <script>
+    // Confession form
+    const form = document.getElementById('confessionForm');
+    const success = document.getElementById('confessSuccess');
+    form && form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const fd = new FormData(form);
+      try {
+        await fetch('/api/confess', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name: fd.get('name') || 'Anonymous',
+            type: fd.get('type'),
+            confession: fd.get('confession'),
+          }),
+        });
+      } catch (_) {}
+      form.style.display = 'none';
+      success.style.display = 'block';
+      setTimeout(() => { form.style.display = 'block'; success.style.display = 'none'; form.reset(); }, 4000);
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Holy Scripture — $PADRE Father of Pump.fun</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700;900&family=Cinzel:wght@400;600;700;900&family=IM+Fell+English:ital@0;1&family=UnifrakturMaguntia&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/main.css">
+  <style>
+    .scripture-hero {
+      background: var(--bg-deep);
+      text-align: center;
+      padding: 80px 24px 60px;
+      border-bottom: 1px solid var(--bg-border);
+      position: relative;
+      overflow: hidden;
+    }
+    .scripture-hero::before {
+      content: '✝';
+      position: absolute;
+      font-size: 500px;
+      color: rgba(201,168,76,0.02);
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      font-family: serif;
+      pointer-events: none;
+    }
+    .scripture-hero .section-cross { font-size: 48px; margin-bottom: 20px; }
+    .scripture-tabs {
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+      padding: 32px 24px 0;
+      border-bottom: 1px solid var(--bg-border);
+      max-width: 900px;
+      margin: 0 auto;
+    }
+    .stab {
+      font-family: var(--font-heading);
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      padding: 12px 24px;
+      border: 1px solid var(--bg-border);
+      border-bottom: none;
+      color: var(--text-secondary);
+      cursor: pointer;
+      background: var(--bg-card);
+      border-radius: var(--radius) var(--radius) 0 0;
+      transition: all 0.25s;
+    }
+    .stab.active, .stab:hover {
+      color: var(--gold-primary);
+      border-color: var(--gold-dark);
+      background: var(--bg-card-hover);
+    }
+    .stab.active {
+      background: var(--bg-deep);
+      border-bottom: 1px solid var(--bg-deep);
+      margin-bottom: -1px;
+    }
+    .scripture-panel { display: none; }
+    .scripture-panel.active { display: block; }
+    .tokenomics-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 20px;
+      margin-bottom: 40px;
+    }
+    .tkncard {
+      background: var(--bg-card);
+      border: 1px solid var(--bg-border);
+      border-radius: var(--radius-lg);
+      padding: 28px 24px;
+      text-align: center;
+    }
+    .tkncard-value {
+      font-family: var(--font-display);
+      font-size: 36px;
+      color: var(--gold-primary);
+      font-weight: 900;
+      text-shadow: 0 0 20px rgba(201,168,76,0.4);
+      margin-bottom: 8px;
+    }
+    .tkncard-label {
+      font-family: var(--font-heading);
+      font-size: 11px;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+    }
+    .commandments-list {
+      max-width: 760px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      margin-bottom: 48px;
+    }
+    .cmd-item {
+      background: var(--bg-card);
+      border: 1px solid var(--bg-border);
+      border-left: 3px solid var(--gold-dark);
+      padding: 20px 24px;
+      display: flex;
+      gap: 20px;
+      align-items: flex-start;
+      border-radius: 0 var(--radius) var(--radius) 0;
+    }
+    .cmd-item:hover { border-left-color: var(--gold-primary); }
+    .cmd-num {
+      font-family: var(--font-fraktur);
+      font-size: 36px;
+      color: var(--gold-dark);
+      line-height: 1;
+      flex-shrink: 0;
+      min-width: 40px;
+    }
+    .cmd-text { font-size: 16px; color: var(--text-white); line-height: 1.7; }
+    .cmd-text em { color: var(--text-secondary); font-style: italic; font-size: 14px; display: block; margin-top: 6px; }
+    .prophecy-timeline {
+      position: relative;
+      max-width: 700px;
+      margin: 0 auto 48px;
+    }
+    .prophecy-timeline::before {
+      content: '';
+      position: absolute;
+      left: 20px;
+      top: 0; bottom: 0;
+      width: 1px;
+      background: linear-gradient(to bottom, transparent, var(--gold-dark), transparent);
+    }
+    .prophecy {
+      background: var(--bg-card);
+      border: 1px solid var(--bg-border);
+      border-radius: var(--radius-lg);
+      padding: 24px 24px 24px 60px;
+      position: relative;
+      margin-bottom: 20px;
+      transition: border-color 0.25s;
+    }
+    .prophecy:hover { border-color: var(--gold-dark); }
+    .prophecy::before {
+      content: '◆';
+      position: absolute;
+      left: 12px;
+      top: 26px;
+      color: var(--gold-primary);
+      font-size: 18px;
+      text-shadow: 0 0 10px rgba(201,168,76,0.5);
+    }
+    .prophecy-phase {
+      font-family: var(--font-heading);
+      font-size: 10px;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--gold-primary);
+      margin-bottom: 6px;
+    }
+    .prophecy-title {
+      font-family: var(--font-heading);
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--text-white);
+      margin-bottom: 8px;
+    }
+    .prophecy-desc { font-size: 14px; color: var(--text-secondary); line-height: 1.7; }
+    .prophecy.fulfilled { border-left: 3px solid rgba(100,200,100,0.4); }
+    .prophecy.fulfilled .prophecy-phase { color: rgba(100,200,100,0.7); }
+    .whitepaper-text {
+      max-width: 760px;
+      margin: 0 auto;
+      font-size: 16px;
+      color: var(--text-secondary);
+      line-height: 2;
+    }
+    .whitepaper-text h3 {
+      font-family: var(--font-heading);
+      font-size: 14px;
+      font-weight: 700;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--gold-primary);
+      margin: 32px 0 12px;
+    }
+    .whitepaper-text p { margin-bottom: 16px; }
+    .whitepaper-text strong { color: var(--text-white); }
+    .whitepaper-text em { color: var(--gold-primary); font-style: italic; }
+    .chapter-num {
+      font-family: var(--font-fraktur);
+      font-size: 48px;
+      color: var(--gold-deep);
+      display: block;
+      margin-bottom: 8px;
+    }
+  </style>
+</head>
+<body>
+  <div class="top-bar">
+    <div class="top-bar-inner">
+      <span class="top-bar-item">fatherofpump.fun</span>
+      <span class="top-bar-divider">✦</span>
+      <a href="index.html" class="top-bar-item top-bar-link">← Back to The Church</a>
+    </div>
+  </div>
+
+  <header class="site-header">
+    <div class="header-inner">
+      <div class="header-logo">
+        <a href="index.html" class="logo-link">
+          <div class="logo-cross">✝</div>
+          <div class="logo-text">
+            <span class="logo-ticker">$PADRE</span>
+            <span class="logo-tagline">Father of Pump.fun</span>
+          </div>
+        </a>
+      </div>
+      <button class="mobile-menu-toggle" id="menuToggle"><span></span><span></span><span></span></button>
+      <nav class="main-nav" id="mainNav">
+        <ul class="nav-list">
+          <li><a href="about.html" class="nav-link">About The Father</a></li>
+          <li><a href="plan-to-ape.html" class="nav-link">Plan to Ape</a></li>
+          <li><a href="livestream.html" class="nav-link">Father's Livestream</a></li>
+          <li><a href="sermons.html" class="nav-link">The Sermons</a></li>
+          <li><a href="scripture.html" class="nav-link" style="color:var(--gold-primary)">Holy Scripture</a></li>
+          <li><a href="confessional.html" class="nav-link">Confessional</a></li>
+          <li><a href="offerings.html" class="nav-link nav-highlight">Offerings</a></li>
+          <li><a href="request-blessing.html" class="nav-link">Request Blessing</a></li>
+          <li><a href="connect-wallet.html" class="nav-link nav-wallet">Connect Wallet</a></li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+
+  <section class="scripture-hero">
+    <div class="section-cross">📜</div>
+    <h1 class="section-title">The Holy Scripture</h1>
+    <p class="section-subtitle">Tokenomics · Roadmap · Whitepaper — Written in Gold on the Blockchain</p>
+    <div class="title-ornament">◆────────────────────────◆</div>
+  </section>
+
+  <div class="scripture-tabs">
+    <button class="stab active" data-panel="tokenomics">⚖ Commandments<br><small>(Tokenomics)</small></button>
+    <button class="stab" data-panel="prophecies">🌟 Prophecies<br><small>(Roadmap)</small></button>
+    <button class="stab" data-panel="whitepaper">📖 Holy Whitepaper<br><small>(The Scripture)</small></button>
+  </div>
+
+  <!-- ─── TOKENOMICS ─── -->
+  <div class="section-inner scripture-panel active" id="panel-tokenomics">
+    <div class="tokenomics-grid">
+      <div class="tkncard">
+        <div class="tkncard-value">1B</div>
+        <div class="tkncard-label">Total Supply<br>The Flock</div>
+      </div>
+      <div class="tkncard">
+        <div class="tkncard-value">0%</div>
+        <div class="tkncard-label">Buy / Sell Tax<br>The Father Asks Nothing</div>
+      </div>
+      <div class="tkncard">
+        <div class="tkncard-value">0%</div>
+        <div class="tkncard-label">Team Tokens<br>No Pre-Sale. No Insiders.</div>
+      </div>
+      <div class="tkncard">
+        <div class="tkncard-value">🔥</div>
+        <div class="tkncard-label">LP Burned<br>Liquidity is Eternal</div>
+      </div>
+    </div>
+
+    <div class="section-header">
+      <div class="section-cross">✝</div>
+      <h2 class="section-title">The Ten Commandments of $PADRE</h2>
+      <div class="title-ornament">◆────────────────◆</div>
+    </div>
+
+    <div class="commandments-list">
+      <div class="cmd-item">
+        <span class="cmd-num">I</span>
+        <div class="cmd-text">Thou shalt have no other coins before $PADRE.
+          <em>For in the kingdom of Pump.fun, there is but one true Father.</em>
+        </div>
+      </div>
+      <div class="cmd-item">
+        <span class="cmd-num">II</span>
+        <div class="cmd-text">Thou shalt not paper hand thy $PADRE.
+          <em>Diamond hands are the armor of the faithful. Sell in weakness and face the void.</em>
+        </div>
+      </div>
+      <div class="cmd-item">
+        <span class="cmd-num">III</span>
+        <div class="cmd-text">Thou shalt buy every dip with righteous conviction.
+          <em>Red candles are not punishment. They are opportunity dressed in crimson.</em>
+        </div>
+      </div>
+      <div class="cmd-item">
+        <span class="cmd-num">IV</span>
+        <div class="cmd-text">Remember the liquidity, to keep it holy.
+          <em>LP is burned and eternal. No rug shall come from The Father's hands.</em>
+        </div>
+      </div>
+      <div class="cmd-item">
+        <span class="cmd-num">V</span>
+        <div class="cmd-text">Honor thy community and thy congregation.
+          <em>The holders are the church. Their faith moves the market cap.</em>
+        </div>
+      </div>
+      <div class="cmd-item">
+        <span class="cmd-num">VI</span>
+        <div class="cmd-text">Thou shalt not spread FUD in the congregation.
+          <em>Fear, uncertainty, and doubt are the weapons of the ungodly. Cast them out.</em>
+        </div>
+      </div>
+      <div class="cmd-item">
+        <span class="cmd-num">VII</span>
+        <div class="cmd-text">Thou shalt spread The Father's gospel on all platforms.
+          <em>Twitter, Telegram, Discord — evangelize without ceasing.</em>
+        </div>
+      </div>
+      <div class="cmd-item">
+        <span class="cmd-num">VIII</span>
+        <div class="cmd-text">Thou shalt not covet thy neighbor's bag size.
+          <em>Stack at thine own pace. The Father welcomes all bag sizes to his congregation.</em>
+        </div>
+      </div>
+      <div class="cmd-item">
+        <span class="cmd-num">IX</span>
+        <div class="cmd-text">Thou shalt verify the contract address before aping.
+          <em>There are false prophets. Always use the official CA from fatherofpump.fun.</em>
+        </div>
+      </div>
+      <div class="cmd-item">
+        <span class="cmd-num">X</span>
+        <div class="cmd-text">Thou shalt take profits only after $PADRE reaches His destiny.
+          <em>The final destination is written in the prophecies. Hold until the promised land.</em>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─── PROPHECIES (ROADMAP) ─── -->
+  <div class="section-inner scripture-panel" id="panel-prophecies">
+    <div class="section-header">
+      <div class="section-cross">🌟</div>
+      <h2 class="section-title">The Prophecies</h2>
+      <p class="section-subtitle">The Roadmap, as revealed to The Father</p>
+      <div class="title-ornament">◆────────────────◆</div>
+    </div>
+    <div class="prophecy-timeline">
+      <div class="prophecy fulfilled">
+        <div class="prophecy-phase">✓ Phase I — Genesis</div>
+        <div class="prophecy-title">The Birth of The Father</div>
+        <div class="prophecy-desc">$PADRE is born on Pump.fun. The first congregation assembles. Zero taxes. Zero presale. Liquidity burned. The Father enters the world pure.</div>
+      </div>
+      <div class="prophecy">
+        <div class="prophecy-phase">Phase II — The Gathering</div>
+        <div class="prophecy-title">1,000 Souls</div>
+        <div class="prophecy-desc">The congregation grows to 1,000 holders. Community channels open. The first sermons are delivered. CoinGecko and CMC listings sought. The Father is listed among the prophets.</div>
+      </div>
+      <div class="prophecy">
+        <div class="prophecy-phase">Phase III — The Ministry</div>
+        <div class="prophecy-title">The Grand Church Opens</div>
+        <div class="prophecy-desc">fatherofpump.fun launches fully. Stream goes live. Sermons delivered nightly. Tier-1 CEX outreach begins. The congregation swells to 5,000 souls. Influencer partnerships and Twitter Spaces.</div>
+      </div>
+      <div class="prophecy">
+        <div class="prophecy-phase">Phase IV — The Crusade</div>
+        <div class="prophecy-title">10,000 Believers</div>
+        <div class="prophecy-desc">10,000 holders. Major exchange listings. Merchandise. The Father's face appears on billboards. The meme becomes the movement. $1M market cap becomes $10M. The prophecy fulfills.</div>
+      </div>
+      <div class="prophecy">
+        <div class="prophecy-phase">Phase V — The Promised Land</div>
+        <div class="prophecy-title">The Father Ascends</div>
+        <div class="prophecy-desc">$PADRE reaches his destiny. Top 100 Solana token. The faithful who held from the beginning receive their divine reward. The Last Coin You Will Ever Need proves itself. Amen.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─── WHITEPAPER ─── -->
+  <div class="section-inner scripture-panel" id="panel-whitepaper">
+    <div class="section-header">
+      <div class="section-cross">📖</div>
+      <h2 class="section-title">The Holy Whitepaper</h2>
+      <p class="section-subtitle">The Word of The Father — Written in the Book of $PADRE</p>
+      <div class="title-ornament">◆────────────────◆</div>
+    </div>
+    <div class="whitepaper-text">
+      <span class="chapter-num">I</span>
+      <h3>In the Beginning</h3>
+      <p>In the beginning there was Solana, and Solana was fast. And upon Solana, men built Pump.fun, and from Pump.fun came thousands of tokens, most of which perished in the void. But from this chaos, <strong>$PADRE</strong> emerged — not as another noise, but as <em>The Father</em>.</p>
+      <p>The Father did not come with promises of utility. He came with something greater: <strong>community, faith, and the unshakeable conviction of the congregation</strong>. For what is a coin without believers? Nothing. And what is a coin with an army of diamond-handed faithful? Everything.</p>
+
+      <span class="chapter-num">II</span>
+      <h3>The Nature of The Father</h3>
+      <p><strong>Total Supply:</strong> 1,000,000,000 $PADRE tokens exist in perpetuity. No more shall be minted. The supply is sacred and immutable, written into the blockchain as scripture is written in stone.</p>
+      <p><strong>Zero Tax:</strong> The Father imposes no burden on His congregation. Buy without penalty. Sell without tithe. Every transaction is clean and pure, as The Father intended.</p>
+      <p><strong>No Presale:</strong> There were no favored few. No venture capitalists received tokens before the congregation. The Father arrived on Pump.fun and His doors opened to all simultaneously. The playing field is holy and level.</p>
+      <p><strong>Burned Liquidity:</strong> The liquidity pool is burned. There is no rug to pull. The Father's covenant with His congregation is eternal and cannot be broken by mortal hands.</p>
+
+      <span class="chapter-num">III</span>
+      <h3>The Mission</h3>
+      <p>$PADRE exists to prove a singular thesis: <em>community is everything</em>. In a sea of forgotten launches, the tokens that survive are not those with the most sophisticated tokenomics or the most elaborate promises. They are the ones with the most <strong>faithful congregation</strong>.</p>
+      <p>The Father builds His church on Twitch, on Twitter, on Telegram — wherever the faithful gather. The stream is the sermon. The chat is the congregation. Every new holder is a soul saved.</p>
+
+      <span class="chapter-num">IV</span>
+      <h3>The Covenant</h3>
+      <p>The Father makes one promise to His congregation: <strong>transparency, consistency, and presence</strong>. The stream runs on schedule. The community is answered. The Father shows up — every day, every stream, every sermon.</p>
+      <p>In return, the congregation holds with faith, evangelizes with fervor, and welcomes new souls without judgment. Together, the church and The Father walk the path to the promised market cap.</p>
+
+      <span class="chapter-num">V</span>
+      <h3>The Disclaimer (of the Earthly Kind)</h3>
+      <p style="font-size:13px; color:var(--text-dim);">$PADRE is a meme coin created for entertainment and community purposes. It has no intrinsic financial value, no guaranteed return, and no promise of profit. Cryptocurrency investments carry significant risk including the potential loss of all invested funds. This whitepaper is a creative work inspired by the meme coin community. Nothing contained herein constitutes financial advice. Always conduct your own research (DYOR) and never invest more than you can afford to lose. By purchasing $PADRE, you acknowledge that you understand these risks and are participating in good faith as part of the community. Not financial advice. Not investment advice. Just vibes and faith. Amen.</p>
+    </div>
+  </div>
+
+  <footer class="site-footer">
+    <div class="footer-top-ornament">
+      <span class="ornament-line-wide"></span>
+      <span class="ornament-cross-lg">✝</span>
+      <span class="ornament-line-wide"></span>
+    </div>
+    <div class="footer-bottom">
+      <p>© 2025 $PADRE — Father of Pump.fun · fatherofpump.fun</p>
+      <p class="footer-disclaimer">$PADRE is a meme coin with no intrinsic value or financial promise. Not financial advice. Always DYOR.</p>
+    </div>
+  </footer>
+
+  <script src="js/main.js"></script>
+  <script>
+    // Tab switching
+    document.querySelectorAll('.stab').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.stab').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.scripture-panel').forEach(p => p.classList.remove('active'));
+        btn.classList.add('active');
+        document.getElementById('panel-' + btn.dataset.panel).classList.add('active');
+      });
+    });
+  </script>
+</body>
+</html>
