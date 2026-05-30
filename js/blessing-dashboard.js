@@ -276,13 +276,39 @@
   }
 
   /* ─── HOURLY RACE ─── */
-  let hourlyData = null;
+  let hourlyData     = null;
+  let currentPrize   = null;   // live prize estimate from Dexscreener
+
+  /* Fetch 24h volume from Dexscreener and compute prize = (vol/24) × 1% × 10% */
+  async function fetchPrizeEstimate() {
+    const ca = (typeof window.PADRE_TOKEN_ADDRESS !== 'undefined')
+      ? window.PADRE_TOKEN_ADDRESS : null;
+    if (!ca) return null;
+    try {
+      const res  = await fetch(`https://api.dexscreener.com/latest/dex/tokens/${ca}`);
+      const data = await res.json();
+      const pair = data?.pairs?.[0];
+      if (!pair?.volume?.h24) return null;
+      const hourlyVol  = pair.volume.h24 / 24;          // USD estimate for this hour
+      const prizeUSD   = hourlyVol * 0.01 * 0.10;       // 1% pump fee × 10% to winner
+      return prizeUSD >= 0.01
+        ? '~$' + prizeUSD.toFixed(2)
+        : '~$' + prizeUSD.toFixed(4);
+    } catch (_) { return null; }
+  }
 
   async function loadHourlyStats() {
     try {
-      const res  = await fetch('/api/blessing/hourly-stats');
+      const [res, prize] = await Promise.all([
+        fetch('/api/blessing/hourly-stats'),
+        fetchPrizeEstimate(),
+      ]);
       if (!res.ok) return;
-      hourlyData = await res.json();
+      hourlyData   = await res.json();
+      currentPrize = prize
+        || hourlyData.config?.prize
+        || hourlyData.config?.prizeEstimate
+        || '10% of this hour\'s fees';
       renderHourly();
     } catch (e) {
       console.warn('[hourly]', e);
@@ -292,59 +318,110 @@
   function renderHourly() {
     if (!hourlyData) return;
 
-    // Rewards line
-    const rewards = hourlyData.config?.rewards;
-    if (rewards && $('hourlyRewards')) {
-      $('hourlyRewards').textContent =
-        `🥇 ${rewards[0]}  ·  🥈 ${rewards[1]}  ·  🥉 ${rewards[2]}`;
+    const prize = currentPrize || '10% of this hour\'s fees';
+
+    /* ── Prize line ── */
+    const prizeEl = $('hourlyRewards');
+    if (prizeEl) {
+      prizeEl.innerHTML =
+        `🏆 &nbsp;Winner Prize: <strong style="color:#00E676;">${prize}</strong>`;
     }
 
-    // This hour top 3
-    const top3El = $('hourlyTop3');
-    if (top3El) {
-      const entries = (hourlyData.currentHour || []).slice(0, 3);
-      if (entries.length === 0) {
-        top3El.innerHTML = `<div style="font-family:var(--font-heading);font-size:11px;color:var(--text-dim);text-align:center;padding:8px;">No activity yet this hour — be first!</div>`;
+    /* ── Current hour LEADER (single winner) ── */
+    const leaderEl = $('hourlyTop3');
+    if (leaderEl) {
+      const entries = hourlyData.currentHour || [];
+      const leader  = entries[0];
+
+      if (!leader) {
+        leaderEl.innerHTML = `
+          <div style="font-family:var(--font-heading);font-size:11px;color:var(--text-dim);
+                      text-align:center;padding:16px;">
+            No activity yet this hour — post to take the lead!
+          </div>`;
       } else {
-        const medals = ['🥇','🥈','🥉'];
-        top3El.innerHTML = entries.map((e, i) => {
-          const isMe = connectedWallet && e.wallet === connectedWallet;
-          return `
-            <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--bg-border);">
-              <span style="font-size:18px;">${medals[i]}</span>
-              <span style="font-family:'Courier New',monospace;font-size:11px;color:${isMe ? '#FFB800' : 'var(--text-secondary)'};">
-                ${e.walletShort}${isMe ? ' <span style="color:#FFB800;font-family:var(--font-heading);font-size:9px;">(YOU)</span>' : ''}
-              </span>
-              <span style="margin-left:auto;font-family:var(--font-heading);font-size:11px;font-weight:700;color:#FFB800;">${e.activityScore} pts</span>
-            </div>`;
-        }).join('');
+        const isMe = connectedWallet && leader.wallet === connectedWallet;
+        leaderEl.innerHTML = `
+          <div style="display:flex;align-items:center;gap:12px;padding:14px;
+                      background:rgba(0,230,118,0.04);border:1px solid rgba(0,230,118,0.15);
+                      border-radius:var(--radius);">
+            <span style="font-size:28px;flex-shrink:0;">🥇</span>
+            <div style="flex:1;min-width:0;">
+              <div style="font-family:'Courier New',monospace;font-size:12px;
+                          color:${isMe ? '#00E676' : 'var(--text-secondary)'};
+                          overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
+                ${leader.walletShort}
+                ${isMe ? '<span style="font-family:var(--font-heading);font-size:9px;letter-spacing:.1em;color:#00E676;">&nbsp;(YOU)</span>' : ''}
+              </div>
+              <div style="font-family:var(--font-heading);font-size:10px;color:var(--text-muted);margin-top:3px;">
+                ${leader.activityScore} pts &nbsp;·&nbsp;
+                ${leader.posts||0} posts &nbsp;·&nbsp;
+                ${leader.replies||0} replies &nbsp;·&nbsp;
+                ${leader.likes||0} likes
+              </div>
+            </div>
+            <div style="text-align:right;flex-shrink:0;">
+              <div style="font-family:var(--font-heading);font-size:12px;font-weight:700;color:#00E676;">${prize}</div>
+              <div style="font-family:var(--font-heading);font-size:8px;letter-spacing:.1em;
+                          color:var(--text-dim);margin-top:2px;text-transform:uppercase;">if ends now</div>
+            </div>
+          </div>`;
       }
     }
 
-    // Last hour winners
+    /* ── Last hour WINNER (single) ── */
     const lastEl = $('lastHourWinners');
     if (lastEl) {
-      const winners = hourlyData.lastHour;
-      if (!winners || winners.length === 0) {
-        lastEl.innerHTML = `<div style="font-family:var(--font-heading);font-size:11px;color:var(--text-dim);">No winners yet — first hour coming up!</div>`;
+      const lastWinners = hourlyData.lastHour || [];
+      const winner      = lastWinners[0];
+      const lastPrize   = hourlyData.lastHourPrize
+        || hourlyData.config?.lastPrize
+        || '—';
+
+      if (!winner) {
+        lastEl.innerHTML = `
+          <div style="font-family:var(--font-heading);font-size:11px;color:var(--text-dim);">
+            No winner yet — first hour coming up!
+          </div>`;
       } else {
-        const rewards = hourlyData.config?.rewards || [];
-        lastEl.innerHTML = winners.map((w, i) => `
-          <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
-            <span style="font-size:16px;">${w.medal}</span>
-            <span style="font-family:'Courier New',monospace;font-size:11px;color:var(--text-secondary);">${w.walletShort}</span>
-            <span style="margin-left:auto;font-family:var(--font-heading);font-size:11px;font-weight:700;color:#4CAF50;">${rewards[i] || '—'}</span>
-          </div>`).join('');
+        lastEl.innerHTML = `
+          <div style="display:flex;align-items:center;gap:12px;">
+            <span style="font-size:26px;">🏆</span>
+            <div style="flex:1;">
+              <div style="font-family:'Courier New',monospace;font-size:12px;color:var(--text-secondary);">
+                ${winner.walletShort}
+              </div>
+              <div style="font-family:var(--font-heading);font-size:10px;color:var(--text-muted);margin-top:3px;">
+                ${winner.activityScore} pts &nbsp;·&nbsp;
+                ${winner.posts||0} posts · ${winner.replies||0} replies · ${winner.likes||0} likes
+              </div>
+            </div>
+            <div style="font-family:var(--font-heading);font-size:16px;font-weight:700;color:#00E676;">
+              ${lastPrize}
+            </div>
+          </div>`;
       }
     }
 
-    // My hourly rank
+    /* ── My position this hour ── */
     const myRankEl = $('myHourlyRank');
-    if (myRankEl && connectedWallet) {
-      const myEntry = (hourlyData.currentHour || []).find(e => e.wallet === connectedWallet);
+    if (myRankEl) {
+      const entries = hourlyData.currentHour || [];
+      const myEntry = connectedWallet
+        ? entries.find(e => e.wallet === connectedWallet)
+        : null;
+
       if (myEntry) {
-        myRankEl.textContent = `#${myEntry.position} this hour — ${myEntry.activityScore} activity pts`;
-        myRankEl.style.color = myEntry.position <= 3 ? '#FFB800' : 'var(--gold-primary)';
+        if (myEntry.position === 1) {
+          myRankEl.innerHTML = `🏆 You're leading this hour! &nbsp;${myEntry.activityScore} pts`;
+          myRankEl.style.color = '#00E676';
+        } else {
+          const leader = entries[0];
+          const gap    = leader ? leader.activityScore - myEntry.activityScore : 0;
+          myRankEl.textContent =
+            `#${myEntry.position} this hour — ${gap} pts behind the leader`;
+          myRankEl.style.color = 'var(--text-secondary)';
+        }
       } else {
         myRankEl.textContent = 'Not ranked yet — post in the community!';
         myRankEl.style.color = 'var(--text-muted)';

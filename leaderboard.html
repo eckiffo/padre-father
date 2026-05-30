@@ -93,20 +93,30 @@
     <div id="hourlyPanel" style="display:none;">
       <!-- Countdown -->
       <div style="text-align:center;padding:28px;background:linear-gradient(135deg,var(--bg-card),#141414);border:1px solid rgba(0,230,118,0.12);border-radius:var(--radius-lg);margin-bottom:24px;">
-        <div style="font-family:var(--font-heading);font-size:9px;letter-spacing:.2em;text-transform:uppercase;color:rgba(0,230,118,0.4);margin-bottom:8px;">Next Reward In</div>
+        <div style="font-family:var(--font-heading);font-size:9px;letter-spacing:.2em;text-transform:uppercase;color:rgba(0,230,118,0.4);margin-bottom:8px;">Next Winner Decided In</div>
         <div id="lbCountdown" style="font-family:var(--font-display);font-size:52px;font-weight:900;color:#00E676;text-shadow:0 0 30px rgba(0,230,118,0.4);line-height:1;">00:00:00</div>
         <div style="margin:14px auto 0;max-width:300px;height:5px;background:rgba(255,255,255,0.05);border-radius:3px;overflow:hidden;">
           <div id="lbHourlyBar" style="height:100%;background:linear-gradient(to right,#00962E,#00E676);border-radius:3px;transition:width 1s linear;width:0%;"></div>
         </div>
-        <div id="lbHourlyRewards" style="font-family:var(--font-heading);font-size:11px;letter-spacing:.1em;color:rgba(0,230,118,0.4);margin-top:10px;">🥇 0.05 SOL &nbsp;·&nbsp; 🥈 0.03 SOL &nbsp;·&nbsp; 🥉 0.02 SOL</div>
+        <div id="lbHourlyRewards" style="font-family:var(--font-heading);font-size:11px;letter-spacing:.1em;color:rgba(0,230,118,0.5);margin-top:12px;">
+          🏆 &nbsp;Single Winner Takes: <strong id="lbPrizeAmount" style="color:#00E676;">10% of this hour's fees</strong>
+        </div>
+        <div style="font-family:var(--font-heading);font-size:9px;letter-spacing:.1em;color:var(--text-dim);margin-top:6px;">
+          Posts ×25 &nbsp;·&nbsp; Replies ×10 &nbsp;·&nbsp; Likes ×5 &nbsp;·&nbsp; Most points wins
+        </div>
       </div>
 
-      <!-- This hour top 10 -->
+      <!-- Current hour LEADER + race standings -->
       <div class="lb-section">
         <div class="lb-section-header">
-          <span class="lb-section-title" style="color:#00E676;">⚡ &nbsp; This Hour — Top 10 Most Active</span>
+          <span class="lb-section-title" style="color:#00E676;">🥇 &nbsp; Current Hour Leader</span>
           <span class="lb-update-note">Updates every 60s</span>
         </div>
+
+        <!-- Leader spotlight -->
+        <div id="hourlyLeaderSpot" style="margin-bottom:16px;"></div>
+
+        <!-- Race standings table -->
         <div id="hourlyLbLoading" class="blessing-loading"><div class="blessing-spinner"></div></div>
         <div id="hourlyLbTable" style="display:none;background:var(--bg-card);border:1px solid rgba(0,230,118,0.12);border-radius:var(--radius-lg);overflow:hidden;">
           <table class="lb-table">
@@ -114,8 +124,8 @@
               <tr>
                 <th style="width:48px;">#</th>
                 <th>Wallet</th>
-                <th style="text-align:right;">Activity Score</th>
-                <th style="text-align:right;">Prize</th>
+                <th style="text-align:right;">Posts ×25 · Replies ×10 · Likes ×5</th>
+                <th style="text-align:right;">Pts This Hour</th>
               </tr>
             </thead>
             <tbody id="hourlyLbBody"></tbody>
@@ -126,12 +136,12 @@
         </div>
       </div>
 
-      <!-- Last hour winners -->
+      <!-- Last hour WINNER (single) -->
       <div class="lb-section">
         <div class="lb-section-header">
-          <span class="lb-section-title">🏆 &nbsp; Last Hour's Winners</span>
+          <span class="lb-section-title">🏆 &nbsp; Last Hour's Winner</span>
         </div>
-        <div id="lastHourGrid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;"></div>
+        <div id="lastHourGrid"></div>
       </div>
     </div>
 
@@ -228,58 +238,155 @@
     }
     setInterval(tickCountdown, 1000); tickCountdown();
 
+    /* ─── Fetch Dexscreener prize estimate ─── */
+    async function fetchLbPrize() {
+      const ca = (typeof window.PADRE_TOKEN_ADDRESS !== 'undefined')
+        ? window.PADRE_TOKEN_ADDRESS : null;
+      if (!ca) return null;
+      try {
+        const res  = await fetch(`https://api.dexscreener.com/latest/dex/tokens/${ca}`);
+        const data = await res.json();
+        const pair = data?.pairs?.[0];
+        if (!pair?.volume?.h24) return null;
+        const prize = (pair.volume.h24 / 24) * 0.01 * 0.10;
+        return prize >= 0.01 ? '~$' + prize.toFixed(2) : '~$' + prize.toFixed(4);
+      } catch (_) { return null; }
+    }
+
     /* ─── Load hourly data ─── */
     async function loadHourly() {
       try {
-        const res  = await fetch('/api/blessing/hourly-stats');
-        const data = await res.json();
+        const [res, prizeEst] = await Promise.all([
+          fetch('/api/blessing/hourly-stats'),
+          fetchLbPrize(),
+        ]);
+        const data          = await res.json();
         const connectedWallet = localStorage.getItem('padre_wallet');
 
-        // Rewards
-        const r = data.config?.rewards || [];
-        const rEl = document.getElementById('lbHourlyRewards');
-        if (rEl && r.length) rEl.textContent = `🥇 ${r[0]}  ·  🥈 ${r[1]}  ·  🥉 ${r[2]}`;
+        /* Prize display */
+        const prize = prizeEst
+          || data.config?.prize
+          || data.config?.prizeEstimate
+          || '10% of this hour\'s fees';
+        const prizeEl = document.getElementById('lbPrizeAmount');
+        if (prizeEl) prizeEl.textContent = prize;
 
-        // This hour table
+        /* Loading states */
         const loading = document.getElementById('hourlyLbLoading');
         const table   = document.getElementById('hourlyLbTable');
         const empty   = document.getElementById('hourlyLbEmpty');
         const tbody   = document.getElementById('hourlyLbBody');
-        const medals  = ['🥇','🥈','🥉'];
-
         loading.style.display = 'none';
+
         const entries = data.currentHour || [];
 
+        /* Leader spotlight */
+        const spotEl = document.getElementById('hourlyLeaderSpot');
+        if (spotEl) {
+          const leader = entries[0];
+          if (leader) {
+            const isMe = connectedWallet && leader.wallet === connectedWallet;
+            spotEl.innerHTML = `
+              <div style="display:flex;align-items:center;gap:16px;padding:18px 20px;
+                          background:rgba(0,230,118,0.05);border:1px solid rgba(0,230,118,0.2);
+                          border-radius:var(--radius-lg);margin-bottom:0;">
+                <span style="font-size:36px;flex-shrink:0;">🥇</span>
+                <div style="flex:1;min-width:0;">
+                  <div style="font-family:'Courier New',monospace;font-size:13px;
+                              color:${isMe ? '#00E676' : 'var(--text-secondary)'};margin-bottom:4px;">
+                    ${leader.walletShort}
+                    ${isMe ? '<span style="font-family:var(--font-heading);font-size:9px;letter-spacing:.1em;color:#00E676;">&nbsp;(YOU)</span>' : ''}
+                  </div>
+                  <div style="font-family:var(--font-heading);font-size:10px;color:var(--text-muted);">
+                    ${leader.activityScore} pts &nbsp;·&nbsp; ${leader.posts||0} posts &nbsp;·&nbsp; ${leader.replies||0} replies &nbsp;·&nbsp; ${leader.likes||0} likes
+                  </div>
+                </div>
+                <div style="text-align:right;flex-shrink:0;">
+                  <div style="font-family:var(--font-display);font-size:18px;font-weight:900;color:#00E676;
+                              text-shadow:0 0 15px rgba(0,230,118,0.3);">${prize}</div>
+                  <div style="font-family:var(--font-heading);font-size:8px;letter-spacing:.1em;
+                              color:var(--text-dim);margin-top:2px;text-transform:uppercase;">If ends now</div>
+                </div>
+              </div>`;
+          } else {
+            spotEl.innerHTML = '';
+          }
+        }
+
+        /* Race standings table */
         if (entries.length === 0) {
           empty.style.display = 'block';
         } else {
           table.style.display = 'block';
           tbody.innerHTML = entries.map((e, i) => {
-            const isMe = connectedWallet && e.wallet === connectedWallet;
-            const prize = i < 3 ? `<span style="color:#4CAF50;font-weight:700;">${r[i] || '—'}</span>` : '—';
-            return `<tr class="lb-row${isMe ? ' is-me' : ''}" style="${i < 3 ? 'border-left:2px solid #00E67644;' : ''}">
-              <td><span style="font-size:${i<3?'20px':'14px'}">${medals[i] || i+1}</span></td>
-              <td><span class="lb-wallet${isMe?' is-me':''}" style="${isMe?'color:#00E676;':''}">${e.walletShort}</span>${isMe?'<span class="lb-wallet-tag">YOU</span>':''}</td>
-              <td style="text-align:right;"><span style="font-family:var(--font-heading);font-size:13px;font-weight:700;color:#00E676;">${e.activityScore} pts</span></td>
-              <td style="text-align:right;">${prize}</td>
+            const isMe     = connectedWallet && e.wallet === connectedWallet;
+            const isLeader = i === 0;
+            const pts      = `${e.posts||0}×25 + ${e.replies||0}×10 + ${e.likes||0}×5`;
+            return `<tr class="lb-row${isMe ? ' is-me' : ''}"
+                        style="${isLeader ? 'border-left:2px solid #00E676;' : ''}">
+              <td>
+                <span style="font-size:${isLeader ? '20px' : '14px'};">
+                  ${isLeader ? '🥇' : i + 1}
+                </span>
+              </td>
+              <td>
+                <span class="lb-wallet${isMe ? ' is-me' : ''}"
+                      style="${isMe ? 'color:#00E676;' : ''}${isLeader ? 'font-weight:700;' : ''}">
+                  ${e.walletShort}
+                </span>
+                ${isMe ? '<span class="lb-wallet-tag">YOU</span>' : ''}
+              </td>
+              <td style="text-align:right;font-family:'Courier New',monospace;font-size:11px;
+                         color:var(--text-muted);">${pts}</td>
+              <td style="text-align:right;">
+                <span style="font-family:var(--font-heading);font-size:13px;font-weight:700;
+                             color:${isLeader ? '#00E676' : 'var(--text-secondary)'};">
+                  ${e.activityScore} pts
+                </span>
+                ${isLeader ? `<span style="display:block;font-family:var(--font-heading);font-size:9px;
+                              color:#00E676;letter-spacing:.05em;margin-top:1px;">${prize}</span>` : ''}
+              </td>
             </tr>`;
           }).join('');
         }
 
-        // Last hour winners
+        /* Last hour WINNER (single) */
         const lastGrid = document.getElementById('lastHourGrid');
         const winners  = data.lastHour || [];
+        const lastPrize = data.lastHourPrize || data.config?.lastPrize || '—';
         if (lastGrid) {
           if (!winners.length) {
-            lastGrid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:24px;font-family:var(--font-heading);font-size:12px;color:var(--text-dim);">First hourly reward coming soon after launch!</div>`;
+            lastGrid.innerHTML = `
+              <div style="text-align:center;padding:32px;font-family:var(--font-heading);
+                          font-size:12px;letter-spacing:.1em;color:var(--text-dim);">
+                First hourly winner coming soon after launch!
+              </div>`;
           } else {
-            lastGrid.innerHTML = winners.map((w, i) => `
-              <div style="background:var(--bg-card);border:1px solid rgba(0,230,118,0.12);border-radius:var(--radius-lg);padding:20px;text-align:center;">
-                <div style="font-size:32px;margin-bottom:8px;">${w.medal}</div>
-                <div style="font-family:'Courier New',monospace;font-size:11px;color:var(--text-secondary);margin-bottom:6px;">${w.walletShort}</div>
-                <div style="font-family:var(--font-heading);font-size:16px;font-weight:700;color:#4CAF50;">${r[i] || '—'}</div>
-                <div style="font-family:var(--font-heading);font-size:9px;color:var(--text-dim);margin-top:4px;">${w.activityScore} activity pts</div>
-              </div>`).join('');
+            const w = winners[0];
+            lastGrid.innerHTML = `
+              <div style="background:var(--bg-card);border:1px solid rgba(0,230,118,0.18);
+                          border-radius:var(--radius-lg);padding:28px 24px;
+                          display:flex;align-items:center;gap:20px;">
+                <span style="font-size:44px;flex-shrink:0;">🏆</span>
+                <div style="flex:1;">
+                  <div style="font-family:var(--font-heading);font-size:9px;letter-spacing:.2em;
+                              text-transform:uppercase;color:rgba(0,230,118,0.5);margin-bottom:6px;">
+                    Last Hour's Winner
+                  </div>
+                  <div style="font-family:'Courier New',monospace;font-size:14px;
+                              color:var(--text-secondary);margin-bottom:6px;">${w.walletShort}</div>
+                  <div style="font-family:var(--font-heading);font-size:11px;color:var(--text-muted);">
+                    ${w.activityScore} pts &nbsp;·&nbsp;
+                    ${w.posts||0} posts · ${w.replies||0} replies · ${w.likes||0} likes
+                  </div>
+                </div>
+                <div style="text-align:right;flex-shrink:0;">
+                  <div style="font-family:var(--font-display);font-size:26px;font-weight:900;
+                              color:#00E676;text-shadow:0 0 20px rgba(0,230,118,0.3);">${lastPrize}</div>
+                  <div style="font-family:var(--font-heading);font-size:9px;letter-spacing:.1em;
+                              color:var(--text-dim);margin-top:4px;">Prize Paid</div>
+                </div>
+              </div>`;
           }
         }
       } catch (e) {
