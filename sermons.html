@@ -1,67 +1,685 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>The Sermons — $PADRE</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>The Father's Sermons — $PADRE Father of Pump.fun</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700;900&family=Cinzel:wght@400;600;700;900&family=IM+Fell+English:ital@0;1&family=UnifrakturMaguntia&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/main.css">
   <style>
-    .sermons-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:24px;}
-    .sermon-card{background:var(--bg-card);border:1px solid var(--bg-border);border-radius:var(--radius-lg);overflow:hidden;transition:all .25s;}
-    .sermon-card:hover{border-color:var(--gold-dark);transform:translateY(-3px);}
-    .sermon-thumb{aspect-ratio:16/9;background:var(--bg-dark);display:flex;align-items:center;justify-content:center;font-size:48px;position:relative;}
-    .sermon-thumb::after{content:'▶';position:absolute;width:52px;height:52px;background:rgba(201,168,76,.9);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:20px;color:#000;}
-    .sermon-body{padding:20px;}
-    .sermon-date{font-family:var(--font-heading);font-size:10px;letter-spacing:.15em;text-transform:uppercase;color:var(--text-muted);margin-bottom:8px;}
-    .sermon-title{font-family:var(--font-heading);font-size:15px;font-weight:700;color:var(--text-white);margin-bottom:8px;line-height:1.4;}
-    .sermon-desc{font-size:13px;color:var(--text-secondary);line-height:1.6;}
+
+    /* ── HERO ── */
+    .sermons-hero {
+      background: var(--bg-deep);
+      text-align: center;
+      padding: 80px 24px 60px;
+      border-bottom: 1px solid var(--bg-border);
+      position: relative;
+      overflow: hidden;
+    }
+    .sermons-hero::before {
+      content: '✝';
+      position: absolute;
+      font-size: 500px;
+      color: rgba(201,168,76,0.02);
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      font-family: serif;
+      pointer-events: none;
+      line-height: 1;
+    }
+
+    /* ── INTRO VERSE ── */
+    .sermon-verse-block {
+      max-width: 680px;
+      margin: 0 auto 64px;
+      text-align: center;
+      padding: 32px 40px;
+      background: var(--bg-card);
+      border: 1px solid var(--bg-border);
+      border-top: 3px solid var(--gold-dark);
+      border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+      position: relative;
+    }
+    .sermon-verse-block::before {
+      content: '"';
+      position: absolute;
+      top: -20px; left: 24px;
+      font-family: var(--font-fraktur);
+      font-size: 80px;
+      color: var(--gold-dark);
+      line-height: 1;
+    }
+    .sermon-verse-text {
+      font-size: 16px;
+      font-style: italic;
+      color: var(--text-secondary);
+      line-height: 1.9;
+    }
+    .sermon-verse-source {
+      font-family: var(--font-heading);
+      font-size: 10px;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-top: 12px;
+    }
+
+    /* ── TIKTOK FOLLOW BUTTON ── */
+    .tiktok-follow-wrap {
+      text-align: center;
+      margin-bottom: 56px;
+    }
+    .btn-tiktok {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      font-family: var(--font-heading);
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      padding: 14px 32px;
+      border-radius: 2px;
+      border: 2px solid rgba(255,255,255,0.15);
+      background: rgba(0,0,0,0.6);
+      color: #fff;
+      text-decoration: none;
+      transition: all 0.25s;
+      position: relative;
+      overflow: hidden;
+    }
+    .btn-tiktok::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, rgba(105,201,208,0.1), rgba(238,29,82,0.1));
+      opacity: 0;
+      transition: opacity 0.25s;
+    }
+    .btn-tiktok:hover {
+      border-color: rgba(255,255,255,0.35);
+      color: #fff;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 20px rgba(0,0,0,0.5), 0 0 30px rgba(238,29,82,0.15);
+    }
+    .btn-tiktok:hover::before { opacity: 1; }
+    .tiktok-icon {
+      width: 20px;
+      height: 20px;
+      flex-shrink: 0;
+    }
+
+    /* ── SERMONS GRID ── */
+    .sermons-outer {
+      max-width: 1280px;
+      margin: 0 auto;
+      padding: 0 24px 80px;
+    }
+
+    .sermons-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 32px;
+      align-items: start;
+    }
+
+    @media (max-width: 1060px) {
+      .sermons-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+    @media (max-width: 680px) {
+      .sermons-grid { grid-template-columns: 1fr; }
+    }
+
+    /* ── SERMON CARD ── */
+    .sermon-card {
+      background: var(--bg-card);
+      border: 1px solid var(--bg-border);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+      transition: border-color 0.25s, box-shadow 0.25s, transform 0.25s;
+      display: flex;
+      flex-direction: column;
+    }
+    .sermon-card:hover {
+      border-color: var(--gold-dark);
+      transform: translateY(-4px);
+      box-shadow: 0 8px 32px rgba(0,0,0,0.6), 0 0 20px rgba(201,168,76,0.06);
+    }
+
+    /* ── CARD HEADER ── */
+    .sermon-card-header {
+      background: var(--bg-dark);
+      border-bottom: 1px solid var(--bg-border);
+      padding: 12px 18px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-shrink: 0;
+    }
+    .sermon-numeral {
+      font-family: var(--font-fraktur);
+      font-size: 28px;
+      color: var(--gold-primary);
+      line-height: 1;
+      flex-shrink: 0;
+      text-shadow: 0 0 12px rgba(201,168,76,0.4);
+    }
+    .sermon-card-meta {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      flex: 1;
+      min-width: 0;
+    }
+    .sermon-card-label {
+      font-family: var(--font-heading);
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--gold-primary);
+    }
+    .sermon-card-title {
+      font-family: var(--font-heading);
+      font-size: 12px;
+      color: var(--text-secondary);
+      letter-spacing: 0.04em;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .sermon-cross {
+      font-size: 14px;
+      color: var(--gold-deep);
+      flex-shrink: 0;
+    }
+
+    /* ── TIKTOK EMBED CONTAINER ── */
+    .sermon-embed {
+      padding: 0;
+      background: #000;
+      display: flex;
+      justify-content: center;
+      /* Let TikTok's script control the height */
+    }
+
+    /* Override TikTok blockquote defaults */
+    .sermon-embed .tiktok-embed {
+      margin: 0 !important;
+      /* TikTok forces min-width:325px — we center it */
+    }
+
+    /* ── CARD FOOTER ── */
+    .sermon-card-footer {
+      padding: 10px 18px;
+      border-top: 1px solid var(--bg-border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: var(--bg-dark);
+    }
+    .sermon-card-platform {
+      font-family: var(--font-heading);
+      font-size: 9px;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--text-dim);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .sermon-card-platform svg {
+      width: 12px; height: 12px; opacity: 0.5;
+    }
+    .sermon-watch-link {
+      font-family: var(--font-heading);
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+    .sermon-watch-link:hover { color: var(--gold-primary); }
+
+    /* ── SECTION DIVIDER ── */
+    .sermons-divider {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      color: var(--gold-deep);
+      margin-bottom: 40px;
+    }
+    .sermons-divider-line {
+      flex: 1;
+      height: 1px;
+      background: linear-gradient(to right, transparent, var(--bg-border), transparent);
+    }
+    .sermons-divider-text {
+      font-family: var(--font-heading);
+      font-size: 9px;
+      letter-spacing: 0.25em;
+      text-transform: uppercase;
+      color: var(--text-dim);
+      white-space: nowrap;
+    }
+
+    /* ── BOTTOM CTA ── */
+    .sermons-cta {
+      text-align: center;
+      padding: 60px 24px;
+      border-top: 1px solid var(--bg-border);
+      background: var(--bg-dark);
+    }
+    .sermons-cta-cross {
+      font-size: 32px;
+      color: var(--gold-primary);
+      text-shadow: 0 0 15px rgba(201,168,76,0.5);
+      display: block;
+      margin-bottom: 16px;
+      animation: crossPulse 3s ease-in-out infinite;
+    }
+    .sermons-cta-title {
+      font-family: var(--font-display);
+      font-size: 26px;
+      color: var(--text-white);
+      margin-bottom: 10px;
+    }
+    .sermons-cta-sub {
+      font-family: var(--font-heading);
+      font-size: 12px;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: 28px;
+    }
+    .sermons-cta-btns {
+      display: flex;
+      gap: 16px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
   </style>
 </head>
 <body>
-  <div class="top-bar"><div class="top-bar-inner"><span class="top-bar-item">fatherofpump.fun</span><span class="top-bar-divider">✦</span><a href="index.html" class="top-bar-item top-bar-link">← Back to The Church</a></div></div>
-  <header class="site-header"><div class="header-inner">
-    <div class="header-logo"><a href="index.html" class="logo-link"><div class="logo-cross">✝</div><div class="logo-text"><span class="logo-ticker">$PADRE</span><span class="logo-tagline">Father of Pump.fun</span></div></a></div>
-    <button class="mobile-menu-toggle" id="menuToggle"><span></span><span></span><span></span></button>
-    <nav class="main-nav" id="mainNav"><ul class="nav-list">
-      <li><a href="about.html" class="nav-link">About The Father</a></li>
-      <li><a href="plan-to-ape.html" class="nav-link">Plan to Ape</a></li>
-      <li><a href="livestream.html" class="nav-link">Father's Livestream</a></li>
-      <li><a href="sermons.html" class="nav-link" style="color:var(--gold-primary)">The Sermons</a></li>
-      <li><a href="scripture.html" class="nav-link">Holy Scripture</a></li>
-      <li><a href="confessional.html" class="nav-link">Confessional</a></li>
-      <li><a href="offerings.html" class="nav-link nav-highlight">Offerings</a></li>
-      <li><a href="request-blessing.html" class="nav-link">Request Blessing</a></li>
-      <li><a href="connect-wallet.html" class="nav-link nav-wallet">Connect Wallet</a></li>
-    </ul></nav>
-  </div></header>
 
-  <section style="background:var(--bg-deep);text-align:center;padding:80px 24px 60px;border-bottom:1px solid var(--bg-border);">
-    <div class="section-cross">🎬</div>
-    <h1 class="section-title">The Sermons</h1>
-    <p class="section-subtitle">Past stream clips and highlights from The Father's ministry</p>
+  <!-- TOP BAR -->
+  <div class="top-bar">
+    <div class="top-bar-inner">
+      <span class="top-bar-item">fatherofpump.fun</span>
+      <span class="top-bar-divider">✦</span>
+      <a href="index.html" class="top-bar-item top-bar-link">← Back to The Church</a>
+      <span class="top-bar-divider">✦</span>
+      <a href="https://www.tiktok.com/@thetrenchfather" target="_blank" rel="noopener" class="top-bar-item top-bar-link">@thetrenchfather on TikTok</a>
+    </div>
+  </div>
+
+  <!-- HEADER -->
+  <header class="site-header">
+    <div class="header-inner">
+      <div class="header-logo">
+        <a href="index.html" class="logo-link">
+          <div class="logo-cross">✝</div>
+          <div class="logo-text">
+            <span class="logo-ticker">$PADRE</span>
+            <span class="logo-tagline">Father of Pump.fun</span>
+          </div>
+        </a>
+      </div>
+      <button class="mobile-menu-toggle" id="menuToggle"><span></span><span></span><span></span></button>
+      <nav class="main-nav" id="mainNav">
+        <ul class="nav-list">
+          <li><a href="about.html" class="nav-link">About The Father</a></li>
+          <li><a href="plan-to-ape.html" class="nav-link">Plan to Ape</a></li>
+          <li><a href="livestream.html" class="nav-link">Father's Livestream</a></li>
+          <li><a href="sermons.html" class="nav-link" style="color:var(--gold-primary)">The Sermons</a></li>
+          <li><a href="scripture.html" class="nav-link">Holy Scripture</a></li>
+          <li><a href="confessional.html" class="nav-link">Confessional</a></li>
+          <li><a href="offerings.html" class="nav-link nav-highlight">Offerings</a></li>
+          <li><a href="request-blessing.html" class="nav-link">Request Blessing</a></li>
+          <li><a href="connect-wallet.html" class="nav-link nav-wallet">Connect Wallet</a></li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+
+  <!-- HERO -->
+  <section class="sermons-hero">
+    <div class="section-cross">🕯️</div>
+    <h1 class="section-title">The Father's Sermons</h1>
+    <p class="section-subtitle">Teachings from The Trench Father · Preserved for the Congregation</p>
     <div class="title-ornament">◆────────────────────────◆</div>
   </section>
 
-  <div class="section-inner">
-    <div class="sermons-grid" id="sermonsGrid">
-      <div class="sermon-card">
-        <div class="sermon-thumb">🕯️</div>
-        <div class="sermon-body"><div class="sermon-date">Coming Soon</div><div class="sermon-title">The First Sermon of $PADRE</div><div class="sermon-desc">The inaugural mass. The congregation gathers. The Father speaks.</div></div>
-      </div>
-      <div class="sermon-card">
-        <div class="sermon-thumb">📈</div>
-        <div class="sermon-body"><div class="sermon-date">Coming Soon</div><div class="sermon-title">Diamond Hands: A Study in Faith</div><div class="sermon-desc">The Father's teaching on holding through volatility with unwavering conviction.</div></div>
-      </div>
-      <div class="sermon-card">
-        <div class="sermon-thumb">✝</div>
-        <div class="sermon-body"><div class="sermon-date">Coming Soon</div><div class="sermon-title">The Parable of the Paperhander</div><div class="sermon-desc">A cautionary tale. A fallen soul who sold at -30% and watched $PADRE 10x.</div></div>
-      </div>
+  <!-- MAIN CONTENT -->
+  <div class="section-inner" style="padding-bottom: 0;">
+
+    <!-- Verse block -->
+    <div class="sermon-verse-block">
+      <p class="sermon-verse-text">
+        "And The Father went unto the trenches, and there he preached to all who would listen.
+        His words moved markets. His conviction moved wallets. His faith moved charts.
+        And the congregation said: <strong>WAGMI.</strong>"
+      </p>
+      <p class="sermon-verse-source">— The Book of $PADRE, Chapter 2, Verses 4–7</p>
     </div>
-    <p style="text-align:center;margin-top:48px;color:var(--text-muted);font-family:var(--font-heading);font-size:12px;letter-spacing:.1em;">Sermon clips will appear here as the stream archives grow.</p>
+
+    <!-- Follow button -->
+    <div class="tiktok-follow-wrap">
+      <a href="https://www.tiktok.com/@thetrenchfather" target="_blank" rel="noopener" class="btn-tiktok">
+        <!-- TikTok logo SVG -->
+        <svg class="tiktok-icon" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-2.88 2.5 2.89 2.89 0 01-2.89-2.89 2.89 2.89 0 012.89-2.89c.28 0 .54.04.79.1V9.01a6.33 6.33 0 00-.79-.05 6.34 6.34 0 00-6.34 6.34 6.34 6.34 0 006.34 6.34 6.34 6.34 0 006.33-6.34V8.69a8.18 8.18 0 004.78 1.52V6.74a4.85 4.85 0 01-1.01-.05z"/>
+        </svg>
+        Follow The Father on TikTok
+      </a>
+    </div>
+
+    <!-- Divider -->
+    <div class="sermons-divider">
+      <div class="sermons-divider-line"></div>
+      <span class="sermons-divider-text">✝ &nbsp; The Sacred Archive &nbsp; ✝</span>
+      <div class="sermons-divider-line"></div>
+    </div>
+
   </div>
 
-  <footer class="site-footer"><div class="footer-top-ornament"><span class="ornament-line-wide"></span><span class="ornament-cross-lg">✝</span><span class="ornament-line-wide"></span></div><div class="footer-bottom"><p>© 2025 $PADRE — Father of Pump.fun</p></div></footer>
+  <!-- SERMONS GRID -->
+  <div class="sermons-outer">
+    <div class="sermons-grid">
+
+      <!-- Sermon I -->
+      <div class="sermon-card">
+        <div class="sermon-card-header">
+          <span class="sermon-numeral">I</span>
+          <div class="sermon-card-meta">
+            <span class="sermon-card-label">Sermon I</span>
+            <span class="sermon-card-title">@thetrenchfather</span>
+          </div>
+          <span class="sermon-cross">✝</span>
+        </div>
+        <div class="sermon-embed">
+          <blockquote
+            class="tiktok-embed"
+            cite="https://www.tiktok.com/@thetrenchfather/video/7565430378324905238"
+            data-video-id="7565430378324905238"
+            style="max-width:605px;min-width:325px;">
+            <section></section>
+          </blockquote>
+        </div>
+        <div class="sermon-card-footer">
+          <span class="sermon-card-platform">
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-2.88 2.5 2.89 2.89 0 01-2.89-2.89 2.89 2.89 0 012.89-2.89c.28 0 .54.04.79.1V9.01a6.33 6.33 0 00-.79-.05 6.34 6.34 0 00-6.34 6.34 6.34 6.34 0 006.34 6.34 6.34 6.34 0 006.33-6.34V8.69a8.18 8.18 0 004.78 1.52V6.74a4.85 4.85 0 01-1.01-.05z"/></svg>
+            TikTok
+          </span>
+          <a href="https://www.tiktok.com/@thetrenchfather/video/7565430378324905238" target="_blank" rel="noopener" class="sermon-watch-link">Watch on TikTok →</a>
+        </div>
+      </div>
+
+      <!-- Sermon II -->
+      <div class="sermon-card">
+        <div class="sermon-card-header">
+          <span class="sermon-numeral">II</span>
+          <div class="sermon-card-meta">
+            <span class="sermon-card-label">Sermon II</span>
+            <span class="sermon-card-title">@thetrenchfather</span>
+          </div>
+          <span class="sermon-cross">✝</span>
+        </div>
+        <div class="sermon-embed">
+          <blockquote
+            class="tiktok-embed"
+            cite="https://www.tiktok.com/@thetrenchfather/video/7564779663667547414"
+            data-video-id="7564779663667547414"
+            style="max-width:605px;min-width:325px;">
+            <section></section>
+          </blockquote>
+        </div>
+        <div class="sermon-card-footer">
+          <span class="sermon-card-platform">
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-2.88 2.5 2.89 2.89 0 01-2.89-2.89 2.89 2.89 0 012.89-2.89c.28 0 .54.04.79.1V9.01a6.33 6.33 0 00-.79-.05 6.34 6.34 0 00-6.34 6.34 6.34 6.34 0 006.34 6.34 6.34 6.34 0 006.33-6.34V8.69a8.18 8.18 0 004.78 1.52V6.74a4.85 4.85 0 01-1.01-.05z"/></svg>
+            TikTok
+          </span>
+          <a href="https://www.tiktok.com/@thetrenchfather/video/7564779663667547414" target="_blank" rel="noopener" class="sermon-watch-link">Watch on TikTok →</a>
+        </div>
+      </div>
+
+      <!-- Sermon III -->
+      <div class="sermon-card">
+        <div class="sermon-card-header">
+          <span class="sermon-numeral">III</span>
+          <div class="sermon-card-meta">
+            <span class="sermon-card-label">Sermon III</span>
+            <span class="sermon-card-title">@thetrenchfather</span>
+          </div>
+          <span class="sermon-cross">✝</span>
+        </div>
+        <div class="sermon-embed">
+          <blockquote
+            class="tiktok-embed"
+            cite="https://www.tiktok.com/@thetrenchfather/video/7564751045532847382"
+            data-video-id="7564751045532847382"
+            style="max-width:605px;min-width:325px;">
+            <section></section>
+          </blockquote>
+        </div>
+        <div class="sermon-card-footer">
+          <span class="sermon-card-platform">
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-2.88 2.5 2.89 2.89 0 01-2.89-2.89 2.89 2.89 0 012.89-2.89c.28 0 .54.04.79.1V9.01a6.33 6.33 0 00-.79-.05 6.34 6.34 0 00-6.34 6.34 6.34 6.34 0 006.34 6.34 6.34 6.34 0 006.33-6.34V8.69a8.18 8.18 0 004.78 1.52V6.74a4.85 4.85 0 01-1.01-.05z"/></svg>
+            TikTok
+          </span>
+          <a href="https://www.tiktok.com/@thetrenchfather/video/7564751045532847382" target="_blank" rel="noopener" class="sermon-watch-link">Watch on TikTok →</a>
+        </div>
+      </div>
+
+      <!-- Sermon IV -->
+      <div class="sermon-card">
+        <div class="sermon-card-header">
+          <span class="sermon-numeral">IV</span>
+          <div class="sermon-card-meta">
+            <span class="sermon-card-label">Sermon IV</span>
+            <span class="sermon-card-title">@thetrenchfather</span>
+          </div>
+          <span class="sermon-cross">✝</span>
+        </div>
+        <div class="sermon-embed">
+          <blockquote
+            class="tiktok-embed"
+            cite="https://www.tiktok.com/@thetrenchfather/video/7564740166980554006"
+            data-video-id="7564740166980554006"
+            style="max-width:605px;min-width:325px;">
+            <section></section>
+          </blockquote>
+        </div>
+        <div class="sermon-card-footer">
+          <span class="sermon-card-platform">
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-2.88 2.5 2.89 2.89 0 01-2.89-2.89 2.89 2.89 0 012.89-2.89c.28 0 .54.04.79.1V9.01a6.33 6.33 0 00-.79-.05 6.34 6.34 0 00-6.34 6.34 6.34 6.34 0 006.34 6.34 6.34 6.34 0 006.33-6.34V8.69a8.18 8.18 0 004.78 1.52V6.74a4.85 4.85 0 01-1.01-.05z"/></svg>
+            TikTok
+          </span>
+          <a href="https://www.tiktok.com/@thetrenchfather/video/7564740166980554006" target="_blank" rel="noopener" class="sermon-watch-link">Watch on TikTok →</a>
+        </div>
+      </div>
+
+      <!-- Sermon V -->
+      <div class="sermon-card">
+        <div class="sermon-card-header">
+          <span class="sermon-numeral">V</span>
+          <div class="sermon-card-meta">
+            <span class="sermon-card-label">Sermon V</span>
+            <span class="sermon-card-title">@thetrenchfather</span>
+          </div>
+          <span class="sermon-cross">✝</span>
+        </div>
+        <div class="sermon-embed">
+          <blockquote
+            class="tiktok-embed"
+            cite="https://www.tiktok.com/@thetrenchfather/video/7564737088206146838"
+            data-video-id="7564737088206146838"
+            style="max-width:605px;min-width:325px;">
+            <section></section>
+          </blockquote>
+        </div>
+        <div class="sermon-card-footer">
+          <span class="sermon-card-platform">
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-2.88 2.5 2.89 2.89 0 01-2.89-2.89 2.89 2.89 0 012.89-2.89c.28 0 .54.04.79.1V9.01a6.33 6.33 0 00-.79-.05 6.34 6.34 0 00-6.34 6.34 6.34 6.34 0 006.34 6.34 6.34 6.34 0 006.33-6.34V8.69a8.18 8.18 0 004.78 1.52V6.74a4.85 4.85 0 01-1.01-.05z"/></svg>
+            TikTok
+          </span>
+          <a href="https://www.tiktok.com/@thetrenchfather/video/7564737088206146838" target="_blank" rel="noopener" class="sermon-watch-link">Watch on TikTok →</a>
+        </div>
+      </div>
+
+      <!-- Sermon VI -->
+      <div class="sermon-card">
+        <div class="sermon-card-header">
+          <span class="sermon-numeral">VI</span>
+          <div class="sermon-card-meta">
+            <span class="sermon-card-label">Sermon VI</span>
+            <span class="sermon-card-title">@thetrenchfather</span>
+          </div>
+          <span class="sermon-cross">✝</span>
+        </div>
+        <div class="sermon-embed">
+          <blockquote
+            class="tiktok-embed"
+            cite="https://www.tiktok.com/@thetrenchfather/video/7564725932867521814"
+            data-video-id="7564725932867521814"
+            style="max-width:605px;min-width:325px;">
+            <section></section>
+          </blockquote>
+        </div>
+        <div class="sermon-card-footer">
+          <span class="sermon-card-platform">
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-2.88 2.5 2.89 2.89 0 01-2.89-2.89 2.89 2.89 0 012.89-2.89c.28 0 .54.04.79.1V9.01a6.33 6.33 0 00-.79-.05 6.34 6.34 0 00-6.34 6.34 6.34 6.34 0 006.34 6.34 6.34 6.34 0 006.33-6.34V8.69a8.18 8.18 0 004.78 1.52V6.74a4.85 4.85 0 01-1.01-.05z"/></svg>
+            TikTok
+          </span>
+          <a href="https://www.tiktok.com/@thetrenchfather/video/7564725932867521814" target="_blank" rel="noopener" class="sermon-watch-link">Watch on TikTok →</a>
+        </div>
+      </div>
+
+      <!-- Sermon VII -->
+      <div class="sermon-card">
+        <div class="sermon-card-header">
+          <span class="sermon-numeral">VII</span>
+          <div class="sermon-card-meta">
+            <span class="sermon-card-label">Sermon VII</span>
+            <span class="sermon-card-title">@thetrenchfather</span>
+          </div>
+          <span class="sermon-cross">✝</span>
+        </div>
+        <div class="sermon-embed">
+          <blockquote
+            class="tiktok-embed"
+            cite="https://www.tiktok.com/@thetrenchfather/video/7564723193567513878"
+            data-video-id="7564723193567513878"
+            style="max-width:605px;min-width:325px;">
+            <section></section>
+          </blockquote>
+        </div>
+        <div class="sermon-card-footer">
+          <span class="sermon-card-platform">
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-2.88 2.5 2.89 2.89 0 01-2.89-2.89 2.89 2.89 0 012.89-2.89c.28 0 .54.04.79.1V9.01a6.33 6.33 0 00-.79-.05 6.34 6.34 0 00-6.34 6.34 6.34 6.34 0 006.34 6.34 6.34 6.34 0 006.33-6.34V8.69a8.18 8.18 0 004.78 1.52V6.74a4.85 4.85 0 01-1.01-.05z"/></svg>
+            TikTok
+          </span>
+          <a href="https://www.tiktok.com/@thetrenchfather/video/7564723193567513878" target="_blank" rel="noopener" class="sermon-watch-link">Watch on TikTok →</a>
+        </div>
+      </div>
+
+      <!-- Sermon VIII -->
+      <div class="sermon-card">
+        <div class="sermon-card-header">
+          <span class="sermon-numeral">VIII</span>
+          <div class="sermon-card-meta">
+            <span class="sermon-card-label">Sermon VIII</span>
+            <span class="sermon-card-title">@thetrenchfather</span>
+          </div>
+          <span class="sermon-cross">✝</span>
+        </div>
+        <div class="sermon-embed">
+          <blockquote
+            class="tiktok-embed"
+            cite="https://www.tiktok.com/@thetrenchfather/video/7564703937060818198"
+            data-video-id="7564703937060818198"
+            style="max-width:605px;min-width:325px;">
+            <section></section>
+          </blockquote>
+        </div>
+        <div class="sermon-card-footer">
+          <span class="sermon-card-platform">
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-2.88 2.5 2.89 2.89 0 01-2.89-2.89 2.89 2.89 0 012.89-2.89c.28 0 .54.04.79.1V9.01a6.33 6.33 0 00-.79-.05 6.34 6.34 0 00-6.34 6.34 6.34 6.34 0 006.34 6.34 6.34 6.34 0 006.33-6.34V8.69a8.18 8.18 0 004.78 1.52V6.74a4.85 4.85 0 01-1.01-.05z"/></svg>
+            TikTok
+          </span>
+          <a href="https://www.tiktok.com/@thetrenchfather/video/7564703937060818198" target="_blank" rel="noopener" class="sermon-watch-link">Watch on TikTok →</a>
+        </div>
+      </div>
+
+      <!-- Sermon IX -->
+      <div class="sermon-card">
+        <div class="sermon-card-header">
+          <span class="sermon-numeral">IX</span>
+          <div class="sermon-card-meta">
+            <span class="sermon-card-label">Sermon IX</span>
+            <span class="sermon-card-title">@thetrenchfather</span>
+          </div>
+          <span class="sermon-cross">✝</span>
+        </div>
+        <div class="sermon-embed">
+          <blockquote
+            class="tiktok-embed"
+            cite="https://www.tiktok.com/@thetrenchfather/video/7561375013224320278"
+            data-video-id="7561375013224320278"
+            style="max-width:605px;min-width:325px;">
+            <section></section>
+          </blockquote>
+        </div>
+        <div class="sermon-card-footer">
+          <span class="sermon-card-platform">
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-2.88 2.5 2.89 2.89 0 01-2.89-2.89 2.89 2.89 0 012.89-2.89c.28 0 .54.04.79.1V9.01a6.33 6.33 0 00-.79-.05 6.34 6.34 0 00-6.34 6.34 6.34 6.34 0 006.34 6.34 6.34 6.34 0 006.33-6.34V8.69a8.18 8.18 0 004.78 1.52V6.74a4.85 4.85 0 01-1.01-.05z"/></svg>
+            TikTok
+          </span>
+          <a href="https://www.tiktok.com/@thetrenchfather/video/7561375013224320278" target="_blank" rel="noopener" class="sermon-watch-link">Watch on TikTok →</a>
+        </div>
+      </div>
+
+    </div><!-- /sermons-grid -->
+  </div><!-- /sermons-outer -->
+
+  <!-- BOTTOM CTA -->
+  <div class="sermons-cta">
+    <span class="sermons-cta-cross">✝</span>
+    <h2 class="sermons-cta-title">More Sermons Incoming</h2>
+    <p class="sermons-cta-sub">The Father preaches daily · Follow to receive His gospel</p>
+    <div class="sermons-cta-btns">
+      <a href="https://www.tiktok.com/@thetrenchfather" target="_blank" rel="noopener" class="btn-tiktok">
+        <svg class="tiktok-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-2.88 2.5 2.89 2.89 0 01-2.89-2.89 2.89 2.89 0 012.89-2.89c.28 0 .54.04.79.1V9.01a6.33 6.33 0 00-.79-.05 6.34 6.34 0 00-6.34 6.34 6.34 6.34 0 006.34 6.34 6.34 6.34 0 006.33-6.34V8.69a8.18 8.18 0 004.78 1.52V6.74a4.85 4.85 0 01-1.01-.05z"/></svg>
+        Follow The Father on TikTok
+      </a>
+      <a href="index.html#buy" class="btn btn-outline">
+        <span class="btn-cross">✝</span> Buy $PADRE
+      </a>
+    </div>
+  </div>
+
+  <!-- FOOTER -->
+  <footer class="site-footer">
+    <div class="footer-top-ornament">
+      <span class="ornament-line-wide"></span>
+      <span class="ornament-cross-lg">✝</span>
+      <span class="ornament-line-wide"></span>
+    </div>
+    <div class="footer-bottom">
+      <p>© 2025 $PADRE — Father of Pump.fun · fatherofpump.fun</p>
+      <p class="footer-disclaimer">$PADRE is a meme coin with no intrinsic value or financial promise. Not financial advice. Always DYOR.</p>
+    </div>
+  </footer>
+
   <script src="js/main.js"></script>
+  <!-- TikTok embed script — loaded once, handles all blockquotes on the page -->
+  <script async src="https://www.tiktok.com/embed.js"></script>
+
 </body>
 </html>
