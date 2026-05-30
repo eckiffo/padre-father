@@ -87,10 +87,26 @@ export default async function handler(req, res) {
     lastUpdated:   new Date().toISOString(),
   };
 
-  /* ─── Store in KV + update leaderboard ─── */
+  /* ─── Store in KV + update leaderboard + hourly bucket ─── */
   try {
     await kv.set(cacheKey, scoreRecord, { ex: CACHE_TTL_SECONDS * 2 });
     await kv.zadd('leaderboard', { score: totalScore, member: wallet });
+
+    // Update hourly activity bucket (social score = activity this session)
+    // We use social score as proxy for activity level
+    if (socialResult.score > 0) {
+      const hourBucket = new Date().toISOString().slice(0, 13);
+      const activityScore = (socialResult.posts   * 25) +
+                            (socialResult.replies  * 10) +
+                            (socialResult.likes    *  5);
+      // zadd with NX so we take the max (most active reading)
+      await kv.zadd(`hourly:${hourBucket}`, {
+        score:  activityScore,
+        member: wallet,
+      });
+      // Expire hourly buckets after 48h
+      await kv.expire(`hourly:${hourBucket}`, 48 * 60 * 60);
+    }
   } catch (e) {
     console.warn('[score] KV write failed:', e.message);
   }

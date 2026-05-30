@@ -275,6 +275,117 @@
     return Math.floor(diff / 3600) + 'h ago';
   }
 
+  /* ─── HOURLY RACE ─── */
+  let hourlyData = null;
+
+  async function loadHourlyStats() {
+    try {
+      const res  = await fetch('/api/blessing/hourly-stats');
+      if (!res.ok) return;
+      hourlyData = await res.json();
+      renderHourly();
+    } catch (e) {
+      console.warn('[hourly]', e);
+    }
+  }
+
+  function renderHourly() {
+    if (!hourlyData) return;
+
+    // Rewards line
+    const rewards = hourlyData.config?.rewards;
+    if (rewards && $('hourlyRewards')) {
+      $('hourlyRewards').textContent =
+        `🥇 ${rewards[0]}  ·  🥈 ${rewards[1]}  ·  🥉 ${rewards[2]}`;
+    }
+
+    // This hour top 3
+    const top3El = $('hourlyTop3');
+    if (top3El) {
+      const entries = (hourlyData.currentHour || []).slice(0, 3);
+      if (entries.length === 0) {
+        top3El.innerHTML = `<div style="font-family:var(--font-heading);font-size:11px;color:var(--text-dim);text-align:center;padding:8px;">No activity yet this hour — be first!</div>`;
+      } else {
+        const medals = ['🥇','🥈','🥉'];
+        top3El.innerHTML = entries.map((e, i) => {
+          const isMe = connectedWallet && e.wallet === connectedWallet;
+          return `
+            <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--bg-border);">
+              <span style="font-size:18px;">${medals[i]}</span>
+              <span style="font-family:'Courier New',monospace;font-size:11px;color:${isMe ? '#FFB800' : 'var(--text-secondary)'};">
+                ${e.walletShort}${isMe ? ' <span style="color:#FFB800;font-family:var(--font-heading);font-size:9px;">(YOU)</span>' : ''}
+              </span>
+              <span style="margin-left:auto;font-family:var(--font-heading);font-size:11px;font-weight:700;color:#FFB800;">${e.activityScore} pts</span>
+            </div>`;
+        }).join('');
+      }
+    }
+
+    // Last hour winners
+    const lastEl = $('lastHourWinners');
+    if (lastEl) {
+      const winners = hourlyData.lastHour;
+      if (!winners || winners.length === 0) {
+        lastEl.innerHTML = `<div style="font-family:var(--font-heading);font-size:11px;color:var(--text-dim);">No winners yet — first hour coming up!</div>`;
+      } else {
+        const rewards = hourlyData.config?.rewards || [];
+        lastEl.innerHTML = winners.map((w, i) => `
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+            <span style="font-size:16px;">${w.medal}</span>
+            <span style="font-family:'Courier New',monospace;font-size:11px;color:var(--text-secondary);">${w.walletShort}</span>
+            <span style="margin-left:auto;font-family:var(--font-heading);font-size:11px;font-weight:700;color:#4CAF50;">${rewards[i] || '—'}</span>
+          </div>`).join('');
+      }
+    }
+
+    // My hourly rank
+    const myRankEl = $('myHourlyRank');
+    if (myRankEl && connectedWallet) {
+      const myEntry = (hourlyData.currentHour || []).find(e => e.wallet === connectedWallet);
+      if (myEntry) {
+        myRankEl.textContent = `#${myEntry.position} this hour — ${myEntry.activityScore} activity pts`;
+        myRankEl.style.color = myEntry.position <= 3 ? '#FFB800' : 'var(--gold-primary)';
+      } else {
+        myRankEl.textContent = 'Not ranked yet — post in the community!';
+        myRankEl.style.color = 'var(--text-muted)';
+      }
+    }
+  }
+
+  /* ─── HOURLY COUNTDOWN ─── */
+  function startCountdown() {
+    function tick() {
+      const now       = new Date();
+      const nextHour  = new Date(now);
+      nextHour.setMinutes(0, 0, 0);
+      nextHour.setHours(nextHour.getHours() + 1);
+
+      const totalSecs = 3600;
+      const remaining = Math.max(0, Math.floor((nextHour - now) / 1000));
+      const elapsed   = totalSecs - remaining;
+      const pct       = (elapsed / totalSecs) * 100;
+
+      const h = Math.floor(remaining / 3600);
+      const m = Math.floor((remaining % 3600) / 60);
+      const s = remaining % 60;
+      const fmt = `${pad(h)}:${pad(m)}:${pad(s)}`;
+
+      const cdEl = $('hourlyCountdown');
+      const pbEl = $('hourlyProgressBar');
+      if (cdEl) cdEl.textContent = fmt;
+      if (pbEl) pbEl.style.width = pct + '%';
+
+      // Refresh hourly data when hour rolls over
+      if (remaining === 0 || remaining === 3599) {
+        loadHourlyStats();
+      }
+    }
+    tick();
+    setInterval(tick, 1000);
+  }
+
+  function pad(n) { return String(n).padStart(2, '0'); }
+
   /* ─── AUTO-RECONNECT ─── */
   async function tryAutoReconnect() {
     const saved = localStorage.getItem('padre_wallet');
@@ -308,6 +419,11 @@
 
     // Auto-reconnect
     tryAutoReconnect();
+
+    // Hourly race — always running, no wallet needed
+    startCountdown();
+    loadHourlyStats();
+    setInterval(loadHourlyStats, 60_000); // refresh every minute
   });
 
 })();

@@ -62,7 +62,7 @@
   <div class="leaderboard-layout">
 
     <!-- Stats bar -->
-    <div style="display:flex;gap:24px;flex-wrap:wrap;margin-bottom:32px;padding:16px 20px;background:var(--bg-card);border:1px solid var(--bg-border);border-radius:var(--radius-lg);">
+    <div style="display:flex;gap:24px;flex-wrap:wrap;margin-bottom:24px;padding:16px 20px;background:var(--bg-card);border:1px solid var(--bg-border);border-radius:var(--radius-lg);">
       <div class="roadmap-mc-item">Total Wallets <strong id="lbTotalWallets" style="color:var(--gold-primary);font-size:16px;">—</strong></div>
       <span style="color:var(--gold-deep);font-size:10px;">◆</span>
       <div class="roadmap-mc-item">Last Updated <strong id="lbUpdatedAt" style="color:var(--gold-primary);font-size:13px;">—</strong></div>
@@ -74,8 +74,66 @@
       </div>
     </div>
 
+    <!-- TAB SWITCHER -->
+    <div style="display:flex;gap:0;margin-bottom:32px;background:var(--bg-card);border:1px solid var(--bg-border);border-radius:var(--radius-lg);overflow:hidden;">
+      <button class="lb-tab active" id="tabAllTime" onclick="switchTab('alltime')"
+        style="flex:1;padding:14px;font-family:var(--font-heading);font-size:11px;font-weight:700;letter-spacing:.15em;text-transform:uppercase;border:none;cursor:pointer;transition:all .2s;background:rgba(201,168,76,0.1);color:var(--gold-primary);border-right:1px solid var(--bg-border);">
+        ✝ All-Time Rankings
+      </button>
+      <button class="lb-tab" id="tabHourly" onclick="switchTab('hourly')"
+        style="flex:1;padding:14px;font-family:var(--font-heading);font-size:11px;font-weight:700;letter-spacing:.15em;text-transform:uppercase;border:none;cursor:pointer;transition:all .2s;background:transparent;color:var(--text-muted);">
+        ⚡ This Hour's Race
+      </button>
+    </div>
+
+    <!-- HOURLY RACE PANEL -->
+    <div id="hourlyPanel" style="display:none;">
+      <!-- Countdown -->
+      <div style="text-align:center;padding:28px;background:linear-gradient(135deg,var(--bg-card),#1A1400);border:1px solid rgba(255,180,0,0.2);border-radius:var(--radius-lg);margin-bottom:24px;">
+        <div style="font-family:var(--font-heading);font-size:9px;letter-spacing:.2em;text-transform:uppercase;color:rgba(255,184,0,0.5);margin-bottom:8px;">Next Reward In</div>
+        <div id="lbCountdown" style="font-family:var(--font-display);font-size:52px;font-weight:900;color:#FFB800;text-shadow:0 0 30px rgba(255,184,0,0.5);line-height:1;">00:00:00</div>
+        <div style="margin:14px auto 0;max-width:300px;height:5px;background:rgba(255,255,255,0.05);border-radius:3px;overflow:hidden;">
+          <div id="lbHourlyBar" style="height:100%;background:linear-gradient(to right,#8B6914,#FFB800);border-radius:3px;transition:width 1s linear;width:0%;"></div>
+        </div>
+        <div id="lbHourlyRewards" style="font-family:var(--font-heading);font-size:11px;letter-spacing:.1em;color:rgba(255,184,0,0.5);margin-top:10px;">🥇 0.05 SOL &nbsp;·&nbsp; 🥈 0.03 SOL &nbsp;·&nbsp; 🥉 0.02 SOL</div>
+      </div>
+
+      <!-- This hour top 10 -->
+      <div class="lb-section">
+        <div class="lb-section-header">
+          <span class="lb-section-title" style="color:#FFB800;">⚡ &nbsp; This Hour — Top 10 Most Active</span>
+          <span class="lb-update-note">Updates every 60s</span>
+        </div>
+        <div id="hourlyLbLoading" class="blessing-loading"><div class="blessing-spinner"></div></div>
+        <div id="hourlyLbTable" style="display:none;background:var(--bg-card);border:1px solid rgba(255,180,0,0.2);border-radius:var(--radius-lg);overflow:hidden;">
+          <table class="lb-table">
+            <thead>
+              <tr>
+                <th style="width:48px;">#</th>
+                <th>Wallet</th>
+                <th style="text-align:right;">Activity Score</th>
+                <th style="text-align:right;">Prize</th>
+              </tr>
+            </thead>
+            <tbody id="hourlyLbBody"></tbody>
+          </table>
+        </div>
+        <div id="hourlyLbEmpty" style="display:none;text-align:center;padding:40px;font-family:var(--font-heading);font-size:12px;letter-spacing:.1em;color:var(--text-dim);">
+          No activity yet this hour. Post in the community to take the lead!
+        </div>
+      </div>
+
+      <!-- Last hour winners -->
+      <div class="lb-section">
+        <div class="lb-section-header">
+          <span class="lb-section-title">🏆 &nbsp; Last Hour's Winners</span>
+        </div>
+        <div id="lastHourGrid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;"></div>
+      </div>
+    </div>
+
     <!-- Main leaderboard -->
-    <div class="lb-section">
+    <div id="alltimePanel" class="lb-section">
       <div class="lb-section-header">
         <span class="lb-section-title">✝ &nbsp; Top 50 by Blessing Score</span>
         <span class="lb-update-note" id="lbUpdateNote">Refreshes every 30 min</span>
@@ -139,5 +197,97 @@
 
   <script src="js/main.js"></script>
   <script src="js/blessing-leaderboard.js"></script>
+  <script>
+    /* ─── Tab switching ─── */
+    function switchTab(tab) {
+      const isHourly = tab === 'hourly';
+      document.getElementById('alltimePanel').style.display  = isHourly ? 'none' : 'block';
+      document.getElementById('eliteSection').style.display  = isHourly ? 'none' : '';
+      document.getElementById('hourlyPanel').style.display   = isHourly ? 'block' : 'none';
+      document.getElementById('tabAllTime').style.background = isHourly ? 'transparent' : 'rgba(201,168,76,0.1)';
+      document.getElementById('tabAllTime').style.color      = isHourly ? 'var(--text-muted)' : 'var(--gold-primary)';
+      document.getElementById('tabHourly').style.background  = isHourly ? 'rgba(255,184,0,0.08)' : 'transparent';
+      document.getElementById('tabHourly').style.color       = isHourly ? '#FFB800' : 'var(--text-muted)';
+    }
+
+    /* ─── Hourly countdown ─── */
+    function pad(n) { return String(n).padStart(2,'0'); }
+    function tickCountdown() {
+      const now = new Date();
+      const next = new Date(now); next.setMinutes(0,0,0); next.setHours(next.getHours()+1);
+      const rem = Math.max(0, Math.floor((next - now) / 1000));
+      const pct = ((3600 - rem) / 3600) * 100;
+      const fmt = `${pad(Math.floor(rem/3600))}:${pad(Math.floor(rem%3600/60))}:${pad(rem%60)}`;
+      const cd = document.getElementById('lbCountdown');
+      const pb = document.getElementById('lbHourlyBar');
+      if (cd) cd.textContent = fmt;
+      if (pb) pb.style.width = pct + '%';
+    }
+    setInterval(tickCountdown, 1000); tickCountdown();
+
+    /* ─── Load hourly data ─── */
+    async function loadHourly() {
+      try {
+        const res  = await fetch('/api/blessing/hourly-stats');
+        const data = await res.json();
+        const connectedWallet = localStorage.getItem('padre_wallet');
+
+        // Rewards
+        const r = data.config?.rewards || [];
+        const rEl = document.getElementById('lbHourlyRewards');
+        if (rEl && r.length) rEl.textContent = `🥇 ${r[0]}  ·  🥈 ${r[1]}  ·  🥉 ${r[2]}`;
+
+        // This hour table
+        const loading = document.getElementById('hourlyLbLoading');
+        const table   = document.getElementById('hourlyLbTable');
+        const empty   = document.getElementById('hourlyLbEmpty');
+        const tbody   = document.getElementById('hourlyLbBody');
+        const medals  = ['🥇','🥈','🥉'];
+
+        loading.style.display = 'none';
+        const entries = data.currentHour || [];
+
+        if (entries.length === 0) {
+          empty.style.display = 'block';
+        } else {
+          table.style.display = 'block';
+          tbody.innerHTML = entries.map((e, i) => {
+            const isMe = connectedWallet && e.wallet === connectedWallet;
+            const prize = i < 3 ? `<span style="color:#4CAF50;font-weight:700;">${r[i] || '—'}</span>` : '—';
+            return `<tr class="lb-row${isMe ? ' is-me' : ''}" style="${i < 3 ? 'border-left:2px solid #FFB80044;' : ''}">
+              <td><span style="font-size:${i<3?'20px':'14px'}">${medals[i] || i+1}</span></td>
+              <td><span class="lb-wallet${isMe?' is-me':''}" style="${isMe?'color:#FFB800;':''}">${e.walletShort}</span>${isMe?'<span class="lb-wallet-tag">YOU</span>':''}</td>
+              <td style="text-align:right;"><span style="font-family:var(--font-heading);font-size:13px;font-weight:700;color:#FFB800;">${e.activityScore} pts</span></td>
+              <td style="text-align:right;">${prize}</td>
+            </tr>`;
+          }).join('');
+        }
+
+        // Last hour winners
+        const lastGrid = document.getElementById('lastHourGrid');
+        const winners  = data.lastHour || [];
+        if (lastGrid) {
+          if (!winners.length) {
+            lastGrid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:24px;font-family:var(--font-heading);font-size:12px;color:var(--text-dim);">First hourly reward coming soon after launch!</div>`;
+          } else {
+            lastGrid.innerHTML = winners.map((w, i) => `
+              <div style="background:var(--bg-card);border:1px solid rgba(255,180,0,0.2);border-radius:var(--radius-lg);padding:20px;text-align:center;">
+                <div style="font-size:32px;margin-bottom:8px;">${w.medal}</div>
+                <div style="font-family:'Courier New',monospace;font-size:11px;color:var(--text-secondary);margin-bottom:6px;">${w.walletShort}</div>
+                <div style="font-family:var(--font-heading);font-size:16px;font-weight:700;color:#4CAF50;">${r[i] || '—'}</div>
+                <div style="font-family:var(--font-heading);font-size:9px;color:var(--text-dim);margin-top:4px;">${w.activityScore} activity pts</div>
+              </div>`).join('');
+          }
+        }
+      } catch (e) {
+        console.warn('[hourly lb]', e);
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      loadHourly();
+      setInterval(loadHourly, 60_000);
+    });
+  </script>
 </body>
 </html>
