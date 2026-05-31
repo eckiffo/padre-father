@@ -218,8 +218,21 @@
   <section class="confess-hero">
     <div class="section-cross">🕯️</div>
     <h1 class="section-title">The Confessional</h1>
-    <p class="section-subtitle">Speak thy truth to The Father · Watch the stream · Join the congregation's voice</p>
+    <p class="section-subtitle">The congregation speaks · Post · Reply · Earn points · Get rewarded</p>
     <div class="title-ornament">◆────────────────────────◆</div>
+    <!-- Real community CTA -->
+    <div style="margin-top:32px;display:flex;gap:14px;justify-content:center;flex-wrap:wrap;">
+      <a href="https://coincommunities.org/communities/HNVYhd7CMfCYDgDiRBKzx1gvZVqYohjMMFmRS1n8pump"
+         target="_blank" rel="noopener" class="btn btn-primary btn-lg">
+        <span class="btn-cross">✝</span> Open The Community <span class="btn-cross">✝</span>
+      </a>
+      <a href="https://t.me/fatheroftrenches" target="_blank" rel="noopener" class="btn btn-outline btn-lg">
+        ✈ Join Telegram
+      </a>
+    </div>
+    <p style="font-family:var(--font-heading);font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--text-dim);margin-top:16px;">
+      Posts ×25 pts · Replies ×10 pts · Likes ×5 pts · Top 5 each hour win $PADRE
+    </p>
   </section>
 
   <!-- MAIN LAYOUT: stream + form -->
@@ -246,41 +259,42 @@
       </p>
     </div>
 
-    <!-- Confession form -->
+    <!-- Community card -->
     <div class="confess-form-wrap">
-      <div class="confess-form-title">✝ Make Your Confession</div>
-      <p class="confess-form-subtitle">Speak your truth to the congregation. The Father hears all.</p>
+      <div class="confess-form-title">✝ Speak to the Congregation</div>
+      <p class="confess-form-subtitle">Post in the $PADRE community. Earn points. Win hourly prizes.</p>
 
-      <form id="confessionForm">
-        <div class="form-group">
-          <label class="form-label" for="confessName">Your Name / Wallet (Optional)</label>
-          <input class="form-input" type="text" id="confessName" name="name"
-            placeholder="Anonymous Aper, 0x1234…, etc." autocomplete="off">
+      <div style="background:var(--bg-dark);border:1px solid var(--gold-dark);border-radius:var(--radius-lg);padding:28px;text-align:center;margin-bottom:20px;">
+        <div style="font-size:36px;margin-bottom:12px;">⛪</div>
+        <div style="font-family:var(--font-display);font-size:18px;font-weight:900;color:var(--gold-primary);margin-bottom:8px;">$PADRE Community</div>
+        <p style="font-size:13px;color:var(--text-secondary);line-height:1.8;margin-bottom:20px;">
+          Every post earns you +25 points.<br>
+          Every reply earns +10. Every like earns +5.<br>
+          Top 5 this hour win $PADRE tokens.
+        </p>
+        <a href="https://coincommunities.org/communities/HNVYhd7CMfCYDgDiRBKzx1gvZVqYohjMMFmRS1n8pump"
+           target="_blank" rel="noopener" class="btn btn-primary" style="width:100%;justify-content:center;">
+          <span class="btn-cross">✝</span> Post in Community <span class="btn-cross">✝</span>
+        </a>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;text-align:center;">
+        <div style="background:var(--bg-card);border:1px solid var(--bg-border);border-radius:var(--radius);padding:14px;">
+          <div style="font-family:var(--font-display);font-size:22px;font-weight:900;color:var(--gold-primary);">+25</div>
+          <div style="font-family:var(--font-heading);font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:var(--text-dim);margin-top:4px;">per Post</div>
         </div>
-        <div class="form-group">
-          <label class="form-label" for="confessType">Confession Type</label>
-          <select class="form-select" id="confessType" name="type">
-            <option value="sin">I have sinned (paper handed)</option>
-            <option value="faith">Declaration of faith</option>
-            <option value="testimonial">Gainful testimonial</option>
-            <option value="prayer">Prayer request</option>
-            <option value="question">Question for The Father</option>
-          </select>
+        <div style="background:var(--bg-card);border:1px solid var(--bg-border);border-radius:var(--radius);padding:14px;">
+          <div style="font-family:var(--font-display);font-size:22px;font-weight:900;color:var(--gold-primary);">+10</div>
+          <div style="font-family:var(--font-heading);font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:var(--text-dim);margin-top:4px;">per Reply</div>
         </div>
-        <div class="form-group">
-          <label class="form-label" for="confessText">Your Confession</label>
-          <textarea class="form-textarea" id="confessText" name="confession"
-            placeholder="Speak freely, child. The Father is listening…" required></textarea>
+        <div style="background:var(--bg-card);border:1px solid var(--bg-border);border-radius:var(--radius);padding:14px;">
+          <div style="font-family:var(--font-display);font-size:22px;font-weight:900;color:var(--gold-primary);">+5</div>
+          <div style="font-family:var(--font-heading);font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:var(--text-dim);margin-top:4px;">per Like</div>
         </div>
-        <button type="submit" class="btn btn-primary form-submit">
-          <span class="btn-cross">✝</span>
-          Submit to The Father
-          <span class="btn-cross">✝</span>
-        </button>
-        <p class="form-note">Your confession will be visible to the congregation below.</p>
-      </form>
-      <div id="confessSuccess" style="display:none; text-align:center; padding:20px; color:var(--gold-primary); font-family:var(--font-heading); font-size:13px; letter-spacing:0.1em;">
-        ✝ Your confession has been received. The Father is pleased. ✝
+      </div>
+
+      <div style="margin-top:16px;text-align:center;">
+        <a href="flywheel.html" style="font-family:var(--font-heading);font-size:11px;color:var(--gold-primary);letter-spacing:.08em;">How rewards work →</a>
       </div>
     </div>
   </div>
