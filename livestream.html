@@ -1,86 +1,334 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">  <meta name="description" content="Watch The Father live. Market sermons, chart readings, and congregation events on Pump.fun.">
+  <meta charset="UTF-8">
+  <meta name="description" content="Watch The Father live — The Birth of $PADRE. The first sermon. The congregation assembles.">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Father's Livestream — $PADRE</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <title>The Birth of $PADRE — Father's Livestream</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700;900&family=Cinzel:wght@400;600;700;900&family=IM+Fell+English:ital@0;1&family=UnifrakturMaguntia&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/main.css">
   <style>
-    .stream-full { background:#000; aspect-ratio:16/9; max-width:1200px; margin:0 auto 32px; display:block; width:100%; border:1px solid var(--bg-border); }
+    .stream-full { background:#000; aspect-ratio:16/9; max-width:1200px; margin:0 auto 32px; display:block; width:100%; border:1px solid var(--bg-border); border-radius:var(--radius-lg); overflow:hidden; }
     .stream-full iframe { width:100%; height:100%; border:none; display:block; }
-    .stream-offline-full { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:16px; height:400px; }
+
+    /* Birth hero */
+    .birth-hero {
+      background: var(--bg-void);
+      position: relative;
+      text-align: center;
+      padding: 72px 24px 56px;
+      overflow: hidden;
+      border-bottom: 1px solid var(--bg-border);
+    }
+    .birth-hero::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(ellipse 70% 60% at 50% 40%, rgba(0,230,118,0.08) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    .birth-live-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-family: var(--font-heading);
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: .25em;
+      text-transform: uppercase;
+      color: #FF4444;
+      background: rgba(255,60,60,0.08);
+      border: 1px solid rgba(255,60,60,0.3);
+      border-radius: 2px;
+      padding: 6px 16px;
+      margin-bottom: 24px;
+    }
+    .birth-live-dot {
+      width: 7px; height: 7px;
+      background: #FF4444;
+      border-radius: 50%;
+      animation: livePulse 1.2s ease-in-out infinite;
+      box-shadow: 0 0 8px #FF4444;
+    }
+    @keyframes livePulse { 0%,100%{opacity:1;} 50%{opacity:.4;} }
+
+    .birth-title {
+      font-family: var(--font-display);
+      font-size: clamp(32px, 6vw, 72px);
+      font-weight: 900;
+      color: var(--text-white);
+      line-height: 1.1;
+      margin-bottom: 16px;
+    }
+    .birth-title span { color: var(--gold-primary); text-shadow: 0 0 30px rgba(0,230,118,0.4); }
+
+    .birth-sub {
+      font-family: var(--font-body);
+      font-size: clamp(15px, 2vw, 20px);
+      font-style: italic;
+      color: var(--text-secondary);
+      margin-bottom: 32px;
+      max-width: 600px;
+      margin-left: auto;
+      margin-right: auto;
+      line-height: 1.8;
+    }
+
+    .birth-stats {
+      display: flex;
+      gap: 32px;
+      justify-content: center;
+      flex-wrap: wrap;
+      margin-bottom: 36px;
+    }
+    .birth-stat {
+      text-align: center;
+    }
+    .birth-stat-val {
+      font-family: var(--font-display);
+      font-size: 28px;
+      font-weight: 900;
+      color: var(--gold-primary);
+      text-shadow: 0 0 15px rgba(0,230,118,0.3);
+    }
+    .birth-stat-lbl {
+      font-family: var(--font-heading);
+      font-size: 9px;
+      letter-spacing: .2em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+
+    /* Countdown to next stream */
+    .next-stream-bar {
+      background: linear-gradient(135deg, var(--bg-card), #0A140A);
+      border: 1px solid rgba(0,230,118,0.15);
+      border-radius: var(--radius-lg);
+      padding: 20px 28px;
+      max-width: 600px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+    .next-stream-label {
+      font-family: var(--font-heading);
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: .2em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+    }
+    .next-stream-name {
+      font-family: var(--font-display);
+      font-size: 16px;
+      font-weight: 900;
+      color: var(--gold-primary);
+    }
+    .next-stream-time {
+      font-family: var(--font-heading);
+      font-size: 12px;
+      color: var(--text-secondary);
+      letter-spacing: .05em;
+    }
+
+    /* Stream offline placeholder */
+    .stream-offline-full {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+      height: 420px;
+      background: radial-gradient(ellipse 60% 50% at 50% 50%, rgba(0,230,118,0.04) 0%, transparent 70%);
+    }
+    .stream-cross-pulse {
+      font-size: 72px;
+      color: var(--gold-primary);
+      text-shadow: 0 0 30px rgba(0,230,118,0.3);
+      animation: crossPulse 3s ease-in-out infinite;
+      line-height: 1;
+    }
+
+    /* Action buttons */
+    .stream-actions {
+      display: flex;
+      gap: 14px;
+      justify-content: center;
+      flex-wrap: wrap;
+      margin: 28px 0 0;
+    }
   </style>
 </head>
 <body>
-  <div class="top-bar"><div class="top-bar-inner"><span class="top-bar-item">trenchfather.fun</span><span class="top-bar-divider">✦</span><a href="index.html" class="top-bar-item top-bar-link">← Back to The Church</a>
-      <span class="top-bar-divider">✦</span>
-      <a href="https://x.com/fatherofpumpfun" target="_blank" rel="noopener" class="top-bar-item top-bar-link">𝕏 @fatherofpumpfun</a>
-      <span class="top-bar-divider">✦</span>
-      <a href="https://t.me/fatheroftrenches" target="_blank" rel="noopener" class="top-bar-item top-bar-link">✈ Telegram</a>
-      <span class="top-bar-divider">✦</span>
-      <a href="https://t.me/padreannouncements" target="_blank" rel="noopener" class="top-bar-item top-bar-link">📢 Announcements</a>      <span class="top-bar-divider">✦</span>
-      <a href="https://www.tiktok.com/@thetrenchfather" target="_blank" rel="noopener" class="top-bar-item top-bar-link"><svg viewBox="0 0 24 24" class="icon" style="width:12px;height:12px;margin-right:3px;"><path d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-2.88 2.5 2.89 2.89 0 01-2.89-2.89 2.89 2.89 0 012.89-2.89c.28 0 .54.04.79.1V9.01a6.33 6.33 0 00-.79-.05 6.34 6.34 0 00-6.34 6.34 6.34 6.34 0 006.34 6.34 6.34 6.34 0 006.33-6.34V8.69a8.16 8.16 0 004.84 1.56V6.8a4.85 4.85 0 01-1.07-.11z"/></svg> TikTok</a>
-      <span class="top-bar-divider">✦</span>
-      <a href="https://t.me/fatheroftrenches" target="_blank" rel="noopener" class="top-bar-item top-bar-link">✈ Telegram</a>
-      <span class="top-bar-divider">✦</span>
-      <a href="https://t.me/padreannouncements" target="_blank" rel="noopener" class="top-bar-item top-bar-link">📢 Announcements</a>      <span class="top-bar-divider">✦</span>
-      <a href="https://www.tiktok.com/@thetrenchfather" target="_blank" rel="noopener" class="top-bar-item top-bar-link"><svg viewBox="0 0 24 24" class="icon" style="width:12px;height:12px;margin-right:3px;"><path d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-2.88 2.5 2.89 2.89 0 01-2.89-2.89 2.89 2.89 0 012.89-2.89c.28 0 .54.04.79.1V9.01a6.33 6.33 0 00-.79-.05 6.34 6.34 0 00-6.34 6.34 6.34 6.34 0 006.34 6.34 6.34 6.34 0 006.33-6.34V8.69a8.16 8.16 0 004.84 1.56V6.8a4.85 4.85 0 01-1.07-.11z"/></svg> TikTok</a></div></div>
+
+  <div class="top-bar"><div class="top-bar-inner">
+    <span class="top-bar-item">trenchfather.fun</span>
+    <span class="top-bar-divider">✦</span>
+    <a href="index.html" class="top-bar-item top-bar-link">← The Church</a>
+    <span class="top-bar-divider">✦</span>
+    <a href="https://x.com/fatherofpumpfun" target="_blank" rel="noopener" class="top-bar-item top-bar-link">𝕏 @fatherofpumpfun</a>
+    <span class="top-bar-divider">✦</span>
+    <a href="https://t.me/fatheroftrenches" target="_blank" rel="noopener" class="top-bar-item top-bar-link">✈ Telegram</a>
+    <span class="top-bar-divider">✦</span>
+    <a href="https://t.me/padreannouncements" target="_blank" rel="noopener" class="top-bar-item top-bar-link">📢 Announcements</a>
+    <span class="top-bar-divider">✦</span>
+    <a href="https://www.tiktok.com/@thetrenchfather" target="_blank" rel="noopener" class="top-bar-item top-bar-link"><svg viewBox="0 0 24 24" class="icon" style="width:12px;height:12px;margin-right:3px;"><path d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-2.88 2.5 2.89 2.89 0 01-2.89-2.89 2.89 2.89 0 012.89-2.89c.28 0 .54.04.79.1V9.01a6.33 6.33 0 00-.79-.05 6.34 6.34 0 00-6.34 6.34 6.34 6.34 0 006.34 6.34 6.34 6.34 0 006.33-6.34V8.69a8.16 8.16 0 004.84 1.56V6.8a4.85 4.85 0 01-1.07-.11z"/></svg> TikTok</a>
+  </div></div>
+
   <header class="site-header"><div class="header-inner">
     <div class="header-logo"><a href="index.html" class="logo-link"><div class="logo-cross">✝</div><div class="logo-text"><span class="logo-ticker">$PADRE</span><span class="logo-tagline">Father of Trenches</span></div></a></div>
     <button class="mobile-menu-toggle" id="menuToggle"><span></span><span></span><span></span></button>
-    <nav class="main-nav" id="mainNav">
-        <ul class="nav-list">
-          <li><a href="about.html" class="nav-link">About The Father</a></li>
-          <li><a href="plan-to-ape.html" class="nav-link">Plan to Ape</a></li>
-          <li><a href="livestream.html" class="nav-link" style="color:var(--gold-primary)">Father's Livestream</a></li>
-          <li><a href="sermons.html" class="nav-link">The Sermons</a></li>
-          <li><a href="scripture.html" class="nav-link">Holy Scripture</a></li>
-          <li><a href="roadmap.html" class="nav-link">Roadmap</a></li>
-          <li><a href="dashboard.html" class="nav-link">Dashboard</a></li>
-          <li><a href="flywheel.html" class="nav-link">The Flywheel</a></li>
-          <li><a href="leaderboard.html" class="nav-link">Leaderboard</a></li>
-          <li><a href="offerings.html" class="nav-link nav-highlight">Offerings</a></li>
-          <li><a href="connect-wallet.html" class="nav-link nav-wallet">Connect Wallet</a></li>
-        </ul></nav>
+    <nav class="main-nav" id="mainNav"><ul class="nav-list">
+      <li><a href="about.html" class="nav-link">About The Father</a></li>
+      <li><a href="plan-to-ape.html" class="nav-link">Plan to Ape</a></li>
+      <li><a href="livestream.html" class="nav-link" style="color:var(--gold-primary)">Father's Livestream</a></li>
+      <li><a href="sermons.html" class="nav-link">The Sermons</a></li>
+      <li><a href="scripture.html" class="nav-link">Holy Scripture</a></li>
+      <li><a href="roadmap.html" class="nav-link">Roadmap</a></li>
+      <li><a href="dashboard.html" class="nav-link">Dashboard</a></li>
+      <li><a href="flywheel.html" class="nav-link">The Flywheel</a></li>
+      <li><a href="leaderboard.html" class="nav-link">Leaderboard</a></li>
+      <li><a href="offerings.html" class="nav-link nav-highlight">Offerings</a></li>
+      <li><a href="connect-wallet.html" class="nav-link nav-wallet">Connect Wallet</a></li>
+    </ul></nav>
   </div></header>
 
-  <section style="background:var(--bg-deep);text-align:center;padding:60px 24px 40px;border-bottom:1px solid var(--bg-border);">
-    <div class="section-cross">🔴</div>
-    <h1 class="section-title">Father's Livestream</h1>
-    <p class="section-subtitle">The sermon is live — join the congregation</p>
-    <div class="title-ornament">◆────────────────────────◆</div>
-  </section>
+  <!-- ═══ BIRTH HERO ═══ -->
+  <section class="birth-hero">
+    <div class="birth-live-badge">
+      <span class="birth-live-dot"></span>
+      LIVE NOW
+    </div>
+    <h1 class="birth-title">
+      The Birth of<br>
+      <span>$PADRE</span>
+    </h1>
+    <p class="birth-sub">
+      "In the beginning there was noise. And from the noise, The Father emerged.<br>
+      The congregation assembles. The first sermon begins. History is being made."
+    </p>
 
-  <div class="section-inner" style="padding-top:40px;">
-    <div class="stream-full" id="streamFull">
-      <!-- Replace TWITCH_CHANNEL_NAME with actual Twitch channel -->
-      <div class="stream-offline-full">
-        <div style="font-size:64px;color:var(--gold-deep);animation:crossPulse 3s ease-in-out infinite;">✝</div>
-        <p style="font-family:var(--font-heading);font-size:13px;letter-spacing:.1em;color:var(--text-muted);text-align:center;">The Father is not yet live<br>Check the Stream Schedule for upcoming sermons</p>
-        <a href="#schedule" class="btn btn-outline" style="margin-top:12px;">View Schedule</a>
+    <div class="birth-stats">
+      <div class="birth-stat">
+        <div class="birth-stat-val" id="liveHolders">—</div>
+        <div class="birth-stat-lbl">Souls Saved</div>
+      </div>
+      <div class="birth-stat">
+        <div class="birth-stat-val" id="liveMC">—</div>
+        <div class="birth-stat-lbl">Market Cap</div>
+      </div>
+      <div class="birth-stat">
+        <div class="birth-stat-val" id="livePrice">—</div>
+        <div class="birth-stat-lbl">Price USD</div>
       </div>
     </div>
-    <p style="text-align:center;font-size:12px;color:var(--text-dim);font-family:var(--font-heading);letter-spacing:.08em;margin-bottom:40px;">Live Mon–Fri 9PM EST · Sat 8PM EST · Sun 7PM EST</p>
 
-    <div id="schedule" class="section-header"><div class="section-cross">📅</div><h2 class="section-title">Stream Schedule</h2><div class="title-ornament">◆────────────────◆</div></div>
+    <div class="stream-actions">
+      <a href="https://t.me/fatheroftrenches" target="_blank" rel="noopener" class="btn btn-primary btn-lg">
+        <span class="btn-cross">✝</span> Join the Congregation
+      </a>
+      <a href="plan-to-ape.html" class="btn btn-outline btn-lg">Buy $PADRE Now</a>
+    </div>
+  </section>
+
+  <!-- ═══ STREAM EMBED ═══ -->
+  <div class="section-inner" style="padding-top:40px;">
+    <div class="stream-full" id="streamFull">
+      <div class="stream-offline-full">
+        <div class="stream-cross-pulse">✝</div>
+        <div style="font-family:var(--font-display);font-size:22px;font-weight:900;color:var(--gold-primary);text-shadow:0 0 20px rgba(0,230,118,0.3);">The Father Is Live</div>
+        <p style="font-family:var(--font-heading);font-size:12px;letter-spacing:.1em;color:var(--text-muted);text-align:center;max-width:340px;">Watch on TikTok · Follow for the stream link<br>The congregation is assembling now</p>
+        <div style="display:flex;gap:12px;flex-wrap:wrap;justify-content:center;margin-top:8px;">
+          <a href="https://www.tiktok.com/@thetrenchfather" target="_blank" rel="noopener" class="btn btn-primary">
+            <svg viewBox="0 0 24 24" class="icon"><path d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-2.88 2.5 2.89 2.89 0 01-2.89-2.89 2.89 2.89 0 012.89-2.89c.28 0 .54.04.79.1V9.01a6.33 6.33 0 00-.79-.05 6.34 6.34 0 00-6.34 6.34 6.34 6.34 0 006.34 6.34 6.34 6.34 0 006.33-6.34V8.69a8.16 8.16 0 004.84 1.56V6.8a4.85 4.85 0 01-1.07-.11z"/></svg>
+            Watch on TikTok
+          </a>
+          <a href="https://t.me/padreannouncements" target="_blank" rel="noopener" class="btn btn-outline">📢 Stream Link in Announcements</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ WHAT IS HAPPENING RIGHT NOW ═══ -->
+    <div style="max-width:800px;margin:0 auto 56px;text-align:center;">
+      <div class="section-cross" style="font-size:24px;">✝</div>
+      <h2 class="section-title" style="font-size:clamp(20px,3vw,32px);margin-bottom:12px;">What Is Happening Right Now</h2>
+      <div class="title-ornament" style="margin-bottom:32px;">◆────────────◆</div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;">
+        <div style="background:var(--bg-card);border:1px solid var(--bg-border);border-radius:var(--radius-lg);padding:24px 16px;text-align:center;">
+          <div style="font-size:32px;margin-bottom:12px;">⛪</div>
+          <div style="font-family:var(--font-heading);font-size:12px;font-weight:700;color:var(--text-white);margin-bottom:8px;">The Token Launches</div>
+          <p style="font-size:12px;color:var(--text-secondary);line-height:1.7;">$PADRE is being born on pump.fun. Zero taxes. Zero presale. The Father enters the world pure.</p>
+        </div>
+        <div style="background:var(--bg-card);border:1px solid var(--gold-dark);border-radius:var(--radius-lg);padding:24px 16px;text-align:center;box-shadow:0 0 20px rgba(0,230,118,0.06);">
+          <div style="font-size:32px;margin-bottom:12px;">🕯️</div>
+          <div style="font-family:var(--font-heading);font-size:12px;font-weight:700;color:var(--gold-primary);margin-bottom:8px;">The First Sermon</div>
+          <p style="font-size:12px;color:var(--text-secondary);line-height:1.7;">The Father speaks for the first time. The trenches have a voice. The congregation is being called.</p>
+        </div>
+        <div style="background:var(--bg-card);border:1px solid var(--bg-border);border-radius:var(--radius-lg);padding:24px 16px;text-align:center;">
+          <div style="font-size:32px;margin-bottom:12px;">💰</div>
+          <div style="font-family:var(--font-heading);font-size:12px;font-weight:700;color:var(--text-white);margin-bottom:8px;">The Flywheel Spins</div>
+          <p style="font-size:12px;color:var(--text-secondary);line-height:1.7;">Every trade. Every hour. Every week. The reward system is live. The faithful get paid.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ SCHEDULE ═══ -->
+    <div id="schedule" class="section-header"><div class="section-cross">📅</div><h2 class="section-title">Ongoing Stream Schedule</h2><div class="title-ornament">◆────────────────◆</div></div>
     <div class="schedule-grid">
       <div class="schedule-card"><div class="schedule-day">Mon — Fri</div><div class="schedule-time">9:00 PM EST</div><div class="schedule-name">Evening Mass</div><div class="schedule-desc">Daily market sermon & chart reading</div></div>
       <div class="schedule-card schedule-card--live"><div class="schedule-badge">MAIN EVENT</div><div class="schedule-day">Saturday</div><div class="schedule-time">8:00 PM EST</div><div class="schedule-name">Grand Sunday Service</div><div class="schedule-desc">High Mass — full congregation, special guests</div></div>
-      <div class="schedule-card"><div class="schedule-day">Sunday</div><div class="schedule-time">7:00 PM EST</div><div class="schedule-name">The Weekly Gospel</div><div class="schedule-desc">Weekly recap and prayers for the fallen</div></div>
+      <div class="schedule-card"><div class="schedule-day">Sunday</div><div class="schedule-time">7:00 PM EST</div><div class="schedule-name">The Weekly Gospel</div><div class="schedule-desc">Weekly recap, distribution day, prayers for the fallen</div></div>
+    </div>
+
+    <div style="text-align:center;margin-top:40px;">
+      <a href="flywheel.html" class="btn btn-outline btn-lg" style="margin-right:12px;">How Rewards Work →</a>
+      <a href="plan-to-ape.html" class="btn btn-primary btn-lg">
+        <span class="btn-cross">✝</span> Buy $PADRE Now
+      </a>
     </div>
   </div>
 
-  <footer class="site-footer"><div class="footer-top-ornament"><span class="ornament-line-wide"></span><span class="ornament-cross-lg">✝</span><span class="ornament-line-wide"></span></div><div class="footer-bottom"><p>© 2026 $PADRE — Father of Trenches</p></div></footer>
+  <footer class="site-footer">
+    <div class="footer-top-ornament"><span class="ornament-line-wide"></span><span class="ornament-cross-lg">✝</span><span class="ornament-line-wide"></span></div>
+    <div class="footer-bottom">
+      <p>© 2026 $PADRE — Father of Trenches · trenchfather.fun</p>
+    </div>
+  </footer>
+
+  <script src="js/config.js"></script>
   <script src="js/main.js"></script>
   <script>
-    // Set your Twitch channel here or inject via server
-    const TWITCH_CHANNEL = ''; // e.g. 'fatherofpump'
+    // Embed Twitch if channel is set
+    const TWITCH_CHANNEL = '';
     if (TWITCH_CHANNEL) {
       document.getElementById('streamFull').innerHTML =
-        `<iframe src="https://player.twitch.tv/?channel=${TWITCH_CHANNEL}&parent=${location.hostname}&muted=true" allowfullscreen></iframe>`;
+        `<iframe src="https://player.twitch.tv/?channel=${TWITCH_CHANNEL}&parent=${location.hostname}&muted=false" allowfullscreen></iframe>`;
     }
+
+    // Live stats from Dexscreener
+    async function loadLiveStats() {
+      const ca = window.PADRE_CA;
+      if (!ca) return;
+      try {
+        const res  = await fetch(`https://api.dexscreener.com/latest/dex/tokens/${ca}`);
+        const data = await res.json();
+        const pair = data?.pairs?.[0];
+        if (!pair) return;
+        const fmt = n => n >= 1e6 ? '$'+(n/1e6).toFixed(2)+'M' : n >= 1e3 ? '$'+(n/1e3).toFixed(1)+'K' : '$'+n.toFixed(0);
+        const mc  = document.getElementById('liveMC');
+        const px  = document.getElementById('livePrice');
+        if (mc && pair.fdv)      mc.textContent  = fmt(pair.fdv);
+        if (px && pair.priceUsd) px.textContent  = '$' + parseFloat(pair.priceUsd).toFixed(8);
+      } catch (_) {}
+    }
+    loadLiveStats();
+    setInterval(loadLiveStats, 30000);
   </script>
 </body>
 </html>
