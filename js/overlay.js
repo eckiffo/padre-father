@@ -1,118 +1,81 @@
-/* ═══════════════════════════════════════════════════════════════
-   $PADRE — OBS Overlay JS
-   Uses CommunityRealtimeClient with proper ticket auth
-   Test mode: ?test  |  Live CA override: ?ca=ADDRESS
-   ═══════════════════════════════════════════════════════════════ */
+/* ═══════════════════════════════════════════════════════
+   $PADRE — OBS Overlay  (production)
+   Requires: window.PADRE_CA set in js/config.js
+   ═══════════════════════════════════════════════════════ */
 
 (function () {
   'use strict';
 
-  const _p             = new URLSearchParams(location.search);
-  const TOKEN_ADDRESS  = _p.get('ca') || window.__PADRE_TOKEN || null;
-  const MAX_TOASTS     = 5;
-  const TOAST_DURATION = 7000;
-  const PRICE_INTERVAL = 30_000;
-  const TICKET_REFRESH = 25 * 60 * 1000; // refresh WS ticket every 25min
+  const CA = window.PADRE_CA || new URLSearchParams(location.search).get('ca') || '';
 
-  const IS_TEST = _p.has('test') || !TOKEN_ADDRESS;
+  const PRICE_INTERVAL  = 30_000;   // ms — Dexscreener poll
+  const COMMUNITY_POLL  = 20_000;   // ms — community posts poll
+  const TOAST_DURATION  = 7_000;    // ms — how long each toast stays
+  const MAX_TOASTS      = 5;
+  const SOL_RPC_WS      = 'wss://api.mainnet-beta.solana.com';
+  const SOL_RPC_HTTP    = 'https://api.mainnet-beta.solana.com';
 
   const toastStack = document.getElementById('toastStack');
   const otPrice    = document.getElementById('otPrice');
   const otHolders  = document.getElementById('otHolders');
 
-  /* ─── FAKE WALLET GENERATOR (test mode) ─── */
-  const B58 = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
-  function fakeWallet() {
-    let a = '';
-    for (let i = 0; i < 44; i++) a += B58[Math.floor(Math.random() * B58.length)];
-    return a;
-  }
-  function shortWallet(a) { return a.slice(0, 4) + '…' + a.slice(-4); }
-
-  function fakeBuyAmount() {
-    const amounts = [0.1, 0.25, 0.5, 1, 2, 5, 10, 25, 50];
-    const sol     = amounts[Math.floor(Math.random() * amounts.length)];
-    const tokens  = (sol * (800000 + Math.random() * 400000)).toFixed(0);
-    return { sol, tokens: Number(tokens).toLocaleString() };
+  /* ─── WAITING STATE (no CA yet) ─── */
+  if (!CA) {
+    if (otPrice) otPrice.textContent = 'Set PADRE_CA in config.js';
+    return;
   }
 
-  const DEMO_POSTS = [
-    { author: 'DiamondHandsDevon',  content: '$PADRE is the last coin I will ever need. Congregation WAGMI. Amen 🙏' },
-    { author: 'SolanaPreacher',     content: 'The Father spoke to me in a dream. He said "buy more". I obeyed.' },
-    { author: 'CryptoFaithful',     content: 'Blessed are the diamond hands, for they shall inherit the charts. 💎' },
-    { author: 'HolderOfGains',      content: 'Zero taxes. Zero presale. Zero rug. The Father is pure. Amen.' },
-    { author: 'PumpFaithMaxis',     content: 'Just aped another 5 SOL into $PADRE. The congregation grows stronger.' },
-    { author: 'WalletWarden9',      content: 'Chart looking holy right now. $PADRE forming a golden cross. WAGMI.' },
-    { author: 'RektToRedeemed',     content: 'I was a paperhander once. The Father forgave me. Never again.' },
-    { author: 'OnchainChaplain',    content: 'Telling everyone about $PADRE. The gospel must spread. 📣' },
-    { author: 'GloryBagHolder',     content: 'This community is different. Real faith. Real diamond hands.' },
-    { author: 'BlessedBagger',      content: 'New ATH incoming. The prophecy is being fulfilled. HOLD THE LINE.' },
-  ];
-
-  const DEMO_NAMES = [
-    'FaithfulAper','SolSaint','ChainPilgrim','HolyChadler',
-    'WalletWarden','DiamondDeacon','PumpProphet','MemeMinister',
-    'GloryBagger','RektRedeemer','OnchainOracle','TokenTithes',
-  ];
-
-  const ALERT_TYPES  = ['buy','holder','post','buy','post','holder','buy','post'];
-  let alertCursor    = 0;
-  let fakeHolderCount = 1247;
-  let fakePriceUsd   = 0.00000842;
-  let realtimeClient = null;
-
-  /* ─── PRICE TICKER ─── */
+  /* ═══════════════════ PRICE TICKER ═══════════════════ */
   async function fetchPrice() {
-    if (IS_TEST) {
-      fakePriceUsd *= (0.97 + Math.random() * 0.06);
-      if (otPrice) otPrice.textContent = `$${fakePriceUsd.toFixed(8)}  ·  MC $${fmtNum(fakePriceUsd * 1_000_000_000)}`;
-      return;
-    }
-    if (!TOKEN_ADDRESS) return;
     try {
-      const res  = await fetch(`https://api.dexscreener.com/latest/dex/tokens/${TOKEN_ADDRESS}`);
+      const res  = await fetch(`https://api.dexscreener.com/latest/dex/tokens/${CA}`);
       const data = await res.json();
       const pair = data?.pairs?.[0];
       if (!pair) return;
-      const price = pair.priceUsd ? '$' + parseFloat(pair.priceUsd).toFixed(8) : '—';
-      const fdv   = pair.fdv ? '  ·  MC $' + fmtNum(pair.fdv) : '';
-      if (otPrice) otPrice.textContent = price + fdv;
-    } catch (e) { console.warn('[overlay] price fetch failed', e); }
+
+      const price = pair.priceUsd
+        ? '$' + parseFloat(pair.priceUsd).toFixed(8)
+        : '—';
+      const mc = pair.fdv ? '  ·  MC $' + fmt(pair.fdv) : '';
+      const vol = pair.volume?.h24 ? '  ·  Vol $' + fmt(pair.volume.h24) : '';
+
+      if (otPrice)   otPrice.textContent   = price + mc + vol;
+      if (otHolders) otHolders.textContent = ''; // holder count not in Dexscreener
+    } catch (e) {
+      console.warn('[overlay] price fetch failed', e);
+    }
   }
 
-  function fmtNum(n) {
-    if (n >= 1e9) return (n/1e9).toFixed(2)+'B';
-    if (n >= 1e6) return (n/1e6).toFixed(2)+'M';
-    if (n >= 1e3) return (n/1e3).toFixed(1)+'K';
+  function fmt(n) {
+    if (n >= 1e9) return (n / 1e9).toFixed(2) + 'B';
+    if (n >= 1e6) return (n / 1e6).toFixed(2) + 'M';
+    if (n >= 1e3) return (n / 1e3).toFixed(1) + 'K';
     return Number(n).toFixed(2);
   }
 
-  /* ─── TOAST FACTORY ─── */
-  function createToast({ type, icon, body, isSoul }) {
-    const el    = document.createElement('div');
-    el.className = 'toast' + (isSoul ? ' toast--soul' : '');
-    const time  = new Date().toLocaleTimeString('en-US', { hour:'2-digit', minute:'2-digit' });
+  /* ═══════════════════ TOASTS ═══════════════════ */
+  function pushToast({ type, icon, body, soul }) {
+    const existing = toastStack.querySelectorAll('.toast:not(.toast-exit)');
+    if (existing.length >= MAX_TOASTS) dismiss(existing[0]);
+
+    const el  = document.createElement('div');
+    el.className = 'toast' + (soul ? ' toast--soul' : '');
+    const time = new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+
     el.innerHTML = `
       <div class="toast-header">
         <span class="toast-icon">${icon}</span>
         <span class="toast-type">${esc(type)}</span>
         <span class="toast-time">${time}</span>
       </div>
-      <div class="toast-body">${body}</div>
-    `;
-    return el;
-  }
+      <div class="toast-body">${body}</div>`;
 
-  function pushToast(opts) {
-    const existing = toastStack.querySelectorAll('.toast:not(.toast-exit)');
-    if (existing.length >= MAX_TOASTS) dismissToast(existing[0]);
-    const el    = createToast(opts);
     toastStack.appendChild(el);
-    const timer = setTimeout(() => dismissToast(el), TOAST_DURATION);
-    el.dataset.timer = String(timer);
+    const t = setTimeout(() => dismiss(el), TOAST_DURATION);
+    el.dataset.timer = String(t);
   }
 
-  function dismissToast(el) {
+  function dismiss(el) {
     if (!el || el.classList.contains('toast-exit')) return;
     clearTimeout(parseInt(el.dataset.timer || '0'));
     el.classList.add('toast-exit');
@@ -121,192 +84,222 @@
   }
 
   function esc(s) {
-    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    return String(s)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;');
   }
 
-  /* ─── EVENT HANDLERS ─── */
-  function onNewBuy(wallet, sol, tokens) {
+  function shortWallet(addr) {
+    return String(addr).slice(0, 4) + '…' + String(addr).slice(-4);
+  }
+
+  /* ─── Toast types ─── */
+  function toastBuy(wallet, solAmt, tokenAmt) {
+    const tokens = tokenAmt
+      ? `<strong>${esc(tokenAmt)} $PADRE</strong> for `
+      : '';
     pushToast({
       type: '📈  New Buy — $PADRE',
       icon: '💰',
-      isSoul: false,
-      body: `<span class="toast-author">${esc(shortWallet(wallet))}</span> bought <span class="toast-author">${esc(tokens)} $PADRE</span> for <strong>${sol} SOL</strong>`,
+      soul: false,
+      body: `<span class="toast-author">${esc(shortWallet(wallet))}</span> bought ${tokens}<strong>${esc(solAmt)} SOL</strong>`,
     });
   }
 
-  function onNewHolder(wallet) {
-    fakeHolderCount++;
-    if (otHolders) otHolders.textContent = fakeHolderCount.toLocaleString() + ' Souls Saved';
+  function toastNewHolder(wallet) {
     pushToast({
       type: '✝  A New Soul Has Been Saved',
       icon: '🕯️',
-      isSoul: true,
+      soul: true,
       body: `<span class="toast-author">${esc(shortWallet(wallet))}</span> has received The Father's blessing and joined the congregation.`,
     });
   }
 
-  function onNewPost(post) {
-    const author    = post?.author || post?.username || 'Anonymous';
-    const content   = post?.content || post?.text || '';
+  function toastPost(author, content) {
     const truncated = content.length > 140 ? content.slice(0, 137) + '…' : content;
     pushToast({
       type: '✦  Congregation Speaks',
       icon: '💬',
-      isSoul: false,
+      soul: false,
       body: `<span class="toast-author">${esc(author)}:</span> ${esc(truncated)}`,
     });
   }
 
-  function onNewLike(post) {
-    // Show like events as a smaller toast
-    const author = post?.author || 'Someone';
-    pushToast({
-      type: '♥  Community Activity',
-      icon: '❤️',
-      isSoul: false,
-      body: `<span class="toast-author">${esc(author)}</span>'s post received a new like`,
-    });
-  }
+  /* ═══════════════════ SOLANA RPC — BUY DETECTION ═══════════════════ */
+  let solWs         = null;
+  let txQueue       = [];
+  let processingTx  = false;
+  let seenSigs      = new Set();  // deduplicate within session
 
-  /* ─── REAL-TIME CONNECTION via CommunityRealtimeClient ─── */
-  async function connectRealtime() {
-    if (!TOKEN_ADDRESS) return;
-
-    // Dynamically load the SDK browser bundle
-    // In OBS Browser Source context the page has full network access
+  async function parseTx(sig) {
     try {
-      // Get WS ticket from our server endpoint
-      async function getTicket() {
-        const res  = await fetch('/api/ws-ticket');
-        const data = await res.json();
-        if (!data.ticket) throw new Error('No ticket returned');
-        return data.ticket;
+      const res = await fetch(SOL_RPC_HTTP, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          jsonrpc: '2.0', id: 1,
+          method:  'getTransaction',
+          params:  [sig, { encoding: 'jsonParsed', maxSupportedTransactionVersion: 0 }],
+        }),
+      });
+      const data = await res.json();
+      const tx   = data?.result;
+      if (!tx || tx.meta?.err) return null;          // failed tx, skip
+
+      const keys       = tx.transaction?.message?.accountKeys || [];
+      const preSol     = tx.meta?.preBalances  || [];
+      const postSol    = tx.meta?.postBalances || [];
+      const fee        = tx.meta?.fee || 0;
+
+      // Buyer = first signer; SOL spent = decrease in their balance minus fee
+      const solSpent = (preSol[0] - postSol[0] - fee) / 1e9;
+      if (solSpent < 0.001) return null;             // dust / not a buy
+
+      const buyer = keys[0]?.pubkey || keys[0];
+
+      // Token amount received by any wallet in this tx
+      const preTokens  = tx.meta?.preTokenBalances  || [];
+      const postTokens = tx.meta?.postTokenBalances || [];
+      let tokenReceived = 0;
+      let isNewHolder   = false;
+
+      for (const post of postTokens) {
+        if (post.mint !== CA) continue;
+        const pre     = preTokens.find(p => p.accountIndex === post.accountIndex);
+        const preAmt  = pre?.uiTokenAmount?.uiAmount || 0;
+        const postAmt = post.uiTokenAmount?.uiAmount  || 0;
+        const diff    = postAmt - preAmt;
+        if (diff > tokenReceived) tokenReceived = diff;
+        if (preAmt === 0 && postAmt > 0) isNewHolder = true;
       }
 
-      // Import browser SDK
-      const sdk = await import('https://cdn.jsdelivr.net/npm/@coin-communities/sdk@latest/dist/index.mjs')
-        .catch(() => null);
-
-      if (!sdk?.CommunityRealtimeClient) {
-        console.warn('[overlay] CommunityRealtimeClient not available in browser bundle, falling back to polling');
-        startPolling();
-        return;
-      }
-
-      realtimeClient = sdk.CommunityRealtimeClient.getOrCreate({
-        baseUrl:      'https://api.coin-communities.xyz',
-        tokenAddress: TOKEN_ADDRESS,
-        auth:         { getTicket },
-      });
-
-      realtimeClient.subscribe({
-        onConnect:    () => console.log('[overlay] WS connected'),
-        onDisconnect: () => {
-          console.warn('[overlay] WS disconnected');
-          // Attempt reconnect after 5s
-          setTimeout(connectRealtime, 5000);
-        },
-        onMessage:    (event) => {
-          // New post in community
-          onNewPost(event);
-        },
-        onLike:       (event) => {
-          onNewLike(event);
-        },
-        onModeration: () => {}, // ignore moderation events in overlay
-        onGap:        () => {
-          // Gap = we missed some events; could refetch recent posts here
-          console.warn('[overlay] WS gap detected');
-        },
-      });
-
-      // Refresh ticket before it expires
-      setInterval(async () => {
-        if (realtimeClient) {
-          try { realtimeClient.dispose?.(); } catch (_) {}
-          realtimeClient = null;
-        }
-        connectRealtime();
-      }, TICKET_REFRESH);
-
+      return {
+        buyer:        String(buyer),
+        solSpent:     solSpent.toFixed(3),
+        tokenReceived: tokenReceived > 0
+          ? Number(tokenReceived.toFixed(0)).toLocaleString()
+          : null,
+        isNewHolder,
+      };
     } catch (e) {
-      console.warn('[overlay] realtime init failed, polling instead:', e.message);
-      startPolling();
+      console.warn('[overlay] parseTx failed', e);
+      return null;
     }
   }
 
-  /* ─── POLLING FALLBACK (if WS not available) ─── */
-  let lastSeenId     = null;
-  let pollInterval   = null;
+  async function drainQueue() {
+    if (processingTx || txQueue.length === 0) return;
+    processingTx = true;
 
-  function startPolling() {
-    if (pollInterval) return;
-    console.log('[overlay] starting poll fallback');
-    pollInterval = setInterval(pollCommunity, 15_000);
-    pollCommunity();
+    while (txQueue.length > 0) {
+      const sig    = txQueue.shift();
+      const result = await parseTx(sig);
+      if (result) {
+        if (result.isNewHolder) toastNewHolder(result.buyer);
+        else                    toastBuy(result.buyer, result.solSpent, result.tokenReceived);
+      }
+      // Small delay between RPC calls to avoid rate-limiting
+      await new Promise(r => setTimeout(r, 400));
+    }
+
+    processingTx = false;
   }
+
+  function connectSolanaWS() {
+    if (solWs) { try { solWs.close(); } catch (_) {} }
+
+    solWs = new WebSocket(SOL_RPC_WS);
+
+    solWs.onopen = () => {
+      console.log('[overlay] Solana WS connected');
+      solWs.send(JSON.stringify({
+        jsonrpc: '2.0', id: 1,
+        method:  'logsSubscribe',
+        params:  [
+          { mentions: [CA] },
+          { commitment: 'confirmed' },
+        ],
+      }));
+    };
+
+    solWs.onmessage = (msg) => {
+      try {
+        const data  = JSON.parse(msg.data);
+        if (data.method !== 'logsNotification') return;
+
+        const value = data.params?.result?.value;
+        if (!value || value.err) return;             // failed tx, skip
+
+        const logs = value.logs || [];
+        const sig  = value.signature;
+        if (!sig || seenSigs.has(sig)) return;
+
+        // Only care about buys (pump.fun "Instruction: Buy" or generic swap logs)
+        const isBuy = logs.some(l =>
+          l.includes('Instruction: Buy') ||
+          l.includes('ray_log') ||
+          l.includes('Instruction: Swap')
+        );
+        if (!isBuy) return;
+
+        seenSigs.add(sig);
+        if (seenSigs.size > 200) {
+          // Keep set from growing unbounded
+          const oldest = [...seenSigs].slice(0, 100);
+          oldest.forEach(s => seenSigs.delete(s));
+        }
+
+        txQueue.push(sig);
+        drainQueue();
+      } catch (_) {}
+    };
+
+    solWs.onclose = () => {
+      console.warn('[overlay] Solana WS closed — reconnecting in 4s');
+      setTimeout(connectSolanaWS, 4000);
+    };
+
+    solWs.onerror = () => solWs.close();
+  }
+
+  /* ═══════════════════ COMMUNITY POSTS ═══════════════════ */
+  let lastPostId = null;
 
   async function pollCommunity() {
     try {
-      const res   = await fetch('/api/community?limit=3');
+      const res   = await fetch('/api/community?limit=5');
+      if (!res.ok) return;
       const posts = await res.json();
       if (!Array.isArray(posts) || posts.length === 0) return;
 
       const newest = posts[0];
       if (!newest?.id) return;
-      if (lastSeenId === null) { lastSeenId = newest.id; return; } // first poll, don't toast
-      if (newest.id === lastSeenId) return; // nothing new
+      if (lastPostId === null) { lastPostId = newest.id; return; } // first poll, no toast
+      if (newest.id === lastPostId) return;
 
-      // Toast each new post since last poll
       for (const post of posts) {
-        if (post.id === lastSeenId) break;
-        onNewPost(post);
+        if (post.id === lastPostId) break;
+        const author  = post.author || post.username || 'Anonymous';
+        const content = post.content || post.text || '';
+        if (content) toastPost(author, content);
       }
-      lastSeenId = newest.id;
-    } catch (e) {
-      console.warn('[overlay] poll failed:', e.message);
-    }
+      lastPostId = newest.id;
+    } catch (_) {}
   }
 
-  /* ─── TEST MODE ─── */
-  function startTestMode() {
-    if (otPrice)   otPrice.textContent   = `$${fakePriceUsd.toFixed(8)}  ·  MC $${fmtNum(fakePriceUsd * 1_000_000_000)}`;
-    if (otHolders) otHolders.textContent = `${fakeHolderCount.toLocaleString()} Souls Saved`;
-
-    const badge       = document.createElement('div');
-    badge.style.cssText = 'position:fixed;top:12px;right:12px;font-family:"Cinzel",serif;font-size:10px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;background:rgba(201,168,76,.15);border:1px solid rgba(201,168,76,.4);color:rgba(201,168,76,.7);padding:5px 12px;border-radius:3px;pointer-events:none;';
-    badge.textContent   = '✝ TEST MODE ✝';
-    document.body.appendChild(badge);
-
-    function fireNext() {
-      const type = ALERT_TYPES[alertCursor++ % ALERT_TYPES.length];
-      if (type === 'buy') {
-        const { sol, tokens } = fakeBuyAmount();
-        onNewBuy(fakeWallet(), sol, tokens);
-      } else if (type === 'holder') {
-        onNewHolder(fakeWallet());
-      } else {
-        const p      = DEMO_POSTS[Math.floor(Math.random() * DEMO_POSTS.length)];
-        const author = Math.random() > 0.5 ? p.author : DEMO_NAMES[Math.floor(Math.random() * DEMO_NAMES.length)];
-        onNewPost({ ...p, author });
-      }
-    }
-
-    setTimeout(fireNext, 1500);
-    setInterval(fireNext, 10_000);
-    setInterval(fetchPrice, 30_000);
-  }
-
-  /* ─── INIT ─── */
+  /* ═══════════════════ INIT ═══════════════════ */
   document.addEventListener('DOMContentLoaded', () => {
     fetchPrice();
+    setInterval(fetchPrice, PRICE_INTERVAL);
 
-    if (IS_TEST) {
-      startTestMode();
-    } else {
-      setInterval(fetchPrice, PRICE_INTERVAL);
-      connectRealtime();
-    }
+    connectSolanaWS();
+
+    // Community posts — start polling after 5s delay (let WS connect first)
+    setTimeout(() => {
+      pollCommunity();
+      setInterval(pollCommunity, COMMUNITY_POLL);
+    }, 5000);
   });
 
 })();

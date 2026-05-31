@@ -69,10 +69,9 @@
     });
   }
 
-  /* ─── RESOLVE TOKEN ADDRESS (env var OR ?ca= URL param) ─── */
-  const _urlCA = new URLSearchParams(location.search).get('ca');
-  const RESOLVED_CA = _urlCA
-    || (typeof window.PADRE_TOKEN_ADDRESS !== 'undefined' ? window.PADRE_TOKEN_ADDRESS : null)
+  /* ─── RESOLVE TOKEN ADDRESS ─── */
+  const RESOLVED_CA = new URLSearchParams(location.search).get('ca')
+    || window.PADRE_CA
     || null;
 
   /* ─── COPY CA ─── */

@@ -8,7 +8,7 @@
   'use strict';
 
   const _p           = new URLSearchParams(location.search);
-  const TOKEN        = _p.get('ca') || window.__PADRE_TOKEN || window.PADRE_TOKEN_ADDRESS || null;
+  const TOKEN        = _p.get('ca') || window.PADRE_CA || null;
   const POLL_MS      = 30_000;
 
   /* ─── STAGE DEFINITIONS ─── */

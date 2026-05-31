@@ -208,6 +208,7 @@
     </div>
   </footer>
 
+  <script src="js/config.js"></script>
   <script src="js/main.js"></script>
   <script src="js/blessing-leaderboard.js"></script>
   <script>
@@ -240,8 +241,7 @@
 
     /* ─── Fetch Dexscreener prize estimate ─── */
     async function fetchLbPrize() {
-      const ca = (typeof window.PADRE_TOKEN_ADDRESS !== 'undefined')
-        ? window.PADRE_TOKEN_ADDRESS : null;
+      const ca = window.PADRE_CA || null;
       if (!ca) return null;
       try {
         const res  = await fetch(`https://api.dexscreener.com/latest/dex/tokens/${ca}`);

@@ -1,24 +1,21 @@
 /* ═══════════════════════════════════════════════════════════════
-   $PADRE — Live Candle Roadmap Widget
-   Polls Dexscreener every 30s · 6 stages driven by market cap
-   URL params:
-     ?test         → demo mode, cycles all stages automatically
-     ?stage=0..5   → lock to a specific stage (preview in OBS)
-     ?ca=ADDRESS   → test with any live Solana token address
+   $PADRE — Live Candle Roadmap Widget  (production)
+   Requires: window.PADRE_CA set in js/config.js
+   ?stage=0..5  → lock to a specific stage for OBS layout preview
    ═══════════════════════════════════════════════════════════════ */
 
 (function () {
   'use strict';
 
   /* ─── CONFIG ─── */
-  // Priority: ?ca= URL param → window.__PADRE_TOKEN env var → null (demo mode)
-  const TOKEN_ADDRESS  = new URLSearchParams(location.search).get('ca') || window.__PADRE_TOKEN || null;
-  const POLL_INTERVAL  = 30_000;  // ms between Dexscreener polls
-  const FAKE_HOLDERS   = 1247;    // test mode starting holder count
+  const TOKEN_ADDRESS = window.PADRE_CA
+    || new URLSearchParams(location.search).get('ca')
+    || '';
+  const POLL_INTERVAL = 30_000;
 
-  const params     = new URLSearchParams(location.search);
-  const IS_TEST    = params.has('test') || !TOKEN_ADDRESS;
-  const LOCK_STAGE = params.has('stage') ? parseInt(params.get('stage')) : null;
+  const LOCK_STAGE = new URLSearchParams(location.search).has('stage')
+    ? parseInt(new URLSearchParams(location.search).get('stage'))
+    : null;
 
   /* ─── STAGE DEFINITIONS ─── */
   const STAGES = [
@@ -270,57 +267,19 @@
     }
   }
 
-  /* ─── TEST MODE — cycles through all 6 stages ─── */
-  function startTestMode() {
-    testBadge.style.display = 'block';
-
-    // If ?stage=N is set, just show that one stage with fake data
-    if (LOCK_STAGE !== null) {
-      const stage = STAGES[Math.max(0, Math.min(5, LOCK_STAGE))];
-      const fakeMC = stage.threshold + (stage.nextAt ? (stage.nextAt - stage.threshold) * 0.45 : 0);
-      render(fakeMC, 0.0000042, FAKE_HOLDERS);
-      updateStats(fakeMC, 0.0000042, FAKE_HOLDERS);
-      return;
-    }
-
-    // Otherwise cycle through all stages, 8s each
-    const fakeMCsByStage = [
-      5_000,      // Stage 0: Ember
-      45_000,     // Stage 1: Red
-      280_000,    // Stage 2: Green
-      1_200_000,  // Stage 3: Gold
-      6_500_000,  // Stage 4: God
-      25_000_000, // Stage 5: Holy
-    ];
-    const fakePrices = [0.000000005, 0.000000045, 0.00000028, 0.0000012, 0.0000065, 0.000025];
-
-    let idx = 0;
-
-    function showNext() {
-      const mc      = fakeMCsByStage[idx];
-      const price   = fakePrices[idx];
-      const holders = FAKE_HOLDERS + idx * 1200;
-      render(mc, price, holders);
-      updateStats(mc, price, holders);
-      idx = (idx + 1) % STAGES.length;
-    }
-
-    showNext(); // show immediately
-    setInterval(showNext, 8000); // cycle every 8s
-  }
-
   /* ─── INIT ─── */
   document.addEventListener('DOMContentLoaded', () => {
-    // Set initial stage-0 class and base render
     applyStage(STAGES[0], 0);
     updateStats(0, 0, 0);
 
-    if (IS_TEST) {
-      startTestMode();
-    } else {
-      fetchLiveData();
-      setInterval(fetchLiveData, POLL_INTERVAL);
+    if (!TOKEN_ADDRESS) {
+      stageNameEl.textContent  = 'Set CA in config.js';
+      stageVerseEl.textContent = '';
+      return;
     }
+
+    fetchLiveData();
+    setInterval(fetchLiveData, POLL_INTERVAL);
   });
 
 })();

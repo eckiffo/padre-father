@@ -517,15 +517,7 @@
     </div>
   </footer>
 
-  <!-- TEST CA: BONK — remove and set PADRE_TOKEN_ADDRESS env var after launch -->
-  <script>
-    // Temporary test CA (BONK) — shows live Dexscreener data so you can
-    // preview the price ticker, stats, roadmap candle, and candle widget.
-    // DELETE THIS BLOCK after setting PADRE_TOKEN_ADDRESS in Vercel env vars.
-    if (!window.PADRE_TOKEN_ADDRESS) {
-      window.PADRE_TOKEN_ADDRESS = 'DezXAZ8z7PnrnRJjz3wXBoRgixCa6xjnB7YaB1pPB263'; // BONK
-    }
-  </script>
+  <script src="js/config.js"></script>
   <script src="js/main.js"></script>
   <script src="js/roadmap.js"></script>
   <script>

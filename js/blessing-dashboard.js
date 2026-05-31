@@ -281,8 +281,7 @@
 
   /* Fetch 24h volume from Dexscreener and compute prize = (vol/24) × 1% × 10% */
   async function fetchPrizeEstimate() {
-    const ca = (typeof window.PADRE_TOKEN_ADDRESS !== 'undefined')
-      ? window.PADRE_TOKEN_ADDRESS : null;
+    const ca = window.PADRE_CA || null;
     if (!ca) return null;
     try {
       const res  = await fetch(`https://api.dexscreener.com/latest/dex/tokens/${ca}`);
