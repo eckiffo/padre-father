@@ -4,12 +4,12 @@
    ═══════════════════════════════════════════════════════════════ */
 
 :root {
-  --gold:       #00E676;
-  --gold-bright:#39FF14;
+  --gold:       #FFFFFF;
+  --gold-bright:#FFFFFF;
   --white:      #FFFFFF;
   --white-dim:  rgba(245, 237, 208, 0.85);
   --shadow:     0 2px 20px rgba(0,0,0,0.9), 0 0 40px rgba(0,0,0,0.7);
-  --gold-glow:  0 0 12px rgba(0,230,118,0.5);
+  --gold-glow:  0 0 8px rgba(255,255,255,0.2);
   --font-d:     'Cinzel Decorative', serif;
   --font-h:     'Cinzel', serif;
   --font-f:     'UnifrakturMaguntia', cursive;
@@ -44,11 +44,11 @@ html, body {
   align-items: center;
   gap: 16px;
   background: rgba(0,0,0,0.72);
-  border: 1px solid rgba(0,230,118,0.3);
+  border: 1px solid rgba(255,255,255,0.3);
   border-radius: 3px;
   padding: 10px 20px;
   backdrop-filter: blur(6px);
-  box-shadow: var(--shadow), inset 0 0 0 1px rgba(0,230,118,0.05);
+  box-shadow: var(--shadow), inset 0 0 0 1px rgba(255,255,255,0.05);
   align-self: flex-start;
   min-width: 420px;
 }
@@ -61,8 +61,8 @@ html, body {
 }
 
 @keyframes crossPulse {
-  0%,100% { opacity: 0.8; text-shadow: 0 0 10px rgba(0,230,118,0.4); }
-  50%      { opacity: 1;   text-shadow: 0 0 20px rgba(0,230,118,0.9); }
+  0%,100% { opacity: 0.8; text-shadow: 0 0 10px rgba(255,255,255,0.3); }
+  50%      { opacity: 1;   text-shadow: 0 0 20px rgba(255,255,255,0.6); }
 }
 
 .ot-label {
@@ -75,7 +75,7 @@ html, body {
 }
 
 .ot-divider {
-  color: rgba(0,230,118,0.3);
+  color: rgba(255,255,255,0.3);
   font-size: 10px;
 }
 
@@ -106,13 +106,13 @@ html, body {
 /* ─── INDIVIDUAL TOAST ─── */
 .toast {
   background: rgba(0, 0, 0, 0.80);
-  border: 1px solid rgba(0,230,118,0.4);
+  border: 1px solid rgba(255,255,255,0.4);
   border-left: 3px solid var(--gold);
   border-radius: 3px;
   padding: 14px 20px;
   max-width: 480px;
   min-width: 300px;
-  box-shadow: var(--shadow), 0 0 20px rgba(0,230,118,0.08);
+  box-shadow: var(--shadow), 0 0 20px rgba(255,255,255,0.08);
   backdrop-filter: blur(8px);
   animation: toastIn 0.4s cubic-bezier(0.22, 1, 0.36, 1) forwards;
   position: relative;
@@ -124,7 +124,7 @@ html, body {
   position: absolute;
   top: 0; left: 0; right: 0;
   height: 1px;
-  background: linear-gradient(to right, transparent, rgba(0,230,118,0.5), transparent);
+  background: linear-gradient(to right, transparent, rgba(255,255,255,0.5), transparent);
 }
 
 .toast.toast-exit {
@@ -187,7 +187,7 @@ html, body {
 .toast-time {
   font-family: var(--font-h);
   font-size: 9px;
-  color: rgba(0,230,118,0.3);
+  color: rgba(255,255,255,0.3);
   margin-left: auto;
   letter-spacing: 0.1em;
 }
