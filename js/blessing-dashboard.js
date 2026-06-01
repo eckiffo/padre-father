@@ -349,7 +349,7 @@
               <div style="font-family:'Courier New',monospace;font-size:12px;
                           color:${isMe ? '#00E676' : 'var(--text-secondary)'};
                           overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
-                ${leader.walletShort}
+                ${leader.displayName || leader.walletShort}
                 ${isMe ? '<span style="font-family:var(--font-heading);font-size:9px;letter-spacing:.1em;color:#00E676;">&nbsp;(YOU)</span>' : ''}
               </div>
               <div style="font-family:var(--font-heading);font-size:10px;color:var(--text-muted);margin-top:3px;">
@@ -388,7 +388,7 @@
             <span style="font-size:26px;">🏆</span>
             <div style="flex:1;">
               <div style="font-family:'Courier New',monospace;font-size:12px;color:var(--text-secondary);">
-                ${winner.walletShort}
+                ${winner.displayName || winner.walletShort}
               </div>
               <div style="font-family:var(--font-heading);font-size:10px;color:var(--text-muted);margin-top:3px;">
                 ${winner.activityScore} pts &nbsp;·&nbsp;
