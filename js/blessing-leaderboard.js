@@ -61,10 +61,15 @@
 
         const numClass = entry.position <= 3 ? 'lb-rank-num top3' : 'lb-rank-num';
 
+        const displayName = entry.username
+          ? '@' + entry.username
+          : entry.walletShort;
+
         tr.innerHTML = `
           <td><span class="${numClass}">${toRoman(entry.position)}</span></td>
           <td>
-            <span class="lb-wallet ${isMe ? 'is-me' : ''}">${entry.walletShort}</span>
+            <span class="lb-wallet ${isMe ? 'is-me' : ''}">${esc(displayName)}</span>
+            <span style="font-family:'Courier New',monospace;font-size:9px;color:var(--text-muted);margin-left:6px;opacity:0.5;">${entry.walletShort}</span>
             ${isMe ? '<span class="lb-wallet-tag">YOU</span>' : ''}
             ${isSaint    ? '<span class="lb-wallet-tag" style="color:#fff;border-color:rgba(255,255,255,0.3)">✝ SAINT</span>'   : ''}
             ${isCardinal ? '<span class="lb-wallet-tag" style="color:#FF4444;border-color:#CC0000">🔴 CARDINAL</span>' : ''}
@@ -107,6 +112,10 @@
       $('lbError').textContent = 'Failed to load leaderboard. Please refresh.';
       $('lbError').style.display = 'block';
     }
+  }
+
+  function esc(s) {
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
   }
 
   function toRoman(n) {
