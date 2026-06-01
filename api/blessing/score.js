@@ -8,7 +8,10 @@
 import { SCORE_CONFIG, CACHE_TTL_SECONDS, getRankForScore, cors } from './_config.js';
 import { kvGet, kvSet, kvZadd, kvExpire, kvScard } from './_kv.js';
 
-const RPC_URL     = process.env.SOLANA_RPC_URL     || 'https://api.mainnet-beta.solana.com';
+// Use multiple RPC fallbacks — public mainnet is rate-limited, try alternatives
+const RPC_URL = process.env.SOLANA_RPC_URL
+  || 'https://solana-mainnet.rpc.extrnode.com'
+  || 'https://api.mainnet-beta.solana.com';
 const TOKEN_ADDR  = process.env.PADRE_TOKEN_ADDRESS || null;
 const CC_API_KEY  = process.env.CC_API_KEY          || null;
 

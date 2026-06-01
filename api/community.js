@@ -44,8 +44,8 @@ export default async function handler(req, res) {
     const raw      = result?.data;
     const messages = Array.isArray(raw) ? raw : (raw?.messages || raw?.data || []);
 
-    // Map to a consistent shape for the frontend
-    const posts = messages.map(m => ({
+    // Map to a consistent shape for the frontend (slice to requested limit)
+    const posts = messages.slice(0, limit).map(m => ({
       id:        m.id || m.message_id,
       author:    m.author?.username || m.username || m.user?.username || 'Anonymous',
       wallet:    m.author?.wallet_address || m.wallet_address || m.wallet || m.user?.wallet_address || null,
