@@ -4,7 +4,7 @@
  * Caches in Vercel KV for 30 minutes unless ?refresh=1
  */
 
-import { Connection, PublicKey } from '@solana/web3.js';
+// @solana/web3.js imported lazily inside computeHoldScore to avoid Vercel cold-start crashes
 import { SCORE_CONFIG, CACHE_TTL_SECONDS, getRankForScore, cors } from './_config.js';
 import { kvGet, kvSet, kvZadd, kvExpire, kvScard } from './_kv.js';
 
@@ -106,13 +106,12 @@ async function computeHoldScore(wallet) {
     holdStart: null, holderTier: 'Standard Holder',
   };
 
-  if (!TOKEN_ADDR) {
-    // No token yet — return demo data
-    return { ...result, balance: 0, holderTier: 'Token not launched' };
-  }
+  if (!TOKEN_ADDR) return { ...result, holderTier: 'Token not launched' };
 
   try {
-    const connection  = new Connection(RPC_URL, { commitment: 'confirmed', disableRetryOnRateLimit: true });
+    // Lazy import to avoid Vercel cold-start crashes
+    const { Connection, PublicKey } = await import('@solana/web3.js');
+    const connection   = new Connection(RPC_URL, { commitment: 'confirmed', disableRetryOnRateLimit: true });
     const walletPubkey = new PublicKey(wallet);
     const mintPubkey   = new PublicKey(TOKEN_ADDR);
 
