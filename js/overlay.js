@@ -40,7 +40,6 @@
       const vol = pair.volume?.h24 ? '  ·  Vol $' + fmt(pair.volume.h24) : '';
 
       if (otPrice)   otPrice.textContent   = price + mc + vol;
-      if (otHolders) otHolders.textContent = ''; // holder count not in Dexscreener
     } catch (e) {
       console.warn('[overlay] price fetch failed', e);
     }

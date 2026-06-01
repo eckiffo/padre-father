@@ -236,9 +236,9 @@
 
   /* ─── UPDATE STATS ─── */
   function updateStats(mc, price, holders) {
-    statMC.textContent      = mc      ? formatMC(mc)         : '—';
-    statPrice.textContent   = price   ? formatPrice(price)   : '—';
-    statHolders.textContent = holders ? holders.toLocaleString() : '—';
+    statMC.textContent      = mc    ? formatMC(mc)       : '—';
+    statPrice.textContent   = price ? formatPrice(price) : '—';
+    if (statHolders) statHolders.style.display = 'none'; // hide — no reliable holder count source
   }
 
   /* ─── RENDER (from data) ─── */
@@ -259,7 +259,7 @@
 
       currentMC      = pair.fdv            || 0;
       currentPrice   = parseFloat(pair.priceUsd || 0);
-      currentHolders = pair.txns?.h24?.buys || 0; // Dexscreener doesn't give holder count directly
+      currentHolders = 0; // Dexscreener doesn't expose holder count — hide rather than show wrong number
 
       render(currentMC, currentPrice, currentHolders);
     } catch (e) {
