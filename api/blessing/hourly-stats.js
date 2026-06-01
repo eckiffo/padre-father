@@ -11,8 +11,8 @@
  * No cron required — lazy evaluation on each request.
  */
 
-import { kv } from '@vercel/kv';
 import { cors } from './_config.js';
+import { kvZrange, kvGet, kvSet } from './_kv.js';
 
 export default async function handler(req, res) {
   cors(res);
@@ -24,39 +24,28 @@ export default async function handler(req, res) {
     const prevBucket = getHourBucket(new Date(now.getTime() - 3_600_000));
 
     /* ── Current hour top 10 ── */
-    const currentRaw = await kv.zrange(`hourly:${hourBucket}`, 0, 9, {
-      rev: true,
-      withScores: true,
-    }).catch(() => []);
-
+    const currentRaw  = await kvZrange(`hourly:${hourBucket}`, 0, 9, { rev: true, withScores: true });
     const currentHour = parseLeaderboard(currentRaw);
 
     /* ── Last hour winners (stored when hour rolled over) ── */
-    let lastHour = await kv.get(`hourly:winners:${prevBucket}`).catch(() => null);
+    let lastHour = await kvGet(`hourly:winners:${prevBucket}`);
 
     /* ── If last hour winners not yet stored, compute them now ── */
     if (!lastHour) {
-      const prevRaw = await kv.zrange(`hourly:${prevBucket}`, 0, 9, {
-        rev: true,
-        withScores: true,
-      }).catch(() => []);
-
+      const prevRaw = await kvZrange(`hourly:${prevBucket}`, 0, 9, { rev: true, withScores: true });
       if (prevRaw.length > 0) {
         const prevEntries = parseLeaderboard(prevRaw);
         lastHour = buildWinners(prevEntries);
-        // Cache it
-        await kv.set(`hourly:winners:${prevBucket}`, lastHour, {
-          ex: 7 * 24 * 60 * 60, // keep 1 week
-        }).catch(() => {});
+        await kvSet(`hourly:winners:${prevBucket}`, lastHour, { ex: 7 * 24 * 60 * 60 });
       }
     }
 
     /* ── Hourly reward config ── */
-    const config = await kv.get('hourly:config').catch(() => null) || {
-      active:    true,
-      rewards:   ['0.05 SOL', '0.03 SOL', '0.02 SOL'], // 1st, 2nd, 3rd
-      currency:  'SOL',
-      note:      'Distributed manually within 1 hour of each winner',
+    const config = await kvGet('hourly:config') || {
+      active:   true,
+      rewards:  ['0.05 SOL', '0.03 SOL', '0.02 SOL'],
+      currency: 'SOL',
+      note:     'Distributed manually within 1 hour of each winner',
     };
 
     /* ── Next reward timestamp ── */

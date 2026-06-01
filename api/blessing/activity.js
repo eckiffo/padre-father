@@ -3,12 +3,10 @@
  * Called when a community event fires (new post, reply, like).
  * Records activity into the current hour bucket for that wallet.
  * Body: { wallet, type: 'post' | 'reply' | 'like' }
- *
- * Also called by the overlay WebSocket onMessage handler.
  */
 
-import { kv } from '@vercel/kv';
 import { SCORE_CONFIG, cors } from './_config.js';
+import { kvZincrby, kvExpire } from './_kv.js';
 
 export default async function handler(req, res) {
   cors(res);
@@ -26,18 +24,11 @@ export default async function handler(req, res) {
 
   if (!points) return res.status(400).json({ error: 'invalid type' });
 
-  try {
-    const hourBucket = new Date().toISOString().slice(0, 13);
-    const key        = `hourly:${hourBucket}`;
+  const hourBucket = new Date().toISOString().slice(0, 13);
+  const key        = `hourly:${hourBucket}`;
 
-    // Increment this wallet's hourly score
-    await kv.zincrby(key, points, wallet);
-    // Expire after 48h
-    await kv.expire(key, 48 * 60 * 60);
+  await kvZincrby(key, points, wallet);
+  await kvExpire(key, 48 * 60 * 60);
 
-    return res.status(200).json({ ok: true });
-  } catch (e) {
-    console.error('[activity]', e);
-    return res.status(500).json({ error: 'failed' });
-  }
+  return res.status(200).json({ ok: true });
 }

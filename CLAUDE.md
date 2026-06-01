@@ -204,8 +204,19 @@ Both read CA from `window.PADRE_CA` (set in `js/config.js`).
 
 ---
 
+## Blessing Score Sync (Active)
+
+`/api/blessing/sync` runs every 15 minutes via Vercel cron.
+- Fetches all $PADRE community members from CC SDK (`getCommunityMembersServer`)
+- For each wallet-linked member: writes `social:{wallet}` to KV (posts/replies/likes/score, 7d TTL)
+- Updates `hourly:YYYY-MM-DDTHH` sorted set (activity points for hourly race)
+- Updates `leaderboard:social` sorted set
+- `score.js` reads `social:{wallet}` first (fast path); falls back to live CC query if stale/missing
+- Manual trigger: `GET /api/blessing/sync?secret=SYNC_SECRET` (set `SYNC_SECRET` env var)
+- Vercel cron sends `Authorization: Bearer $CRON_SECRET` header automatically
+
 ## Launch Checklist
-- [ ] Set `window.PADRE_CA` in `js/config.js`
+- [x] Set `window.PADRE_CA` in `js/config.js` → `HNVYhd7CMfCYDgDiRBKzx1gvZVqYohjMMFmRS1n8pump`
 - [ ] Set `PADRE_TOKEN_ADDRESS` in Vercel env vars
 - [ ] Drop `padre-hero-1.mp4` + `padre-hero-2.mp4` into `videos/`
 - [ ] Verify Dexscreener embed showing live data

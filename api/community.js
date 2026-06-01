@@ -27,26 +27,28 @@ export default async function handler(req, res) {
   const offset = Math.max(parseInt(req.query.offset || '0',  10), 0);
 
   try {
-    const { configureApi, getMessages } = await import('@coin-communities/sdk/node');
+    // All CC SDK functions live under api.* — not top-level named exports
+    const { configureApi, api } = await import('@coin-communities/sdk/node');
 
     configureApi({
       baseUrl: 'https://api.coin-communities.xyz',
       headers: { 'x-api-key': apiKey },
     });
 
-    // Correct method: getMessages (not getPosts)
-    const result = await getMessages(
-      { token_address: tokenAddress },
-      { limit, offset }
-    );
+    // getMessages requires Bearer JWT — use getMessagesPublic (works with x-api-key)
+    const result = await api.getMessagesPublic({
+      path:  { token_address: tokenAddress },
+      query: { limit, offset },
+    });
 
-    // Normalise to array regardless of response shape
-    const messages = Array.isArray(result) ? result : (result?.messages || result?.data || []);
+    const raw      = result?.data;
+    const messages = Array.isArray(raw) ? raw : (raw?.messages || raw?.data || []);
 
     // Map to a consistent shape for the frontend
     const posts = messages.map(m => ({
       id:        m.id || m.message_id,
       author:    m.author?.username || m.username || m.user?.username || 'Anonymous',
+      wallet:    m.author?.wallet_address || m.wallet_address || m.wallet || m.user?.wallet_address || null,
       content:   m.content || m.text || m.body || '',
       createdAt: m.created_at || m.createdAt || m.timestamp,
       likes:     m.likes_count || m.likesCount || 0,

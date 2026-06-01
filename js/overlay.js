@@ -263,8 +263,42 @@
     solWs.onerror = () => solWs.close();
   }
 
-  /* ═══════════════════ COMMUNITY POSTS ═══════════════════ */
+  /* ═══════════════════ COMMUNITY FEED ═══════════════════ */
   let lastPostId = null;
+  let feedPosts  = [];
+
+  const feedList = document.getElementById('feedList');
+
+  function timeAgoShort(ts) {
+    if (!ts) return '';
+    const s = Math.floor((Date.now() - new Date(ts).getTime()) / 1000);
+    if (s < 60)    return s + 's';
+    if (s < 3600)  return Math.floor(s / 60) + 'm';
+    if (s < 86400) return Math.floor(s / 3600) + 'h';
+    return Math.floor(s / 86400) + 'd';
+  }
+
+  function renderFeed(posts, newIds = new Set()) {
+    if (!feedList) return;
+    if (!posts.length) {
+      feedList.innerHTML = '<div class="feed-empty">awaiting the faithful…</div>';
+      return;
+    }
+    feedList.innerHTML = posts.map(p => {
+      const author  = esc(p.author || 'anon');
+      const content = esc((p.content || '').slice(0, 120));
+      const time    = timeAgoShort(p.createdAt);
+      const isNew   = newIds.has(p.id);
+      return `
+        <div class="feed-post${isNew ? ' feed-new' : ''}">
+          <div class="feed-post-top">
+            <span class="feed-post-author">${author}</span>
+            <span class="feed-post-time">${time}</span>
+          </div>
+          <div class="feed-post-content">${content}</div>
+        </div>`;
+    }).join('');
+  }
 
   async function pollCommunity() {
     try {
@@ -275,18 +309,36 @@
 
       const newest = posts[0];
       if (!newest?.id) return;
-      if (lastPostId === null) { lastPostId = newest.id; return; } // first poll, no toast
-      if (newest.id === lastPostId) return;
 
-      for (const post of posts) {
-        if (post.id === lastPostId) break;
-        const author  = post.author || post.username || 'Anonymous';
-        const content = post.content || post.text || '';
-        if (content) toastPost(author, content);
+      // Which posts are brand new since last poll
+      const newIds = new Set();
+      if (lastPostId !== null) {
+        for (const post of posts) {
+          if (post.id === lastPostId) break;
+          newIds.add(post.id);
+        }
       }
+
+      // Always update the feed panel
+      feedPosts = posts;
+      renderFeed(feedPosts, newIds);
+
+      // Toast for each new post
+      if (lastPostId !== null) {
+        for (const post of [...posts].reverse()) {
+          if (!newIds.has(post.id)) continue;
+          const author  = post.author || 'Anonymous';
+          const content = post.content || '';
+          if (content) toastPost(author, content);
+        }
+      }
+
       lastPostId = newest.id;
     } catch (_) {}
   }
+
+  // Refresh timestamps in panel every 30s without re-fetching
+  setInterval(() => { if (feedPosts.length) renderFeed(feedPosts); }, 30_000);
 
   /* ═══════════════════ INIT ═══════════════════ */
   document.addEventListener('DOMContentLoaded', () => {
@@ -295,11 +347,9 @@
 
     connectSolanaWS();
 
-    // Community posts — start polling after 5s delay (let WS connect first)
-    setTimeout(() => {
-      pollCommunity();
-      setInterval(pollCommunity, COMMUNITY_POLL);
-    }, 5000);
+    // Community — poll immediately to populate feed panel, then every 20s
+    pollCommunity();
+    setInterval(pollCommunity, COMMUNITY_POLL);
   });
 
 })();

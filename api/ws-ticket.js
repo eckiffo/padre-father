@@ -19,15 +19,15 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { configureApi, getWsTicketServer } = await import('@coin-communities/sdk/node');
+    const { configureApi, api } = await import('@coin-communities/sdk/node');
 
     configureApi({
       baseUrl: 'https://api.coin-communities.xyz',
       headers: { 'x-api-key': apiKey },
     });
 
-    const result = await getWsTicketServer({ token_address: tokenAddress });
-    const ticket = result?.ticket || result?.token || result;
+    const result = await api.getWsTicketServer({ path: { token_address: tokenAddress } });
+    const ticket = result?.data?.ticket || result?.ticket || result?.token;
 
     return res.status(200).json({ ticket, tokenAddress });
   } catch (e) {

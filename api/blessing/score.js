@@ -4,9 +4,9 @@
  * Caches in Vercel KV for 30 minutes unless ?refresh=1
  */
 
-import { kv }        from '@vercel/kv';
 import { Connection, PublicKey } from '@solana/web3.js';
 import { SCORE_CONFIG, CACHE_TTL_SECONDS, getRankForScore, cors } from './_config.js';
+import { kvGet, kvSet, kvZadd, kvExpire, kvScard } from './_kv.js';
 
 const RPC_URL     = process.env.SOLANA_RPC_URL     || 'https://api.mainnet-beta.solana.com';
 const TOKEN_ADDR  = process.env.PADRE_TOKEN_ADDRESS || null;
@@ -31,16 +31,12 @@ export default async function handler(req, res) {
   /* ─── Cache check ─── */
   const cacheKey = `wallet:${wallet}`;
   if (!refresh) {
-    try {
-      const cached = await kv.get(cacheKey);
-      if (cached && cached.lastUpdated) {
-        const age = (Date.now() - new Date(cached.lastUpdated).getTime()) / 1000;
-        if (age < CACHE_TTL_SECONDS) {
-          return res.status(200).json({ ...cached, cached: true });
-        }
+    const cached = await kvGet(cacheKey);
+    if (cached && cached.lastUpdated) {
+      const age = (Date.now() - new Date(cached.lastUpdated).getTime()) / 1000;
+      if (age < CACHE_TTL_SECONDS) {
+        return res.status(200).json({ ...cached, cached: true });
       }
-    } catch (e) {
-      console.warn('[score] KV get failed, recomputing:', e.message);
     }
   }
 
@@ -58,10 +54,8 @@ export default async function handler(req, res) {
   // Real distribution: total pool × (this score / total leaderboard score)
   // For now we store 0 and update during distribution
   let existingClaimed = 0;
-  try {
-    const existing = await kv.get(cacheKey);
-    existingClaimed = existing?.claimed || 0;
-  } catch (_) {}
+  const existing = await kvGet(cacheKey);
+  existingClaimed = existing?.claimed || 0;
 
   const scoreRecord = {
     wallet,
@@ -88,27 +82,16 @@ export default async function handler(req, res) {
   };
 
   /* ─── Store in KV + update leaderboard + hourly bucket ─── */
-  try {
-    await kv.set(cacheKey, scoreRecord, { ex: CACHE_TTL_SECONDS * 2 });
-    await kv.zadd('leaderboard', { score: totalScore, member: wallet });
+  await kvSet(cacheKey, scoreRecord, { ex: CACHE_TTL_SECONDS * 2 });
+  await kvZadd('leaderboard', { score: totalScore, member: wallet });
 
-    // Update hourly activity bucket (social score = activity this session)
-    // We use social score as proxy for activity level
-    if (socialResult.score > 0) {
-      const hourBucket = new Date().toISOString().slice(0, 13);
-      const activityScore = (socialResult.posts   * 25) +
-                            (socialResult.replies  * 10) +
-                            (socialResult.likes    *  5);
-      // zadd with NX so we take the max (most active reading)
-      await kv.zadd(`hourly:${hourBucket}`, {
-        score:  activityScore,
-        member: wallet,
-      });
-      // Expire hourly buckets after 48h
-      await kv.expire(`hourly:${hourBucket}`, 48 * 60 * 60);
-    }
-  } catch (e) {
-    console.warn('[score] KV write failed:', e.message);
+  if (socialResult.score > 0) {
+    const hourBucket   = new Date().toISOString().slice(0, 13);
+    const activityScore = (socialResult.posts   * 25) +
+                          (socialResult.replies  * 10) +
+                          (socialResult.likes    *  5);
+    await kvZadd(`hourly:${hourBucket}`, { score: activityScore, member: wallet });
+    await kvExpire(`hourly:${hourBucket}`, 48 * 60 * 60);
   }
 
   return res.status(200).json({ ...scoreRecord, cached: false });
@@ -218,92 +201,61 @@ async function computeHoldScore(wallet) {
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   SOCIAL SCORE (Coin Communities SDK — correct methods)
-   Flow: getUserByWallet(address) → user_id
-         getMessages(token_address) → filter by user_id for posts
-         getReplies per message → count authored replies
+   SOCIAL SCORE
+   Fast path: read from `social:${wallet}` KV cache written by /api/blessing/sync
+   Slow path (fallback): query CC SDK directly if no cached data yet
    ═══════════════════════════════════════════════════════════════ */
 async function computeSocialScore(wallet) {
   const result = { score: 0, posts: 0, replies: 0, likes: 0 };
 
   if (!CC_API_KEY || !TOKEN_ADDR) return result;
 
+  // Fast path — sync job pre-populates this every 15 min
+  const socialCached = await kvGet(`social:${wallet}`);
+  if (socialCached && socialCached.updatedAt) {
+    const ageMs = Date.now() - new Date(socialCached.updatedAt).getTime();
+    if (ageMs < 20 * 60 * 1000) {
+      return {
+        score:   socialCached.score   || 0,
+        posts:   socialCached.posts   || 0,
+        replies: socialCached.replies || 0,
+        likes:   socialCached.likes   || 0,
+      };
+    }
+  }
+
   try {
-    const {
-      configureApi,
-      getUserByWallet,
-      getMessagesServer,
-      getCommunityMembersServer,
-    } = await import('@coin-communities/sdk/node');
+    // All CC SDK functions live under api.* — not top-level named exports
+    const { configureApi, api } = await import('@coin-communities/sdk/node');
 
     configureApi({
       baseUrl: 'https://api.coin-communities.xyz',
       headers: { 'x-api-key': CC_API_KEY },
     });
 
-    /* ── Step 1: Resolve wallet → user_id ── */
-    let userId = null;
+    /* Count messages authored by this wallet using getMessagesPublic
+       walletAddress is a top-level field on each message — no user lookup needed */
     try {
-      const user = await getUserByWallet({ address: wallet });
-      userId = user?.id || user?.user_id || user?.userId || null;
-    } catch (e) {
-      // Wallet not linked to a CC account — social score stays 0
-      console.warn('[social] getUserByWallet failed:', e.message);
-      return result;
-    }
+      const res  = await api.getMessagesPublic({
+        path:  { token_address: TOKEN_ADDR },
+        query: { limit: 200 },
+      });
+      const raw  = res?.data;
+      const msgs = Array.isArray(raw) ? raw : (raw?.messages || raw?.data || []);
 
-    if (!userId) return result;
-
-    /* ── Step 2: Count community member stats ──
-       getCommunityMembersServer may return per-member activity counts.
-       If not, fall back to counting messages manually. */
-    let gotStatsFromMembers = false;
-    try {
-      const members = await getCommunityMembersServer({ token_address: TOKEN_ADDR });
-      if (Array.isArray(members)) {
-        const me = members.find(m =>
-          m.user_id === userId || m.userId === userId || m.id === userId
-        );
-        if (me) {
-          result.posts   = me.post_count   || me.postCount   || me.posts   || 0;
-          result.replies = me.reply_count  || me.replyCount  || me.replies || 0;
-          result.likes   = me.like_count   || me.likeCount   || me.likes   || 0;
-          gotStatsFromMembers = true;
-        }
+      for (const m of msgs) {
+        const msgWallet = m.walletAddress || m.wallet_address;
+        if (!msgWallet || msgWallet.toLowerCase() !== wallet.toLowerCase()) continue;
+        if (m.parentMessageId || m.parent_message_id || m.parentId) result.replies++;
+        else result.posts++;
+        // likes given by this user aren't tracked in messages — use 0 or sync job
       }
     } catch (e) {
-      console.warn('[social] getCommunityMembersServer failed:', e.message);
-    }
-
-    /* ── Step 3: Fallback — count messages manually ── */
-    if (!gotStatsFromMembers) {
-      try {
-        // Fetch up to 200 recent messages and count by this user
-        const messages = await getMessagesServer(
-          { token_address: TOKEN_ADDR },
-          { limit: 200, offset: 0 }
-        );
-        const msgs = Array.isArray(messages) ? messages : (messages?.messages || messages?.data || []);
-
-        for (const m of msgs) {
-          const authorId = m.user_id || m.userId || m.author?.id;
-          if (authorId === userId) {
-            if (m.parent_id || m.parentId || m.reply_to) {
-              result.replies++;
-            } else {
-              result.posts++;
-            }
-          }
-        }
-      } catch (e) {
-        console.warn('[social] getMessagesServer failed:', e.message);
-      }
+      console.warn('[social] getMessagesPublic failed:', e.message);
     }
 
     const { social } = SCORE_CONFIG;
-    result.score = (result.posts   * social.post) +
-                   (result.replies * social.reply) +
-                   (result.likes   * social.like);
+    result.score = (result.posts * social.post) + (result.replies * social.reply) + (result.likes * social.like);
 
   } catch (e) {
     console.warn('[social] CC SDK error:', e.message);
@@ -316,14 +268,10 @@ async function computeSocialScore(wallet) {
    REFERRAL SCORE
    ═══════════════════════════════════════════════════════════════ */
 async function getReferralScore(wallet) {
-  try {
-    const count = await kv.scard(`referrals:${wallet}`) || 0;
-    return count * SCORE_CONFIG.referral.perWallet;
-  } catch (_) { return 0; }
+  const count = await kvScard(`referrals:${wallet}`);
+  return count * SCORE_CONFIG.referral.perWallet;
 }
 
 async function getReferralCount(wallet) {
-  try {
-    return await kv.scard(`referrals:${wallet}`) || 0;
-  } catch (_) { return 0; }
+  return await kvScard(`referrals:${wallet}`);
 }
