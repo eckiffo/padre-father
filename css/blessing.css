@@ -725,3 +725,85 @@
   .lb-table td:nth-child(3) { display: none; } /* hide tier on mobile */
   .tier-cards { grid-template-columns: 1fr; }
 }
+
+/* ═══════════════════════════ DESIGN REFRESH ═══════════════════════════
+   More space, cleaner hierarchy, better card feel
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* ── Leaderboard: wider, more air ── */
+.leaderboard-layout {
+  max-width: 1100px;
+  padding: 60px 32px 100px;
+}
+
+/* ── Dashboard: more padding ── */
+.dashboard-grid {
+  max-width: 1200px;
+  padding: 60px 32px 100px;
+  gap: 36px;
+}
+
+/* ── Cards: subtle gradient ── */
+.score-card,
+.detail-panel,
+.claim-box,
+.share-badge {
+  background: linear-gradient(145deg, #131313, #0e0e0e);
+  border-color: rgba(255,255,255,0.07);
+}
+
+/* ── Panel header: slightly taller ── */
+.panel-header { padding: 16px 24px; }
+.panel-body   { padding: 24px; }
+
+/* ── Score card: more room ── */
+.score-card-top    { padding: 40px 32px 28px; }
+.score-breakdown   { padding: 24px 32px; }
+.score-card-actions{ padding: 24px 32px; }
+.score-progress    { padding: 20px 32px; }
+.referral-box      { padding: 20px 32px; }
+
+/* ── Score value: slightly larger ── */
+.score-value { font-size: 60px; }
+
+/* ── Table rows: taller, easier to scan ── */
+.lb-table td { padding: 16px 16px; font-size: 13px; }
+.lb-table th  { padding: 11px 16px; }
+
+/* ── Stat mini: more padding ── */
+.stat-mini { padding: 18px 14px; }
+.stat-mini-val { font-size: 22px; }
+
+/* ── Hold detail rows: more space ── */
+.hold-detail-row { padding: 13px 0; }
+.hold-detail-key  { font-size: 11px; }
+.hold-detail-val  { font-size: 13px; }
+
+/* ── Breakdown rows: more space ── */
+.breakdown-row  { margin-bottom: 16px; }
+.breakdown-label{ font-size: 11px; }
+.breakdown-pts  { font-size: 12px; }
+
+/* ── Hero: more impact ── */
+.blessing-hero { padding: 96px 24px 80px; }
+
+/* ── Rank tiers table: wider ── */
+.tier-cards { gap: 20px; }
+
+/* ── Wallet tag: cleaner ── */
+.lb-wallet-tag { font-size: 9px; padding: 3px 7px; border-radius: 3px; }
+
+/* ── Connect gate: more breathing room ── */
+.connect-gate { padding: 80px 24px; }
+.connect-gate-icon { font-size: 64px; margin-bottom: 24px; }
+.connect-gate-title { font-size: 30px; margin-bottom: 14px; }
+.connect-gate-sub   { font-size: 16px; margin-bottom: 44px; }
+.connect-btns { gap: 16px; }
+.btn-wallet { padding: 16px 32px; font-size: 13px; }
+
+/* ── Username display: cleaner mono style ── */
+.lb-wallet {
+  font-family: var(--font-heading);
+  font-size: 13px;
+  letter-spacing: 0.04em;
+}

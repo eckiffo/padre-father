@@ -60,7 +60,7 @@ body {
   font-family: var(--font-body);
   background: var(--bg-void);
   color: var(--text-white);
-  line-height: 1.65;
+  line-height: 1.7;
   overflow-x: hidden;
 }
 
@@ -77,16 +77,8 @@ img { max-width: 100%; display: block; }
 ::-webkit-scrollbar-thumb { background: var(--gold-deep); border-radius: 3px; }
 ::-webkit-scrollbar-thumb:hover { background: var(--gold-primary); }
 
-/* ═══════════════════════════ TOP BAR ═══════════════════════════ */
-.top-bar {
-  background: var(--bg-void);
-  border-bottom: 1px solid var(--bg-border);
-  height: var(--topbar-height);
-  display: flex;
-  align-items: center;
-  position: relative;
-  z-index: 100;
-}
+/* ═══════════════════════════ TOP BAR — hidden (declutter) ═══════════════════════════ */
+.top-bar { display: none; }
 
 .top-bar-inner {
   max-width: 1280px;
@@ -218,15 +210,31 @@ img { max-width: 100%; display: block; }
 .nav-link.nav-wallet {
   background: var(--gold-primary);
   color: var(--bg-void);
-  padding: 6px 14px;
+  padding: 6px 16px;
   font-weight: 700;
   border-radius: 2px;
-  margin-left: 8px;
+  margin-left: 12px;
 }
 
 .nav-link.nav-wallet:hover {
   background: var(--gold-bright);
   color: var(--bg-void);
+}
+
+/* Active page indicator */
+.nav-link.nav-active {
+  color: var(--gold-primary);
+  position: relative;
+}
+.nav-link.nav-active::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 10px;
+  right: 10px;
+  height: 2px;
+  background: var(--gold-primary);
+  border-radius: 1px;
 }
 
 /* ─── MOBILE TOGGLE ─── */
@@ -251,7 +259,7 @@ img { max-width: 100%; display: block; }
 /* ═══════════════════════════ HERO ═══════════════════════════ */
 .hero {
   position: relative;
-  min-height: calc(100vh - var(--nav-height) - var(--topbar-height));
+  min-height: calc(100vh - var(--nav-height));
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1525,7 +1533,6 @@ img { max-width: 100%; display: block; }
 }
 
 @media (max-width: 600px) {
-  .top-bar-inner { font-size: 10px; gap: 12px; }
   .logo-ticker { font-size: 17px; }
   .hero-title { font-size: 32px; }
   .hero-actions { flex-direction: column; align-items: center; }
@@ -1534,3 +1541,65 @@ img { max-width: 100%; display: block; }
   .ticker-banner { flex-direction: column; gap: 12px; align-items: flex-start; }
   .ticker-label { border-right: none; padding-right: 0; }
 }
+
+/* ═══════════════════════════ DESIGN REFRESH ═══════════════════════════
+   More breathing room, better cards, cleaner hierarchy
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* ── More generous section padding ── */
+.section-inner { padding-top: 96px; padding-bottom: 96px; }
+
+/* ── Cards: subtle gradient + softer border ── */
+.card,
+.step-card,
+.flywheel-step,
+.stat-block,
+.reward-tier-card {
+  background: linear-gradient(145deg, #131313, #0f0f0f);
+  border-color: rgba(255,255,255,0.07);
+}
+
+/* ── Sections: more vertical space ── */
+.section-header { margin-bottom: 72px; }
+.section-cross   { margin-bottom: 20px; }
+.section-title   { margin-bottom: 14px; }
+
+/* ── Nav: more spacing between items ── */
+.nav-list { gap: 6px; }
+.nav-link  { padding: 7px 12px; font-size: 11px; letter-spacing: 0.07em; }
+
+/* ── Footer social links: add to footer so top-bar removal is covered ── */
+.footer-social-row {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  margin-top: 16px;
+  flex-wrap: wrap;
+}
+.footer-social-link {
+  font-family: var(--font-heading);
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  transition: color 0.2s;
+}
+.footer-social-link:hover { color: var(--gold-primary); }
+
+/* ── Stat bar on homepage: more air ── */
+.stats-row { gap: 48px; padding: 40px 0; }
+
+/* ── Dexscreener embed: more space ── */
+.dex-embed-wrap { margin-top: 48px; margin-bottom: 48px; }
+
+/* ── Page heroes: less cramped ── */
+.blessing-hero { padding: 88px 24px 72px; }
+
+/* ── Better table row readability ── */
+.data-table td,
+.lb-table td { padding: 16px 16px; }
+.data-table th,
+.lb-table th  { padding: 10px 16px; font-size: 9px; }
