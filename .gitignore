@@ -20,3 +20,7 @@ videos/*.mov
 videos/*.webm
 
 .vercel
+.env.vercel
+
+# Debug/utility scripts
+*.py
