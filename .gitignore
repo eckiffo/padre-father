@@ -18,3 +18,5 @@ package*.json
 videos/*.mp4
 videos/*.mov
 videos/*.webm
+
+.vercel

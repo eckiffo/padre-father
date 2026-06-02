@@ -24,6 +24,11 @@ export default async function handler(req, res) {
   cors(res);
   if (req.method === 'OPTIONS') { res.status(200).end(); return; }
 
+  // ?action=refresh-token — refresh CC access token and store in KV
+  if (req.query?.action === 'refresh-token') {
+    return handleRefreshToken(req, res);
+  }
+
   // Allow GET (from cron) or POST (manual trigger)
   // If SYNC_SECRET is set, require it (except for Vercel cron which sends Authorization header)
   const cronHeader = req.headers['authorization'] || '';
@@ -223,4 +228,38 @@ async function fetchHoldData(wallet) {
     console.warn('[sync] fetchHoldData failed for', wallet, e.message);
   }
   return result;
+}
+
+/* ── CC access token refresh (merged to stay under Vercel's 12-function limit) ── */
+async function handleRefreshToken(req, res) {
+  const cronHeader  = req.headers['authorization'] || '';
+  const isCron      = cronHeader === `Bearer ${process.env.CRON_SECRET || ''}`;
+  const isManual    = SYNC_SECRET && req.query?.secret === SYNC_SECRET;
+  if (!isCron && !isManual && SYNC_SECRET) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+
+  const refreshToken = await kvGet('cc:refresh_token') || process.env.CC_REFRESH_TOKEN;
+  if (!CC_API_KEY || !refreshToken) {
+    return res.status(200).json({ ok: false, reason: 'CC_API_KEY or refresh token not set' });
+  }
+
+  try {
+    const { configureApi, api } = await import('@coin-communities/sdk/node');
+    configureApi({ baseUrl: 'https://api.coin-communities.xyz', headers: { 'x-api-key': CC_API_KEY } });
+
+    const result = await api.refreshToken({ body: { refreshToken } });
+    const newAccess  = result?.data?.accessToken;
+    const newRefresh = result?.data?.refreshToken;
+
+    if (!newAccess) return res.status(200).json({ ok: false, reason: 'No token returned', result });
+
+    await kvSet('cc:access_token',  newAccess,  { ex: 23 * 60 * 60 });
+    if (newRefresh) await kvSet('cc:refresh_token', newRefresh, { ex: 30 * 24 * 60 * 60 });
+
+    console.log('[sync] CC access token refreshed');
+    return res.status(200).json({ ok: true, refreshedAt: new Date().toISOString() });
+  } catch (e) {
+    return res.status(500).json({ ok: false, error: e.message });
+  }
 }

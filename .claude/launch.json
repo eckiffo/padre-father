@@ -1,8 +1,8 @@
-{
+﻿{
   "version": "0.0.1",
   "configurations": [
     {
-      "name": "padre-overlay",
+      "name": "padre-father",
       "runtimeExecutable": "node",
       "runtimeArgs": ["serve.mjs"],
       "port": 4321
