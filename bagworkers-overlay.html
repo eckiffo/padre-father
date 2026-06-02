@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>$PADRE — Bag Workers</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700;900&family=Cinzel:wght@600;700&family=UnifrakturMaguntia&display=swap" rel="stylesheet">
+  <style>
+    /* ── inherit overlay palette ── */
+    :root {
+      --gold:      #FFFFFF;
+      --gold-dim:  rgba(245,237,208,0.85);
+      --muted:     rgba(255,255,255,0.28);
+      --shadow:    0 2px 20px rgba(0,0,0,0.9), 0 0 40px rgba(0,0,0,0.7);
+      --glow:      0 0 8px rgba(255,255,255,0.18);
+      --font-d:    'Cinzel Decorative', serif;
+      --font-h:    'Cinzel', serif;
+      --font-f:    'UnifrakturMaguntia', cursive;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body {
+      background: transparent !important;
+      overflow: hidden;
+      width: 400px;
+      height: 520px;
+    }
+
+    /* ── PANEL ── */
+    .panel {
+      width: 400px;
+      background: rgba(0,0,0,0.78);
+      border: 1px solid rgba(255,255,255,0.18);
+      border-radius: 4px;
+      backdrop-filter: blur(10px);
+      box-shadow: var(--shadow), inset 0 0 0 1px rgba(255,255,255,0.04);
+      overflow: hidden;
+    }
+
+    /* ── HEADER ── */
+    .panel-header {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      padding: 12px 18px 10px;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+      background: rgba(255,255,255,0.03);
+    }
+
+    .panel-title {
+      font-family: var(--font-d);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: var(--gold);
+      text-shadow: var(--glow);
+    }
+
+    .cross {
+      color: rgba(255,255,255,0.35);
+      font-size: 10px;
+    }
+
+    /* ── SUBTITLE / COUNTDOWN ── */
+    .panel-sub {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 7px 16px 6px;
+      border-bottom: 1px solid rgba(255,255,255,0.07);
+    }
+
+    .sub-label {
+      font-family: var(--font-h);
+      font-size: 9px;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    .sub-countdown {
+      font-family: var(--font-h);
+      font-size: 10px;
+      letter-spacing: 0.14em;
+      color: rgba(245,237,208,0.55);
+    }
+
+    .sub-countdown span {
+      color: var(--gold-dim);
+      font-weight: 700;
+    }
+
+    /* ── ROWS ── */
+    .workers-list {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .worker-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 11px 16px;
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+      animation: rowIn 0.4s cubic-bezier(0.22,1,0.36,1) both;
+      position: relative;
+    }
+
+    .worker-row:last-child { border-bottom: none; }
+
+    @keyframes rowIn {
+      from { opacity: 0; transform: translateX(-8px); }
+      to   { opacity: 1; transform: translateX(0); }
+    }
+
+    /* rank medal */
+    .rank {
+      font-family: var(--font-f);
+      font-size: 20px;
+      width: 28px;
+      text-align: center;
+      flex-shrink: 0;
+      line-height: 1;
+    }
+
+    .rank-1 { color: #FFD700; text-shadow: 0 0 12px rgba(255,215,0,0.6); }
+    .rank-2 { color: #C0C0C0; text-shadow: 0 0 8px rgba(192,192,192,0.4); }
+    .rank-3 { color: #cd7f32; text-shadow: 0 0 8px rgba(205,127,50,0.4); }
+    .rank-4, .rank-5 { color: rgba(255,255,255,0.4); }
+
+    /* wallet + points */
+    .worker-info {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .worker-wallet {
+      font-family: var(--font-h);
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      color: var(--gold);
+      text-shadow: var(--glow);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .worker-pts {
+      font-family: var(--font-h);
+      font-size: 9px;
+      letter-spacing: 0.14em;
+      color: var(--muted);
+      margin-top: 2px;
+    }
+
+    .worker-pts strong {
+      color: rgba(245,237,208,0.7);
+    }
+
+    /* share badge */
+    .worker-share {
+      font-family: var(--font-h);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      color: rgba(245,237,208,0.65);
+      flex-shrink: 0;
+      text-align: right;
+    }
+
+    .worker-share small {
+      display: block;
+      font-size: 8px;
+      letter-spacing: 0.14em;
+      color: var(--muted);
+      font-weight: 400;
+      margin-top: 1px;
+    }
+
+    /* top1 highlight */
+    .worker-row.top1::before {
+      content: '';
+      position: absolute;
+      left: 0; top: 0; bottom: 0;
+      width: 2px;
+      background: #FFD700;
+      box-shadow: 0 0 8px rgba(255,215,0,0.5);
+    }
+
+    /* ── EMPTY STATE ── */
+    .empty {
+      font-family: var(--font-h);
+      font-size: 11px;
+      color: var(--muted);
+      letter-spacing: 0.12em;
+      text-align: center;
+      padding: 28px 16px;
+      font-style: italic;
+    }
+
+    /* ── FOOTER ── */
+    .panel-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 7px 16px 8px;
+      border-top: 1px solid rgba(255,255,255,0.07);
+      background: rgba(255,255,255,0.02);
+    }
+
+    .footer-label {
+      font-family: var(--font-h);
+      font-size: 8px;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    .footer-pool {
+      font-family: var(--font-h);
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      color: rgba(245,237,208,0.6);
+    }
+  </style>
+</head>
+<body>
+
+<div class="panel">
+  <div class="panel-header">
+    <span class="cross">✝</span>
+    <span class="panel-title">Hourly Bag Workers</span>
+    <span class="cross">✝</span>
+  </div>
+  <div class="panel-sub">
+    <span class="sub-label">Top 5 this hour</span>
+    <span class="sub-countdown">resets in <span id="countdown">—</span></span>
+  </div>
+  <div class="workers-list" id="workersList">
+    <div class="empty">awaiting the workers…</div>
+  </div>
+  <div class="panel-footer">
+    <span class="footer-label">Hourly Pool</span>
+    <span class="footer-pool" id="poolAmt">—</span>
+  </div>
+</div>
+
+<script src="js/config.js"></script>
+<script>
+(function () {
+  'use strict';
+
+  const POLL_MS = 30_000;
+  const MEDALS  = ['𝟏','𝟐','𝟑','𝟒','𝟓'];
+
+  const listEl     = document.getElementById('workersList');
+  const countdownEl= document.getElementById('countdown');
+  const poolEl     = document.getElementById('poolAmt');
+
+  /* ── countdown to next hour ── */
+  function updateCountdown() {
+    const now  = new Date();
+    const secs = 3600 - (now.getMinutes() * 60 + now.getSeconds());
+    const m    = String(Math.floor(secs / 60)).padStart(2, '0');
+    const s    = String(secs % 60).padStart(2, '0');
+    countdownEl.textContent = m + ':' + s;
+  }
+
+  setInterval(updateCountdown, 1000);
+  updateCountdown();
+
+  /* ── short wallet ── */
+  function shortW(addr) {
+    return String(addr).slice(0, 4) + '…' + String(addr).slice(-4);
+  }
+
+  /* ── render workers ── */
+  function render(workers, pool) {
+    poolEl.textContent = pool || '—';
+
+    if (!workers || workers.length === 0) {
+      listEl.innerHTML = '<div class="empty">awaiting the workers…</div>';
+      return;
+    }
+
+    const totalPts = workers.reduce((s, w) => s + (w.points || 0), 0);
+
+    listEl.innerHTML = workers.slice(0, 5).map((w, i) => {
+      const rank    = i + 1;
+      const pct     = totalPts > 0 ? ((w.points / totalPts) * 100).toFixed(1) + '%' : '—';
+      const wallet  = w.wallet || w.address || '???';
+      const display = w.username || shortW(wallet);
+      const pts     = (w.points || 0).toLocaleString();
+      const posts   = w.posts   != null ? w.posts   : '?';
+      const replies = w.replies != null ? w.replies : '?';
+      const likes   = w.likes   != null ? w.likes   : '?';
+
+      return `
+        <div class="worker-row${rank === 1 ? ' top1' : ''}">
+          <div class="rank rank-${rank}">${rank}</div>
+          <div class="worker-info">
+            <div class="worker-wallet">${esc(display)}</div>
+            <div class="worker-pts">
+              <strong>${pts} pts</strong>
+              &nbsp;·&nbsp;${posts}p ${replies}r ${likes}l
+            </div>
+          </div>
+          <div class="worker-share">
+            ${pct}
+            <small>of pool</small>
+          </div>
+        </div>`;
+    }).join('');
+  }
+
+  function esc(s) {
+    return String(s)
+      .replace(/&/g,'&amp;')
+      .replace(/</g,'&lt;')
+      .replace(/>/g,'&gt;');
+  }
+
+  /* ── fetch ── */
+  async function poll() {
+    try {
+      const res  = await fetch('/api/blessing/hourly-stats');
+      if (!res.ok) return;
+      const data = await res.json();
+
+      /* API shape: { current: { workers: [...], pool: '1.2 $PADRE' }, ... } */
+      const workers = data?.current?.workers || data?.workers || [];
+      const pool    = data?.current?.pool    || data?.pool    || null;
+      render(workers, pool);
+    } catch (e) {
+      console.warn('[bagworkers] fetch failed', e);
+    }
+  }
+
+  poll();
+  setInterval(poll, POLL_MS);
+
+})();
+</script>
+</body>
+</html>
