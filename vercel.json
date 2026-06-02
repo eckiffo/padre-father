@@ -4,8 +4,7 @@
   "outputDirectory": ".",
   "installCommand": "npm install",
   "crons": [
-    { "path": "/api/blessing/sync",          "schedule": "*/15 * * * *" },
-    { "path": "/api/blessing/refresh-token", "schedule": "0 */12 * * *" }
+    { "path": "/api/blessing/refresh-token", "schedule": "0 8 * * *" }
   ],
   "routes": [
     { "src": "/api/(.*)", "dest": "/api/$1" },
