@@ -244,7 +244,7 @@
     <span class="sub-countdown">resets in <span id="countdown">—</span></span>
   </div>
   <div class="workers-list" id="workersList">
-    <div class="empty">awaiting the workers…</div>
+    <div class="empty">No activity yet this hour.<br>Post in the community to take the lead!</div>
   </div>
   <div class="panel-footer">
     <span class="footer-label">Hourly Pool</span>
@@ -286,7 +286,7 @@
     poolEl.textContent = pool || '—';
 
     if (!workers || workers.length === 0) {
-      listEl.innerHTML = '<div class="empty">awaiting the workers…</div>';
+      listEl.innerHTML = '<div class="empty">No activity yet this hour.<br>Post in the community to take the lead!</div>';
       return;
     }
 
