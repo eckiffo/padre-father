@@ -3,6 +3,10 @@
   "buildCommand": "echo done",
   "outputDirectory": ".",
   "installCommand": "npm install",
+  "crons": [
+    { "path": "/api/blessing/sync",          "schedule": "*/15 * * * *" },
+    { "path": "/api/blessing/refresh-token", "schedule": "0 */12 * * *" }
+  ],
   "routes": [
     { "src": "/api/(.*)", "dest": "/api/$1" },
     { "src": "/(.*\\.html)", "dest": "/$1" },

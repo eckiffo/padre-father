@@ -14,7 +14,7 @@
  */
 
 import { SCORE_CONFIG, cors } from './_config.js';
-import { kvSet, kvZadd, kvZscore, kvExpire } from './_kv.js';
+import { kvGet, kvSet, kvZadd, kvZscore, kvExpire } from './_kv.js';
 
 const TOKEN_ADDR = process.env.PADRE_TOKEN_ADDRESS || null;
 const CC_API_KEY = process.env.CC_API_KEY          || null;
@@ -47,9 +47,16 @@ export default async function handler(req, res) {
   try {
     const { configureApi, api } = await import('@coin-communities/sdk/node');
 
+    // Use KV-refreshed token if available, fall back to env var
+    const freshToken = await kvGet('cc:access_token');
+    const accessToken = freshToken || process.env.CC_ACCESS_TOKEN || null;
+
     configureApi({
       baseUrl: 'https://api.coin-communities.xyz',
-      headers: { 'x-api-key': CC_API_KEY },
+      headers: {
+        'x-api-key': CC_API_KEY,
+        ...(accessToken ? { 'Authorization': `Bearer ${accessToken}` } : {}),
+      },
     });
 
     // getMessagesPublic returns walletAddress on every message — no server key needed
