@@ -290,14 +290,15 @@
       return;
     }
 
-    const totalPts = workers.reduce((s, w) => s + (w.points || 0), 0);
+    const totalPts = workers.reduce((s, w) => s + (w.activityScore || w.points || 0), 0);
 
     listEl.innerHTML = workers.slice(0, 5).map((w, i) => {
       const rank    = i + 1;
-      const pct     = totalPts > 0 ? ((w.points / totalPts) * 100).toFixed(1) + '%' : '—';
+      const pts_val = w.activityScore || w.points || 0;
+      const pct     = totalPts > 0 ? ((pts_val / totalPts) * 100).toFixed(1) + '%' : '—';
       const wallet  = w.wallet || w.address || '???';
-      const display = w.username || shortW(wallet);
-      const pts     = (w.points || 0).toLocaleString();
+      const display = w.displayName || w.username || shortW(wallet);
+      const pts     = pts_val.toLocaleString();
       const posts   = w.posts   != null ? w.posts   : '?';
       const replies = w.replies != null ? w.replies : '?';
       const likes   = w.likes   != null ? w.likes   : '?';
@@ -334,9 +335,10 @@
       if (!res.ok) return;
       const data = await res.json();
 
-      /* API shape: { current: { workers: [...], pool: '1.2 $PADRE' }, ... } */
-      const workers = data?.current?.workers || data?.workers || [];
-      const pool    = data?.current?.pool    || data?.pool    || null;
+      /* API shape: { currentHour: [...], config: { rewards: [...] } } */
+      const workers = data?.currentHour || data?.current?.workers || data?.workers || [];
+      const rewards = data?.config?.rewards;
+      const pool    = rewards ? rewards.slice(0,3).join(' / ') : (data?.current?.pool || data?.pool || null);
       render(workers, pool);
     } catch (e) {
       console.warn('[bagworkers] fetch failed', e);
