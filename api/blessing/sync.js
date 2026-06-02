@@ -116,6 +116,30 @@ export default async function handler(req, res) {
 
           await kvZadd('leaderboard:social', { score: socialScore, member: wallet });
 
+          // Fetch hold data from Solana for this wallet (best-effort, non-blocking)
+          try {
+            const holdData = await fetchHoldData(wallet);
+            if (holdData.balance > 0) {
+              // Merge into wallet KV record so leaderboard can show holdDays + balance
+              await kvSet(
+                `wallet:${wallet}`,
+                {
+                  wallet,
+                  balance:   holdData.balance,
+                  holdDays:  holdData.holdDays,
+                  holdStart: holdData.holdStart,
+                  holdScore: holdData.holdScore,
+                  socialScore,
+                  posts, replies, likes,
+                  score: socialScore + holdData.holdScore,
+                  lastUpdated: new Date().toISOString(),
+                },
+                { ex: 2 * 60 * 60 } // 2h TTL — sync refreshes every 15min
+              );
+              await kvZadd('leaderboard', { score: socialScore + holdData.holdScore, member: wallet });
+            }
+          } catch (_) {}
+
           processed++;
         } catch (e) {
           console.warn('[sync] member error:', e.message);
@@ -125,6 +149,7 @@ export default async function handler(req, res) {
     }
 
     // Record last sync metadata
+
     await kvSet('sync:last', {
       at: new Date().toISOString(),
       processed,
@@ -145,4 +170,50 @@ export default async function handler(req, res) {
     console.error('[sync]', e);
     return res.status(500).json({ error: 'Sync failed', message: e.message });
   }
+}
+
+/* ── Fetch token balance + hold duration for a wallet ── */
+const RPC_URL = process.env.SOLANA_RPC_URL || 'https://api.mainnet-beta.solana.com';
+
+async function fetchHoldData(wallet) {
+  const result = { balance: 0, holdDays: 0, holdStart: null, holdScore: 0 };
+  if (!TOKEN_ADDR) return result;
+  try {
+    const { Connection, PublicKey } = await import('@solana/web3.js');
+    const conn = new Connection(RPC_URL, { commitment: 'confirmed', disableRetryOnRateLimit: true });
+    const accounts = await conn.getParsedTokenAccountsByOwner(
+      new PublicKey(wallet),
+      { mint: new PublicKey(TOKEN_ADDR) },
+      'confirmed'
+    );
+    if (!accounts.value.length) return result;
+    const ta      = accounts.value[0];
+    const balance = parseFloat(ta.account.data.parsed.info.tokenAmount.uiAmount || 0);
+    if (balance === 0) return result;
+    result.balance = balance;
+
+    // Get oldest tx on the token account to determine hold start
+    try {
+      const sigs = await conn.getSignaturesForAddress(ta.pubkey, { limit: 1000 }, 'confirmed');
+      if (sigs.length > 0) {
+        const oldest = sigs[sigs.length - 1];
+        result.holdStart = oldest.blockTime
+          ? new Date(oldest.blockTime * 1000).toISOString()
+          : new Date().toISOString();
+      }
+    } catch (_) {
+      result.holdStart = new Date().toISOString();
+    }
+
+    const holdDays = Math.floor((Date.now() - new Date(result.holdStart).getTime()) / 86400000);
+    result.holdDays = holdDays;
+
+    const { hold } = SCORE_CONFIG;
+    if (holdDays >= 30)     result.holdScore = hold.month;
+    else if (holdDays >= 7) result.holdScore = hold.week;
+    else if (holdDays >= 1) result.holdScore = hold.day;
+  } catch (e) {
+    console.warn('[sync] fetchHoldData failed for', wallet, e.message);
+  }
+  return result;
 }
