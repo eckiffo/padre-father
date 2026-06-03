@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>$PADRE Live Chat</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700;900&family=Cinzel:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body {
+      background: transparent;
+      overflow: hidden;
+      width: 400px;
+      height: 600px;
+      font-family: 'Cinzel', serif;
+    }
+
+    .chat-wrap {
+      width: 400px;
+      height: 600px;
+      display: flex;
+      flex-direction: column;
+      background: rgba(0, 0, 0, 0.78);
+      border: 1px solid rgba(0, 230, 118, 0.2);
+      border-radius: 4px;
+      overflow: hidden;
+      backdrop-filter: blur(10px);
+      box-shadow: 0 4px 40px rgba(0,0,0,0.9), inset 0 0 0 1px rgba(0,230,118,0.04);
+    }
+
+    /* Header */
+    .chat-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 16px;
+      border-bottom: 1px solid rgba(0,230,118,0.15);
+      background: rgba(0,230,118,0.04);
+      flex-shrink: 0;
+    }
+
+    .chat-live-dot {
+      width: 7px;
+      height: 7px;
+      background: #00E676;
+      border-radius: 50%;
+      box-shadow: 0 0 8px #00E676;
+      animation: pulse 1.5s ease-in-out infinite;
+      flex-shrink: 0;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; box-shadow: 0 0 8px #00E676; }
+      50%       { opacity: 0.5; box-shadow: 0 0 3px #00E676; }
+    }
+
+    .chat-title {
+      font-family: 'Cinzel Decorative', serif;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: #00E676;
+      text-shadow: 0 0 10px rgba(0,230,118,0.4);
+      flex: 1;
+    }
+
+    .chat-cross {
+      color: rgba(0,230,118,0.4);
+      font-size: 12px;
+    }
+
+    /* Messages area */
+    .chat-messages {
+      flex: 1;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      padding: 8px 0;
+      position: relative;
+    }
+
+    /* Fade gradient at top */
+    .chat-messages::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 60px;
+      background: linear-gradient(to bottom, rgba(0,0,0,0.78), transparent);
+      z-index: 1;
+      pointer-events: none;
+    }
+
+    /* Single message */
+    .msg {
+      padding: 8px 16px;
+      animation: msgIn 0.35s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+      position: relative;
+      border-bottom: 1px solid rgba(255,255,255,0.04);
+    }
+
+    .msg:last-child { border-bottom: none; }
+
+    .msg.msg-new {
+      background: rgba(0,230,118,0.04);
+    }
+
+    .msg.msg-new::before {
+      content: '';
+      position: absolute;
+      left: 0; top: 0; bottom: 0;
+      width: 2px;
+      background: #00E676;
+      box-shadow: 0 0 6px rgba(0,230,118,0.6);
+      animation: barFade 3s ease-out forwards;
+    }
+
+    @keyframes barFade {
+      0%, 60% { opacity: 1; }
+      100%     { opacity: 0; }
+    }
+
+    @keyframes msgIn {
+      from { opacity: 0; transform: translateY(8px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .msg-top {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 3px;
+    }
+
+    .msg-author {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: #00E676;
+      text-shadow: 0 0 8px rgba(0,230,118,0.3);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      max-width: 200px;
+    }
+
+    .msg-author.is-father {
+      color: #fff;
+      text-shadow: 0 0 10px rgba(255,255,255,0.4);
+    }
+
+    .msg-time {
+      font-size: 9px;
+      color: rgba(255,255,255,0.2);
+      letter-spacing: 0.06em;
+      margin-left: auto;
+      flex-shrink: 0;
+    }
+
+    .msg-reply-tag {
+      font-size: 9px;
+      color: rgba(0,230,118,0.4);
+      letter-spacing: 0.08em;
+      flex-shrink: 0;
+    }
+
+    .msg-text {
+      font-size: 12px;
+      color: rgba(245, 237, 208, 0.85);
+      line-height: 1.55;
+      letter-spacing: 0.02em;
+      word-break: break-word;
+    }
+
+    /* Father posts styled differently */
+    .msg.msg-father .msg-text {
+      color: rgba(255,255,255,0.9);
+      font-style: italic;
+    }
+
+    /* Empty state */
+    .chat-empty {
+      text-align: center;
+      padding: 40px 20px;
+      font-size: 11px;
+      color: rgba(255,255,255,0.2);
+      letter-spacing: 0.1em;
+      font-style: italic;
+    }
+
+    /* Footer */
+    .chat-footer {
+      padding: 7px 16px;
+      border-top: 1px solid rgba(0,230,118,0.1);
+      background: rgba(0,0,0,0.4);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+
+    .chat-footer-text {
+      font-size: 9px;
+      color: rgba(255,255,255,0.2);
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+
+    .chat-footer-link {
+      font-size: 9px;
+      color: rgba(0,230,118,0.4);
+      letter-spacing: 0.08em;
+      margin-left: auto;
+      text-decoration: none;
+    }
+
+    .status-dot {
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      background: #00E676;
+      flex-shrink: 0;
+    }
+    .status-dot.disconnected { background: #555; box-shadow: none; }
+  </style>
+</head>
+<body>
+  <div class="chat-wrap">
+    <div class="chat-header">
+      <div class="chat-live-dot" id="liveDot"></div>
+      <div class="chat-title">✝ &nbsp;$PADRE Community</div>
+      <div class="chat-cross">✦</div>
+    </div>
+
+    <div class="chat-messages" id="chatMessages">
+      <div class="chat-empty" id="emptyState">awaiting the congregation…</div>
+    </div>
+
+    <div class="chat-footer">
+      <div class="status-dot" id="statusDot"></div>
+      <span class="chat-footer-text" id="statusText">connecting…</span>
+      <span class="chat-footer-link">trenchfather.fun</span>
+    </div>
+  </div>
+
+  <script src="js/config.js"></script>
+  <script>
+    const TOKEN = window.PADRE_CA || 'HNVYhd7CMfCYDgDiRBKzx1gvZVqYohjMMFmRS1n8pump';
+    const MAX_MSGS  = 8;   // max messages shown
+    const POLL_MS   = 20000; // fallback poll every 20s
+
+    const messagesEl = document.getElementById('chatMessages');
+    const emptyEl    = document.getElementById('emptyState');
+    const statusText = document.getElementById('statusText');
+    const statusDot  = document.getElementById('statusDot');
+    const liveDot    = document.getElementById('liveDot');
+
+    let messages     = [];
+    let seenIds      = new Set();
+    let wsConn       = null;
+    let pollTimer    = null;
+
+    /* ── Time formatter ── */
+    function timeAgo(ts) {
+      const diff = Math.floor((Date.now() - new Date(ts).getTime()) / 1000);
+      if (diff < 60)   return diff + 's';
+      if (diff < 3600) return Math.floor(diff / 60) + 'm';
+      return Math.floor(diff / 3600) + 'h';
+    }
+
+    function isFather(username) {
+      return username && (
+        username.toLowerCase().includes('father') ||
+        username.toLowerCase().includes('padre') ||
+        username.toLowerCase() === 'fatherofpumpfun'
+      );
+    }
+
+    /* ── Render messages ── */
+    function render() {
+      if (messages.length === 0) {
+        emptyEl.style.display = 'block';
+        // Remove any existing message elements
+        messagesEl.querySelectorAll('.msg').forEach(el => el.remove());
+        return;
+      }
+      emptyEl.style.display = 'none';
+
+      // Keep only last MAX_MSGS
+      const visible = messages.slice(-MAX_MSGS);
+
+      // Remove old
+      messagesEl.querySelectorAll('.msg').forEach(el => el.remove());
+
+      visible.forEach((m, i) => {
+        const isNew    = i === visible.length - 1;
+        const isFath   = isFather(m.username || m.author?.username);
+        const isReply  = !!(m.parentMessageId || m.parent_message_id);
+        const author   = m.username || m.author?.username || (m.walletAddress?.slice(0,4) + '…' + m.walletAddress?.slice(-4)) || 'anon';
+        const text     = m.content || m.text || '';
+        const ts       = m.createdAt || m.created_at || new Date().toISOString();
+
+        const div = document.createElement('div');
+        div.className = `msg${isNew ? ' msg-new' : ''}${isFath ? ' msg-father' : ''}`;
+        div.innerHTML = `
+          <div class="msg-top">
+            ${isReply ? '<span class="msg-reply-tag">↩ reply</span>' : ''}
+            <span class="msg-author${isFath ? ' is-father' : ''}">${isFath ? '✝ ' : ''}${esc(author)}</span>
+            <span class="msg-time">${timeAgo(ts)}</span>
+          </div>
+          <div class="msg-text">${esc(text)}</div>
+        `;
+        messagesEl.appendChild(div);
+      });
+    }
+
+    function esc(str) {
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+    }
+
+    /* ── Add a message ── */
+    function addMessage(m) {
+      const id = m.id || m.messageId || JSON.stringify(m).slice(0, 40);
+      if (seenIds.has(id)) return;
+      seenIds.add(id);
+      if (seenIds.size > 200) {
+        const arr = [...seenIds];
+        arr.slice(0, 100).forEach(k => seenIds.delete(k));
+      }
+      messages.push(m);
+      if (messages.length > MAX_MSGS * 2) messages = messages.slice(-MAX_MSGS);
+      render();
+    }
+
+    /* ── Poll fallback ── */
+    async function poll() {
+      try {
+        const res  = await fetch(`/api/community?token=${TOKEN}&limit=10`);
+        if (!res.ok) return;
+        const data = await res.json();
+        const msgs = Array.isArray(data) ? data : (data.messages || data.data || []);
+        msgs.reverse().forEach(addMessage);
+      } catch (_) {}
+    }
+
+    /* ── WebSocket via ticket ── */
+    async function connectWS() {
+      try {
+        const ticketRes = await fetch(`/api/ws-ticket?token=${TOKEN}`);
+        if (!ticketRes.ok) throw new Error('ticket failed');
+        const { ticket, url } = await ticketRes.json();
+        if (!ticket || !url) throw new Error('no ticket');
+
+        wsConn = new WebSocket(`${url}?ticket=${ticket}`);
+
+        wsConn.onopen = () => {
+          statusText.textContent = 'live';
+          statusDot.classList.remove('disconnected');
+          liveDot.style.background = '#00E676';
+          console.log('[chat] WS connected');
+        };
+
+        wsConn.onmessage = (e) => {
+          try {
+            const data = JSON.parse(e.data);
+            const msg  = data?.data || data?.message || data;
+            if (msg?.content || msg?.text) addMessage(msg);
+          } catch (_) {}
+        };
+
+        wsConn.onclose = () => {
+          statusText.textContent = 'reconnecting…';
+          statusDot.classList.add('disconnected');
+          setTimeout(connectWS, 5000);
+        };
+
+        wsConn.onerror = () => wsConn.close();
+
+      } catch (e) {
+        console.warn('[chat] WS failed, using poll:', e.message);
+        statusText.textContent = 'polling';
+        statusDot.classList.add('disconnected');
+        // Fall back to polling
+        poll();
+        clearInterval(pollTimer);
+        pollTimer = setInterval(poll, POLL_MS);
+      }
+    }
+
+    /* ── Init ── */
+    poll(); // load existing messages immediately
+    connectWS();
+
+    // Refresh timestamps every 30s
+    setInterval(() => {
+      messagesEl.querySelectorAll('.msg-time').forEach((el, i) => {
+        const m = messages.slice(-MAX_MSGS)[i];
+        if (m) el.textContent = timeAgo(m.createdAt || m.created_at || new Date().toISOString());
+      });
+    }, 30000);
+  </script>
+</body>
+</html>
