@@ -4,17 +4,20 @@
 Static site for the $PADRE Solana memecoin. Deployed on Vercel at **trenchfather.fun**.
 Stack: vanilla HTML/CSS/JS, no build step, Vercel serverless functions in `/api`.
 
+Father Agent bot lives at `/root/father-agent` on VPS `76.13.248.249` (root / `PD-B'fr,L@mw9bon;cU1`).
+Managed via PM2 as `father-agent`. Deploy by SFTPing files + `pm2 restart father-agent`.
+
 ---
 
 ## CA / Token Address
 
+`HNVYhd7CMfCYDgDiRBKzx1gvZVqYohjMMFmRS1n8pump`
+
 Set in **`js/config.js`** — one file, one line:
 ```js
-window.PADRE_CA = ''; // ← paste CA here at launch
+window.PADRE_CA = 'HNVYhd7CMfCYDgDiRBKzx1gvZVqYohjMMFmRS1n8pump';
 ```
-Every page and overlay reads from `window.PADRE_CA`. Change it here, push, done.
-
-Server-side functions read from Vercel env var `PADRE_TOKEN_ADDRESS` (set in Vercel dashboard).
+Server-side functions read from Vercel env var `PADRE_TOKEN_ADDRESS`.
 
 ---
 
@@ -37,8 +40,10 @@ Server-side functions read from Vercel env var `PADRE_TOKEN_ADDRESS` (set in Ver
 ├── offerings.html
 ├── request-blessing.html
 ├── connect-wallet.html
-├── overlay.html            OBS Browser Source — ticker + buy/holder/post toasts
+├── overlay.html            OBS Browser Source — ticker + buy/holder/post toasts (1920×1080)
 ├── candle-widget.html      OBS Browser Source — 320×420 candle stage widget
+├── bagworkers-overlay.html OBS Browser Source — 400×520 hourly top 5 bag workers
+├── chat-overlay.html       OBS Browser Source — 400×600 live coincommunities chat feed
 ├── css/
 │   ├── main.css            Global styles, design tokens, all components
 │   ├── blessing.css        Dashboard / leaderboard / rewards shared styles
@@ -46,7 +51,7 @@ Server-side functions read from Vercel env var `PADRE_TOKEN_ADDRESS` (set in Ver
 │   ├── candle-widget.css   OBS candle widget
 │   └── overlay.css         OBS overlay (all white accent, no green)
 ├── js/
-│   ├── config.js           ← SET CA HERE AT LAUNCH
+│   ├── config.js           ← CA set here
 │   ├── main.js             Homepage: candles, particles, stats, CA copy, Dexscreener embed
 │   ├── roadmap.js          Live roadmap candle section (homepage)
 │   ├── overlay.js          OBS overlay: Solana WS buy detection, community posts
@@ -54,12 +59,12 @@ Server-side functions read from Vercel env var `PADRE_TOKEN_ADDRESS` (set in Ver
 │   ├── blessing-dashboard.js  Wallet connect, score render, hourly race
 │   └── blessing-leaderboard.js  Leaderboard table
 ├── img/
-│   ├── padre-priest-ocean.jpg   Main cinematic photo (about strip)
-│   ├── padre-banner.jpg         Twitter/X banner (og:image)
-│   └── padre-social-card.jpg    Square social card
+│   ├── padre-priest-ocean.jpg
+│   ├── padre-banner.jpg
+│   └── padre-social-card.jpg
 └── videos/
-    ├── padre-hero-1.mp4    Hero background video (drop in to activate)
-    └── padre-hero-2.mp4    Second video (cycles after first)
+    ├── padre-hero-1.mp4    (drop in to activate hero video)
+    └── padre-hero-2.mp4
 ```
 
 ---
@@ -80,46 +85,29 @@ Server-side functions read from Vercel env var `PADRE_TOKEN_ADDRESS` (set in Ver
 
 ---
 
-## THE REWARD FLYWHEEL
+## THE COMMUNITY REWARD SYSTEM (aka The Reward Flywheel)
 
 ### Fee Flow
-- **100% of all trading fees** go to dev wallet
-- Every hour the bot calculates:
-  - **25%** of that hour's fees → buys $PADRE from the market (buyback)
-  - Bought tokens split: **25% to top 5 hourly bag workers** (by points) / **75% → weekly pool**
+- **100% of all trading fees** go to dev wallet (`8YnUQEZY9beCZQMiTcB8wswUrouW6naJj6W3MgCGerVA`)
+- When fees arrive: bot detects SOL deposit → DMs Ray → Ray approves → **50% buyback** via pumpdev.io
+- Bought tokens split: **50% to hourly bag workers** / **50% → weekly pool**
 - **Weekly pool** distributed every Sunday to qualifying holders
 
+### Fee Collection Flow (LIVE)
+1. Ray manually collects fees from pump.fun UI
+2. Bot's fee deposit watcher (`logsSubscribe` on dev wallet) detects incoming SOL
+3. Bot DMs Ray: "Received X SOL — buyback Y SOL?" 
+4. Ray `/approve` → pumpdev.io executes buy → tokens distributed
+- pumpdev.io endpoint: `POST https://pumpdev.io/api/trade-lightning` with `X-Api-Key` header
+
 ### Hourly Race
-- Anyone can win regardless of bag size
-- **Points this hour:** posts × 25 + replies × 10 + likes × 5
-- **Top 5 wallets** split 25% of the hourly buyback tokens, proportionally by points
-- Resets every hour
-- If tie or no activity → all bought tokens roll into weekly pool
+- Points this hour: posts × 25 + replies × 10 + likes × 5
+- **Top workers** split 50% of hourly buyback tokens proportionally by points
+- Resets every hour, no activity → all rolls to weekly pool
 
 ### Weekly Distribution (Every Sunday)
-**Qualification requirements — all must be met:**
-1. Hold minimum **0.2% of total supply**
-2. Minimum **500 pts** (Congregation rank)
-3. Held **7+ days continuously**
-4. **Did not sell** any tokens during the week
-
-**Distribution by Blessing Score weight:**
-- Saints → largest share
-- Cardinals → second
-- Disciples → third
-- Congregation → minimum share
-
-### Hold Scoring (compounding daily)
-- **+10 pts per day** held continuously
-- Sell ANY tokens → **streak resets to ZERO**
-- Top 1% holder → **+500 pts bonus**
-- Top 10% holder → **+200 pts bonus**
-
-### Social Scoring
-- Post in community → **+25 pts**
-- Reply → **+10 pts**
-- Like → **+5 pts**
-- Refer new wallet → **+200 pts**
+- Qualifying: hold > 0, 500+ pts, held 7+ days, did not sell
+- Distribution by Blessing Score weight (Saint > Cardinal > Disciple > Congregation)
 
 ### Rank Tiers
 | Rank | Points | Benefit |
@@ -131,94 +119,162 @@ Server-side functions read from Vercel env var `PADRE_TOKEN_ADDRESS` (set in Ver
 | Cardinal | 5,000–14,999 | Priority share |
 | Saint | 15,000+ | Largest share |
 
-### Accumulate & Multiply Mechanic
-On dashboard, holders choose between:
-- **CLAIM NOW** → tokens sent immediately
-- **KEEP ACCUMULATING** → rewards build with multiplier:
-  - Week 1: 1× 
-  - Week 2: 1.2×
-  - Week 4: 1.5×
-  - Week 8: 2×
+---
 
-### If Someone Sells
-- Hold streak resets to zero
-- Unclaimed accumulated rewards → return to weekly pool
-- Bot detects sell via Solana RPC
-- Father Agent announces in community
-- Remaining holders get a bigger share
+## Father Agent Bot (VPS — `/home/ray/father-agent`)
+
+### Key Files
+| File | Purpose |
+|------|---------|
+| `agent.js` | Main process — all crons, sell/buy detector, fee watcher, quote poster |
+| `distribution.js` | Hourly + weekly distribution logic, pumpdev.io buyback |
+| `telegram.js` | Telegram bot, approval flow |
+| `personality.js` | Claude API, Father character, quote generation |
+| `community.js` | CoinCommunities WebSocket watcher + poster |
+| `solana.js` | Token sends, wallet balance, RPC calls |
+| `x.js` | X/Twitter OAuth 1.0a poster (currently 401 — broken) |
+| `state.js` | Persistent JSON state |
+
+### Cron Jobs (node-cron)
+| Schedule | Job |
+|----------|-----|
+| `0 * * * *` | Hourly community fee announcement post |
+| `5 * * * *` | Hourly distribution (asks Ray to approve buyback) |
+| `*/10 * * * *` | Father quote posted to coincommunities |
+| `*/15 * * * *` | Milestone check (MC $100K/$500K/$1M) |
+| `0 1 * * 1` | Weekly distribution (Sunday) |
+| `0 */6 * * *` | Heartbeat DM to Ray |
+
+### Telegram Commands
+```
+/approve <id>   — approve pending buyback/distribution
+/skip <id>      — skip this round
+/pending        — list pending approvals
+/post <msg>     — post to community as The Father
+/father <topic> — Claude writes it, you confirm
+/confirm        — post the Claude draft
+/cancel         — discard draft
+/reply <id> <msg> — reply to community post
+/xpost <topic>  — write X post draft (X still broken)
+/posts          — show last 5 community posts
+/balance        — dev wallet SOL + $PADRE balance
+/status         — uptime + last hourly/weekly run
+/help           — command list
+```
+
+### Always-On Watchers
+- **Sell detector** — `logsSubscribe` on token address → shame post + Telegram alert
+- **Buy detector** — same WS → buy alert, new holder welcome, big buy X post
+- **Fee deposit watcher** — `logsSubscribe` on dev wallet → detects incoming SOL → triggers buyback approval
 
 ---
 
-## Admin Dashboard (Ray approves everything)
+## OBS Browser Sources
 
-**Hourly panel shows:**
-- Hour fees received
-- Buyback amount & $PADRE tokens bought
-- Top 5 wallets, their points, token amounts
-- APPROVE / SKIP / EDIT buttons
-
-**Weekly panel shows:**
-- Week total fees & pool amount
-- All qualifying wallets ranked by score
-- Their share in tokens and USD value
-- APPROVE / SKIP / EDIT buttons
-
----
-
-## Third-Party Integrations
-| Service | Purpose |
-|---------|---------|
-| **pumpdev.io API** | Buyback transactions |
-| **Dexscreener** | Volume, price, MC data |
-| **Solana RPC** | Wallet tracking, sell detection, buy toasts |
-| **Communities SDK** | Social scoring (posts, replies, likes) |
-
----
-
-## OBS Overlay Setup
-
-**overlay.html** — Browser Source, 1920×1080:
-- Persistent ticker bottom-left: `$PADRE · $price · MC · Vol`
-- Buy toasts: fire from Solana WS `logsSubscribe` → `getTransaction` for real amounts
-- New holder toasts: detected when pre-balance = 0
-- Community post toasts: polls `/api/community` every 20s
-
-**candle-widget.html** — Browser Source, 320×420:
-- 6-stage candle driven by market cap
-- Stages: Ember ($0) → Red Candle ($10K) → Green Candle ($100K) → Gold Candle ($500K) → God Candle ($2M) → Holy Candle ($10M+)
-
-Both read CA from `window.PADRE_CA` (set in `js/config.js`).
+| File | Size | Purpose |
+|------|------|---------|
+| `overlay.html` | 1920×1080 | Main overlay: ticker, buy toasts, sell toasts, community posts |
+| `candle-widget.html` | 320×420 | Candle stage widget (Ember→Holy based on MC) |
+| `bagworkers-overlay.html` | 400×520 | Live hourly top 5 bag workers leaderboard |
+| `chat-overlay.html` | 400×600 | Live coincommunities chat feed with WS + poll fallback |
 
 ---
 
 ## API Routes (Vercel Serverless)
 ```
-/api/community          GET community posts
-/api/blessing/score     GET wallet blessing score
-/api/blessing/claim     POST claim rewards
-/api/blessing/referral  POST register referral
-/api/blessing/leaderboard GET top 50 wallets
-/api/blessing/hourly-stats GET current + last hour race data
-/api/ws-ticket          GET community WS auth ticket
+/api/community              GET community posts
+/api/blessing/score         GET wallet blessing score (fetches Solana hold data live)
+/api/blessing/claim         POST claim rewards
+/api/blessing/referral      POST register referral
+/api/blessing/leaderboard   GET top 50 wallets
+/api/blessing/hourly-stats  GET current + last hour race data
+/api/blessing/sync          GET sync social scores + hold data (manual: ?secret=padre_sync_2026)
+/api/blessing/sync?action=refresh-token  Refresh CC access token (daily cron at 8am UTC)
+/api/ws-ticket              GET community WS auth ticket
 ```
 
 ---
 
-## Blessing Score Sync (Active)
+## Vercel Environment Variables (all set in Production)
+```
+PADRE_TOKEN_ADDRESS     HNVYhd7CMfCYDgDiRBKzx1gvZVqYohjMMFmRS1n8pump
+CC_API_KEY              cc_ea5be553...
+CC_SERVER_KEY           cck_b91c0fa...
+CC_SERVER_SECRET        ccs_4c1aee3...
+CC_ACCESS_TOKEN         JWT (expires ~24h — auto-refreshed daily by cron)
+CC_REFRESH_TOKEN        JWT (expires 28d)
+CC_BOT_TWITTER_ID       2060718028283654144
+DEV_WALLET_ADDRESS      8YnUQEZY9beCZQMiTcB8wswUrouW6naJj6W3MgCGerVA
+SOLANA_RPC_URL          https://api.mainnet-beta.solana.com
+SITE_URL                https://trenchfather.fun
+SYNC_SECRET             padre_sync_2026
+CRON_SECRET             padre_cron_2026
+KV_*                    Upstash Redis (set by Vercel KV integration)
+```
 
-`/api/blessing/sync` runs every 15 minutes via Vercel cron.
-- Fetches all $PADRE community members from CC SDK (`getCommunityMembersServer`)
-- For each wallet-linked member: writes `social:{wallet}` to KV (posts/replies/likes/score, 7d TTL)
-- Updates `hourly:YYYY-MM-DDTHH` sorted set (activity points for hourly race)
-- Updates `leaderboard:social` sorted set
-- `score.js` reads `social:{wallet}` first (fast path); falls back to live CC query if stale/missing
-- Manual trigger: `GET /api/blessing/sync?secret=SYNC_SECRET` (set `SYNC_SECRET` env var)
-- Vercel cron sends `Authorization: Bearer $CRON_SECRET` header automatically
+**Note:** Vercel Hobby plan = max 12 serverless functions, 1 cron/day max.
+Current function count: 12 (at limit — do not add more without removing one).
 
-## Launch Checklist
-- [x] Set `window.PADRE_CA` in `js/config.js` → `HNVYhd7CMfCYDgDiRBKzx1gvZVqYohjMMFmRS1n8pump`
-- [ ] Set `PADRE_TOKEN_ADDRESS` in Vercel env vars
-- [ ] Drop `padre-hero-1.mp4` + `padre-hero-2.mp4` into `videos/`
-- [ ] Verify Dexscreener embed showing live data
-- [ ] Test overlay in OBS with real CA
-- [ ] Confirm community SDK connected
+---
+
+## Blessing Score Sync
+
+`/api/blessing/sync` — manually triggered or called by agent.
+- Fetches all community members from CC SDK
+- For each wallet: writes `social:{wallet}` to KV + updates hourly bucket + leaderboard
+- **Now also fetches hold data from Solana RPC** (balance, holdDays, holdStart) for each wallet
+- Merges into `wallet:{address}` KV record so leaderboard shows real hold data
+- CC access token auto-refreshed daily at 8am UTC via `?action=refresh-token`
+
+**Known issue:** Hold data only shows for wallets that have posted in community (wallet address must be in CC messages). Dev wallet shows 0 $PADRE because it genuinely holds 0 — needs tokens bought into it.
+
+---
+
+## Third-Party Integrations
+| Service | Purpose | Status |
+|---------|---------|--------|
+| **pumpdev.io** | Buyback transactions via Lightning API | ✅ Working (tested live) |
+| **Dexscreener** | Volume, price, MC data | ✅ Working |
+| **Solana RPC** | Wallet tracking, sell detection, balance checks | ✅ Working |
+| **CoinCommunities SDK** | Social scoring, posting as Father | ✅ Working |
+| **Anthropic Claude** | Father personality, quote generation | ✅ Working |
+| **Telegram Bot** | Ray's control panel, approvals | ✅ Working |
+| **X/Twitter API** | Auto-posting as @fatherofpumpfun | ❌ 401 Unauthorized (OAuth issue) |
+| **Vercel KV (Upstash)** | Leaderboard, score cache, hourly buckets | ✅ Working |
+
+---
+
+## System Status (as of 2026-06-03)
+
+### ✅ Working
+- Community reward system end-to-end (fee detect → buyback → distribute)
+- Pumpdev.io buyback (tested, got real tx signature)
+- Father quotes posting to coincommunities every 10 minutes
+- Hourly fee announcement to coincommunities
+- Sell shaming + buy alerts via Solana WebSocket
+- Telegram approval flow (approve/skip buybacks)
+- Leaderboard + hourly race showing real data
+- Bagworkers OBS overlay
+- Live chat OBS overlay
+- All Vercel env vars set + deployed
+- CC access token daily auto-refresh cron
+- Blessing score dashboard (social score working)
+
+### ❌ Broken / Incomplete
+- **X/Twitter posting** — persistent 401 despite new keys. Tried: new consumer keys, new access token, twitter-api-v2 library. Possible fix: set up Account Automation on @fatherofpumpfun in X Settings
+- **Dashboard hold data = 0** — dev wallet holds 0 $PADRE. Buy some $PADRE into `8YnU…erVA` to fix
+- **Sync job frequency** — Vercel Hobby only allows 1 cron/day. Sync runs manually or when score page is visited. Consider upgrading to Pro ($20/mo) for 15-min sync
+
+### ⚠️ Watch Out For
+- CC access token expires every ~24h — daily cron refreshes at 8am UTC. If cron misses, call `/api/blessing/sync?action=refresh-token&secret=padre_sync_2026` manually
+- pumpdev.io API key: `evtT_beiiNN6LkpeBZqGPDNRU2zwCDiCCEX5gd1fcQ-Wixdkgww41P7ookvtOZ6R`
+- Father quote every 10 min = ~144 CC API calls/day — monitor for rate limits
+
+---
+
+## Next Priorities
+1. Fix X/Twitter 401 — enable Account Automation on @fatherofpumpfun
+2. Buy $PADRE into dev wallet so hold score shows on dashboard
+3. Explore pump-fun SDK for auto fee collection (permissionless `collect_creator_fee_v2`)
+4. Consider Vercel Pro for 15-min sync cron
+5. pump-fun-skills repo — `coin-fees` skill has fee inspection + collection tools worth integrating
