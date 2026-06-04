@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>$PADRE Twitch Chat — OBS Source</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    html, body {
+      width: 400px;
+      height: 600px;
+      overflow: hidden;
+      background: transparent;
+      font-family: 'Inter', sans-serif;
+    }
+
+    /* ── Message list — transparent, stacks from bottom ── */
+    #chat {
+      position: absolute;
+      bottom: 0; left: 0; right: 0;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      gap: 2px;
+      padding: 0 8px 8px;
+      max-height: 600px;
+      overflow: hidden;
+    }
+
+    /* Fade gradient at top so old msgs disappear nicely */
+    #chat::before {
+      content: '';
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      height: 80px;
+      background: linear-gradient(to bottom, rgba(0,0,0,0.0) 0%, transparent 100%);
+      pointer-events: none;
+      z-index: 10;
+    }
+
+    /* ── Single message ── */
+    .msg {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: baseline;
+      gap: 0;
+      padding: 3px 8px 3px 6px;
+      border-radius: 3px;
+      background: rgba(0,0,0,0.55);
+      animation: slideIn 0.25s cubic-bezier(0.22,1,0.36,1) forwards;
+      line-height: 1.5;
+      word-break: break-word;
+      max-width: 100%;
+    }
+
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateX(-12px); }
+      to   { opacity: 1; transform: translateX(0); }
+    }
+
+    /* ── Badges ── */
+    .badges {
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      margin-right: 5px;
+      flex-shrink: 0;
+    }
+    .badge {
+      font-size: 11px;
+      line-height: 1;
+    }
+
+    /* ── Username ── */
+    .username {
+      font-size: 14px;
+      font-weight: 700;
+      cursor: default;
+      white-space: nowrap;
+      flex-shrink: 0;
+      text-shadow: 0 1px 3px rgba(0,0,0,0.9);
+    }
+    .username::after {
+      content: ': ';
+      color: rgba(255,255,255,0.7);
+      font-weight: 400;
+    }
+
+    /* ── Message text ── */
+    .text {
+      font-size: 14px;
+      color: #ffffff;
+      font-weight: 400;
+      text-shadow: 0 1px 3px rgba(0,0,0,0.9), 0 0 6px rgba(0,0,0,0.6);
+      word-break: break-word;
+      flex: 1;
+      min-width: 0;
+    }
+
+    /* Father posts get a subtle highlight */
+    .msg.is-father {
+      background: rgba(0,230,118,0.08);
+      border-left: 2px solid rgba(0,230,118,0.6);
+    }
+    .msg.is-father .text {
+      color: rgba(255,255,255,0.95);
+      font-style: italic;
+    }
+
+    /* ── Empty state ── */
+    #empty {
+      position: absolute;
+      bottom: 20px; left: 16px;
+      font-size: 12px;
+      color: rgba(255,255,255,0.25);
+      font-style: italic;
+      text-shadow: 0 1px 3px rgba(0,0,0,0.8);
+    }
+
+    /* ── Connection status pill (top right, subtle) ── */
+    #status {
+      position: absolute;
+      top: 8px; right: 8px;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      background: rgba(0,0,0,0.5);
+      border-radius: 20px;
+      padding: 3px 8px;
+      font-size: 9px;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.4);
+    }
+    #statusDot {
+      width: 5px; height: 5px;
+      border-radius: 50%;
+      background: #00E676;
+      box-shadow: 0 0 6px #00E676;
+      flex-shrink: 0;
+    }
+    #statusDot.off { background: #444; box-shadow: none; }
+  </style>
+</head>
+<body>
+
+<div id="status">
+  <div id="statusDot"></div>
+  <span id="statusLabel">live</span>
+</div>
+
+<div id="empty">awaiting the congregation…</div>
+<div id="chat"></div>
+
+<script src="js/config.js"></script>
+<script>
+const TOKEN   = window.PADRE_CA || 'HNVYhd7CMfCYDgDiRBKzx1gvZVqYohjMMFmRS1n8pump';
+const MAX_MSG = 18;
+const POLL_MS = 20000;
+
+const chatEl      = document.getElementById('chat');
+const emptyEl     = document.getElementById('empty');
+const statusDot   = document.getElementById('statusDot');
+const statusLabel = document.getElementById('statusLabel');
+
+let messages  = [];
+let seenIds   = new Set();
+let wsConn    = null;
+let pollTimer = null;
+
+/* ── Username → consistent colour (Twitch-style) ── */
+const COLORS = [
+  '#FF4500','#1E90FF','#00FF7F','#FF69B4','#FFD700',
+  '#9ACD32','#FF7F50','#00CED1','#DA70D6','#FF6347',
+  '#7FFF00','#40E0D0','#EE82EE','#F08080','#90EE90',
+  '#87CEEB','#DDA0DD','#98FB98','#FFA07A','#20B2AA',
+];
+function userColor(name) {
+  let h = 0;
+  for (let i = 0; i < name.length; i++) h = ((h << 5) - h + name.charCodeAt(i)) | 0;
+  return COLORS[Math.abs(h) % COLORS.length];
+}
+
+/* ── Badges ── */
+function getBadges(username) {
+  const u = (username || '').toLowerCase();
+  if (u.includes('father') || u.includes('fatherofpumpfun') || u === 'padre') {
+    return '<span class="badges"><span class="badge" title="The Father">✝</span></span>';
+  }
+  return '';
+}
+
+function isFather(username) {
+  const u = (username || '').toLowerCase();
+  return u.includes('father') || u === 'fatherofpumpfun' || u === 'padre';
+}
+
+function esc(s) {
+  return String(s)
+    .replace(/&/g,'&amp;')
+    .replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;');
+}
+
+/* ── Add + render message ── */
+function addMessage(m) {
+  const id = m.id || m.messageId || (m.content||'').slice(0,30) + (m.createdAt||'');
+  if (seenIds.has(id)) return;
+  seenIds.add(id);
+  if (seenIds.size > 300) [...seenIds].slice(0,150).forEach(k => seenIds.delete(k));
+
+  const author = m.username || m.author?.username
+    || (m.walletAddress ? m.walletAddress.slice(0,4)+'…'+m.walletAddress.slice(-4) : 'anon');
+  const text   = (m.content || m.text || '').trim();
+  if (!text) return;
+
+  messages.push({ id, author, text, father: isFather(author) });
+  if (messages.length > MAX_MSG * 2) messages = messages.slice(-MAX_MSG);
+  renderAll();
+}
+
+function renderAll() {
+  const visible = messages.slice(-MAX_MSG);
+  emptyEl.style.display = visible.length ? 'none' : 'block';
+  chatEl.innerHTML = '';
+
+  visible.forEach((m, i) => {
+    const isNew  = i === visible.length - 1;
+    const color  = m.father ? '#00E676' : userColor(m.author);
+    const div    = document.createElement('div');
+    div.className = 'msg' + (m.father ? ' is-father' : '');
+
+    div.innerHTML =
+      getBadges(m.author) +
+      `<span class="username" style="color:${color}">${esc(m.author)}</span>` +
+      `<span class="text">${esc(m.text)}</span>`;
+
+    chatEl.appendChild(div);
+  });
+}
+
+/* ── Poll fallback ── */
+async function poll() {
+  try {
+    const r    = await fetch(`/api/community?token=${TOKEN}&limit=12`);
+    if (!r.ok) return;
+    const data = await r.json();
+    const msgs = Array.isArray(data) ? data : (data.messages || data.data || []);
+    msgs.reverse().forEach(addMessage);
+  } catch(_) {}
+}
+
+/* ── WebSocket ── */
+async function connectWS() {
+  try {
+    const tr = await fetch(`/api/ws-ticket?token=${TOKEN}`);
+    if (!tr.ok) throw new Error('ticket failed');
+    const { ticket, url } = await tr.json();
+    if (!ticket || !url) throw new Error('no ticket');
+
+    wsConn = new WebSocket(`${url}?ticket=${ticket}`);
+
+    wsConn.onopen = () => {
+      statusDot.classList.remove('off');
+      statusLabel.textContent = 'live';
+    };
+    wsConn.onmessage = (e) => {
+      try {
+        const data = JSON.parse(e.data);
+        const msg  = data?.data || data?.message || data;
+        if (msg?.content || msg?.text) addMessage(msg);
+      } catch(_) {}
+    };
+    wsConn.onclose  = () => {
+      statusDot.classList.add('off');
+      statusLabel.textContent = 'reconnecting';
+      setTimeout(connectWS, 5000);
+    };
+    wsConn.onerror  = () => wsConn.close();
+
+  } catch(e) {
+    statusDot.classList.add('off');
+    statusLabel.textContent = 'polling';
+    poll();
+    clearInterval(pollTimer);
+    pollTimer = setInterval(poll, POLL_MS);
+  }
+}
+
+poll();
+connectWS();
+</script>
+</body>
+</html>
