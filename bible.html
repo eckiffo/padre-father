@@ -50,34 +50,56 @@
     .bible-nav-title {
       font-family: var(--font-heading);
       font-size: 9px;
-      letter-spacing: 0.2em;
+      letter-spacing: 0.25em;
       text-transform: uppercase;
       color: var(--text-muted);
-      padding: 0 24px 12px;
+      padding: 0 20px 14px;
       border-bottom: 1px solid var(--bg-border);
-      margin-bottom: 12px;
+      margin-bottom: 8px;
     }
     .bible-nav a {
-      display: block;
-      padding: 10px 24px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 11px 20px;
+      text-decoration: none;
+      border-left: 2px solid transparent;
+      transition: all 0.2s;
+    }
+    .bible-nav a:hover, .bible-nav a.active {
+      border-left-color: var(--gold-primary);
+      background: rgba(0,230,118,0.04);
+    }
+    .bible-nav a:hover .nav-book-num,
+    .bible-nav a.active .nav-book-num {
+      color: var(--gold-primary);
+      border-color: var(--gold-primary);
+    }
+    .bible-nav a:hover .nav-book-label,
+    .bible-nav a.active .nav-book-label {
+      color: var(--gold-primary);
+    }
+    .bible-nav .nav-book-num {
+      font-family: var(--font-heading);
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      color: var(--gold-dark);
+      border: 1px solid var(--gold-deep);
+      border-radius: 3px;
+      padding: 3px 7px;
+      flex-shrink: 0;
+      transition: all 0.2s;
+      min-width: 36px;
+      text-align: center;
+    }
+    .bible-nav .nav-book-label {
       font-family: var(--font-heading);
       font-size: 12px;
       font-weight: 600;
       color: var(--text-secondary);
-      text-decoration: none;
-      border-left: 3px solid transparent;
-      transition: all 0.2s;
-    }
-    .bible-nav a:hover, .bible-nav a.active {
-      color: var(--gold-primary);
-      border-left-color: var(--gold-primary);
-      background: rgba(0,230,118,0.04);
-    }
-    .bible-nav .nav-book-num {
-      font-family: var(--font-fraktur);
-      font-size: 18px;
-      margin-right: 8px;
-      color: var(--gold-dark);
+      letter-spacing: 0.04em;
+      transition: color 0.2s;
     }
 
     /* ── Bible content ── */
@@ -95,12 +117,17 @@
       margin-bottom: 48px;
     }
     .book-number {
-      font-family: var(--font-fraktur);
-      font-size: 72px;
-      color: var(--gold-deep);
-      display: block;
-      line-height: 1;
-      margin-bottom: 8px;
+      font-family: var(--font-heading);
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      color: var(--gold-dark);
+      display: inline-block;
+      border: 1px solid var(--gold-deep);
+      padding: 6px 18px;
+      border-radius: 3px;
+      margin-bottom: 20px;
     }
     .book-title {
       font-family: var(--font-display);
@@ -147,12 +174,14 @@
       align-items: flex-start;
     }
     .verse-num {
-      font-family: var(--font-fraktur);
-      font-size: 22px;
+      font-family: var(--font-heading);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.05em;
       color: var(--gold-dark);
       flex-shrink: 0;
       min-width: 28px;
-      line-height: 1.4;
+      line-height: 2.2;
     }
     .verse-text {
       font-family: var(--font-body);
@@ -178,12 +207,15 @@
     }
     .cmd-verse:hover { border-left-color: var(--gold-primary); }
     .cmd-verse .cmd-num {
-      font-family: var(--font-fraktur);
-      font-size: 36px;
+      font-family: var(--font-heading);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
       color: var(--gold-dark);
       line-height: 1;
       flex-shrink: 0;
       min-width: 44px;
+      padding-top: 4px;
     }
     .cmd-verse .cmd-body { font-family: var(--font-body); font-size: 16px; color: var(--text-white); line-height: 1.7; }
     .cmd-verse .cmd-body em { color: var(--text-secondary); font-style: italic; font-size: 14px; display: block; margin-top: 6px; }
@@ -400,12 +432,12 @@
     <!-- Sidebar nav -->
     <nav class="bible-nav">
       <div class="bible-nav-title">Books of the Bible</div>
-      <a href="#genesis"><span class="nav-book-num">I</span> Genesis</a>
-      <a href="#commandments"><span class="nav-book-num">II</span> Commandments</a>
-      <a href="#psalms"><span class="nav-book-num">III</span> The Psalms</a>
-      <a href="#prophecies"><span class="nav-book-num">IV</span> The Prophecies</a>
-      <a href="#parables"><span class="nav-book-num">V</span> The Parables</a>
-      <a href="#testimonials"><span class="nav-book-num">VI</span> Testimonials</a>
+      <a href="#genesis"><span class="nav-book-num">I</span><span class="nav-book-label">Genesis</span></a>
+      <a href="#commandments"><span class="nav-book-num">II</span><span class="nav-book-label">Commandments</span></a>
+      <a href="#psalms"><span class="nav-book-num">III</span><span class="nav-book-label">The Psalms</span></a>
+      <a href="#prophecies"><span class="nav-book-num">IV</span><span class="nav-book-label">The Prophecies</span></a>
+      <a href="#parables"><span class="nav-book-num">V</span><span class="nav-book-label">The Parables</span></a>
+      <a href="#testimonials"><span class="nav-book-num">VI</span><span class="nav-book-label">Testimonials</span></a>
     </nav>
 
     <!-- Content -->
