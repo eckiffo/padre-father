@@ -3,6 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <title>$PADRE Rave — OBS Source</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@900&family=Cinzel:wght@700&display=swap" rel="stylesheet">
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     html, body { width: 1920px; height: 1080px; overflow: hidden; background: #000; }
@@ -13,11 +15,107 @@
       color: #fff; letter-spacing: .18em; text-transform: uppercase;
       opacity: 0.4; pointer-events: none;
     }
+
+    /* ── BUY ALERT ── */
+    #buyAlert {
+      position: absolute;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%) scale(0.6);
+      opacity: 0;
+      pointer-events: none;
+      text-align: center;
+      z-index: 100;
+      transition: none;
+    }
+    #buyAlert.show {
+      animation: alertIn 0.35s cubic-bezier(0.175,0.885,0.32,1.5) forwards;
+    }
+    #buyAlert.hide {
+      animation: alertOut 0.4s ease-in forwards;
+    }
+    @keyframes alertIn {
+      from { opacity:0; transform:translate(-50%,-50%) scale(0.5); }
+      to   { opacity:1; transform:translate(-50%,-50%) scale(1); }
+    }
+    @keyframes alertOut {
+      from { opacity:1; transform:translate(-50%,-50%) scale(1); }
+      to   { opacity:0; transform:translate(-50%,-50%) scale(1.1); }
+    }
+    .alert-tag {
+      font-family: 'Cinzel', serif;
+      font-size: 22px;
+      font-weight: 700;
+      letter-spacing: 0.4em;
+      text-transform: uppercase;
+      color: #00E676;
+      text-shadow: 0 0 30px #00E676, 0 0 60px #00E676;
+      margin-bottom: 12px;
+    }
+    .alert-main {
+      font-family: 'Cinzel Decorative', serif;
+      font-size: 110px;
+      font-weight: 900;
+      color: #fff;
+      line-height: 1;
+      text-shadow: 0 0 40px #00E676, 0 0 100px rgba(0,230,118,0.5);
+      letter-spacing: 0.05em;
+    }
+    .alert-main .alert-accent { color: #00E676; }
+    .alert-value {
+      font-family: 'Cinzel Decorative', serif;
+      font-size: 72px;
+      font-weight: 900;
+      color: #00E676;
+      text-shadow: 0 0 40px #00E676, 0 0 80px rgba(0,230,118,0.6);
+      margin-top: 8px;
+    }
+    .alert-sub {
+      font-family: 'Cinzel', serif;
+      font-size: 20px;
+      font-weight: 700;
+      letter-spacing: 0.25em;
+      color: rgba(255,255,255,0.6);
+      margin-top: 14px;
+      text-transform: uppercase;
+    }
+    .alert-divider {
+      color: #00E676;
+      font-size: 16px;
+      letter-spacing: 8px;
+      margin: 10px 0;
+      text-shadow: 0 0 20px #00E676;
+    }
+
+    /* ── Scan line flash on buy ── */
+    #scanFlash {
+      position: absolute; inset: 0;
+      background: linear-gradient(to bottom,
+        transparent 0%, rgba(0,230,118,0.03) 50%, transparent 100%);
+      background-size: 100% 4px;
+      opacity: 0; pointer-events: none; z-index: 90;
+      animation: none;
+    }
+    #scanFlash.flash { animation: scanIn 1.2s ease-out forwards; }
+    @keyframes scanIn {
+      0%   { opacity:0.6; }
+      100% { opacity:0; }
+    }
   </style>
 </head>
 <body>
 <canvas id="c"></canvas>
 <div id="ui">$PADRE · trenchfather.fun</div>
+
+<div id="scanFlash"></div>
+
+<div id="buyAlert">
+  <div class="alert-tag">✝ &nbsp; New Believer &nbsp; ✝</div>
+  <div class="alert-divider">◆ ─────────── ◆ ─────────── ◆</div>
+  <div class="alert-main"><span class="alert-accent">$PADRE</span> BOUGHT</div>
+  <div class="alert-value" id="alertValue">0.000 SOL</div>
+  <div class="alert-sub" id="alertSub">loading…</div>
+  <div class="alert-divider">◆ ─────────── ◆ ─────────── ◆</div>
+</div>
 <script>
 const canvas = document.getElementById('c');
 const ctx = canvas.getContext('2d');
@@ -504,12 +602,161 @@ setTimeout(()=>{tTgt=1;setTimeout(()=>{tTgt=0;},4500);},400);
 setTimeout(()=>{ onBeat();onBeat();onBeat();onBeat();onBar();onPhrase(); },100);
 requestAnimationFrame(frame);
 
+/* ═══════════════════════════════════════════════
+   BUY ALERT — Solana WS + RPC
+═══════════════════════════════════════════════ */
+const CA           = (window.PADRE_CA) || 'HNVYhd7CMfCYDgDiRBKzx1gvZVqYohjMMFmRS1n8pump';
+const SOL_WS       = 'wss://api.mainnet-beta.solana.com';
+const SOL_RPC      = 'https://api.mainnet-beta.solana.com';
+const alertEl      = document.getElementById('buyAlert');
+const alertValue   = document.getElementById('alertValue');
+const alertSub     = document.getElementById('alertSub');
+const scanFlash    = document.getElementById('scanFlash');
+let alertTimer     = null;
+let txQueue        = [];
+let processingTx   = false;
+const seenSigs     = new Set();
+
+function shortW(a) { return String(a).slice(0,4)+'…'+String(a).slice(-4); }
+function fmtSol(n) { return parseFloat(n).toFixed(3)+' SOL'; }
+function fmtUsd(n) { return n>0 ? ' (~$'+Number(n).toLocaleString('en',{maximumFractionDigits:0})+')' : ''; }
+
+function showBuyAlert(solAmt, tokenAmt, wallet, solPrice) {
+  // Cancel any existing alert
+  if (alertTimer) clearTimeout(alertTimer);
+  alertEl.classList.remove('show','hide');
+
+  const usd = solPrice ? parseFloat(solAmt)*solPrice : 0;
+  alertValue.textContent = fmtSol(solAmt) + fmtUsd(usd);
+  alertSub.textContent   = tokenAmt
+    ? shortW(wallet)+' · '+Number(tokenAmt).toLocaleString()+' $PADRE'
+    : shortW(wallet);
+
+  // Force reflow then show
+  void alertEl.offsetWidth;
+  alertEl.classList.add('show');
+
+  // Trigger canvas explosion
+  onPhrase();
+  burstSpark(CX, CY, 80, 20, 1400, 10);
+  burst(CX, CY, 120, 18, 1200, 8);
+  [[0,0],[W,0],[0,H],[W,H]].forEach(([x,y]) => {
+    spawnRing(x,y,pal[0],4,1600);
+    burst(x,y,60,16,1200,7);
+  });
+  rain(80);
+
+  // Scan line flash
+  scanFlash.classList.remove('flash');
+  void scanFlash.offsetWidth;
+  scanFlash.classList.add('flash');
+
+  alertTimer = setTimeout(() => {
+    alertEl.classList.remove('show');
+    alertEl.classList.add('hide');
+    alertTimer = setTimeout(() => alertEl.classList.remove('hide'), 500);
+  }, 5000);
+}
+
+let solPrice = 0;
+async function fetchSolPrice() {
+  try {
+    const r = await fetch(`https://api.dexscreener.com/latest/dex/tokens/${CA}`);
+    const d = await r.json();
+    const p = d?.pairs?.[0];
+    if (p?.priceNative && p?.priceUsd)
+      solPrice = parseFloat(p.priceUsd) / parseFloat(p.priceNative);
+  } catch(_) {}
+}
+fetchSolPrice();
+setInterval(fetchSolPrice, 60_000);
+
+async function parseTx(sig) {
+  try {
+    const res = await fetch(SOL_RPC, {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({jsonrpc:'2.0',id:1,method:'getTransaction',
+        params:[sig,{encoding:'jsonParsed',maxSupportedTransactionVersion:0}]}),
+    });
+    const data = await res.json();
+    const tx   = data?.result;
+    if (!tx || tx.meta?.err) return null;
+
+    const keys    = tx.transaction?.message?.accountKeys || [];
+    const preSol  = tx.meta?.preBalances  || [];
+    const postSol = tx.meta?.postBalances || [];
+    const fee     = tx.meta?.fee || 0;
+    const solSpent = (preSol[0]-postSol[0]-fee)/1e9;
+    if (solSpent < 0.001) return null;
+
+    const buyer = keys[0]?.pubkey || keys[0];
+    const preT  = tx.meta?.preTokenBalances  || [];
+    const postT = tx.meta?.postTokenBalances || [];
+    let tokenReceived = 0;
+    for (const post of postT) {
+      if (post.mint !== CA) continue;
+      const pre  = preT.find(p => p.accountIndex===post.accountIndex);
+      const diff = (post.uiTokenAmount?.uiAmount||0) - (pre?.uiTokenAmount?.uiAmount||0);
+      if (diff > tokenReceived) tokenReceived = diff;
+    }
+    return { buyer:String(buyer), solSpent:solSpent.toFixed(3), tokenReceived:Math.round(tokenReceived) };
+  } catch(_) { return null; }
+}
+
+async function drainQueue() {
+  if (processingTx || !txQueue.length) return;
+  processingTx = true;
+  while (txQueue.length > 0) {
+    const sig = txQueue.shift();
+    const r   = await parseTx(sig);
+    if (r) showBuyAlert(r.solSpent, r.tokenReceived, r.buyer, solPrice);
+    await new Promise(res => setTimeout(res, 400));
+  }
+  processingTx = false;
+}
+
+let solWs = null;
+function connectWS() {
+  if (solWs) { try { solWs.close(); } catch(_) {} }
+  solWs = new WebSocket(SOL_WS);
+  solWs.onopen = () => {
+    solWs.send(JSON.stringify({jsonrpc:'2.0',id:1,method:'logsSubscribe',
+      params:[{mentions:[CA]},{commitment:'confirmed'}]}));
+    console.log('[rave] Solana WS connected');
+  };
+  solWs.onmessage = (msg) => {
+    try {
+      const d = JSON.parse(msg.data);
+      if (d.method !== 'logsNotification') return;
+      const val = d.params?.result?.value;
+      if (!val || val.err) return;
+      const logs = val.logs || [];
+      const sig  = val.signature;
+      if (!sig || seenSigs.has(sig)) return;
+      const isBuy = logs.some(l =>
+        l.includes('Instruction: Buy') ||
+        l.includes('ray_log') ||
+        l.includes('Instruction: Swap')
+      );
+      if (!isBuy) return;
+      seenSigs.add(sig);
+      if (seenSigs.size > 200) [...seenSigs].slice(0,100).forEach(s => seenSigs.delete(s));
+      txQueue.push(sig);
+      drainQueue();
+    } catch(_) {}
+  };
+  solWs.onclose = () => { console.warn('[rave] WS closed — reconnecting'); setTimeout(connectWS, 4000); };
+  solWs.onerror = () => solWs.close();
+}
+connectWS();
+
 /* ─── Keys ─── */
 document.addEventListener('keydown', e => {
   if (e.key===' '||e.key==='ArrowRight') { lastBeat=t; onBeat(); }
   if (e.key==='ArrowUp')   { pi=(pi+1)%PALETTES.length; pal=PALETTES[pi]; lasers.forEach((l,i)=>l.color=pal[i%pal.length]); }
   if (e.key==='ArrowDown') { firework(); firework(); }
   if (e.key==='f'||e.key==='F') { onPhrase(); }
+  if (e.key==='b'||e.key==='B') { showBuyAlert('1.250', 840000, 'Abc1…xyz9', 150); } // test buy alert
 });
 </script>
 </body>
