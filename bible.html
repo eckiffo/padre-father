@@ -1,0 +1,856 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="description" content="The $PADRE Bible — Full scripture, commandments, psalms, prophecies, parables and testimonials of the Church of The Father.">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>The $PADRE Bible — Father of Trenches</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700;900&family=Cinzel:wght@400;600;700;900&family=IM+Fell+English:ital@0;1&family=UnifrakturMaguntia&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/main.css">
+  <style>
+    /* ── Bible Layout ── */
+    .bible-hero {
+      background: var(--bg-deep);
+      text-align: center;
+      padding: 80px 24px 60px;
+      border-bottom: 1px solid var(--bg-border);
+      position: relative;
+      overflow: hidden;
+    }
+    .bible-hero::before {
+      content: '✝';
+      position: absolute;
+      font-size: 600px;
+      color: rgba(0,230,118,0.05);
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      font-family: serif;
+      pointer-events: none;
+    }
+    .bible-hero .hero-cross { font-size: 56px; margin-bottom: 16px; }
+    .bible-subtitle { font-family: var(--font-body); font-style: italic; font-size: 18px; color: var(--text-secondary); margin-top: 12px; }
+
+    /* ── Book navigation sidebar ── */
+    .bible-layout {
+      display: grid;
+      grid-template-columns: 240px 1fr;
+      max-width: 1100px;
+      margin: 0 auto;
+      gap: 0;
+    }
+    .bible-nav {
+      position: sticky;
+      top: 80px;
+      height: fit-content;
+      border-right: 1px solid var(--bg-border);
+      padding: 32px 0;
+    }
+    .bible-nav-title {
+      font-family: var(--font-heading);
+      font-size: 9px;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      padding: 0 24px 12px;
+      border-bottom: 1px solid var(--bg-border);
+      margin-bottom: 12px;
+    }
+    .bible-nav a {
+      display: block;
+      padding: 10px 24px;
+      font-family: var(--font-heading);
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      text-decoration: none;
+      border-left: 3px solid transparent;
+      transition: all 0.2s;
+    }
+    .bible-nav a:hover, .bible-nav a.active {
+      color: var(--gold-primary);
+      border-left-color: var(--gold-primary);
+      background: rgba(0,230,118,0.04);
+    }
+    .bible-nav .nav-book-num {
+      font-family: var(--font-fraktur);
+      font-size: 18px;
+      margin-right: 8px;
+      color: var(--gold-dark);
+    }
+
+    /* ── Bible content ── */
+    .bible-content { padding: 48px 48px 80px; }
+
+    .bible-book {
+      margin-bottom: 80px;
+      padding-bottom: 80px;
+      border-bottom: 1px solid var(--bg-border);
+    }
+    .bible-book:last-child { border-bottom: none; }
+
+    .book-header {
+      text-align: center;
+      margin-bottom: 48px;
+    }
+    .book-number {
+      font-family: var(--font-fraktur);
+      font-size: 72px;
+      color: var(--gold-deep);
+      display: block;
+      line-height: 1;
+      margin-bottom: 8px;
+    }
+    .book-title {
+      font-family: var(--font-display);
+      font-size: 28px;
+      font-weight: 900;
+      color: var(--gold-primary);
+      text-shadow: 0 0 30px rgba(0,230,118,0.2);
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+    .book-subtitle {
+      font-family: var(--font-body);
+      font-style: italic;
+      font-size: 16px;
+      color: var(--text-muted);
+      margin-top: 8px;
+    }
+    .book-ornament {
+      color: var(--gold-dark);
+      font-size: 14px;
+      letter-spacing: 4px;
+      margin-top: 16px;
+    }
+
+    /* ── Chapters within a book ── */
+    .bible-chapter { margin-bottom: 48px; }
+    .chapter-heading {
+      font-family: var(--font-heading);
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--gold-primary);
+      border-bottom: 1px solid var(--bg-border);
+      padding-bottom: 10px;
+      margin-bottom: 24px;
+    }
+
+    /* ── Verses ── */
+    .verse {
+      display: flex;
+      gap: 16px;
+      margin-bottom: 16px;
+      align-items: flex-start;
+    }
+    .verse-num {
+      font-family: var(--font-fraktur);
+      font-size: 22px;
+      color: var(--gold-dark);
+      flex-shrink: 0;
+      min-width: 28px;
+      line-height: 1.4;
+    }
+    .verse-text {
+      font-family: var(--font-body);
+      font-size: 17px;
+      color: var(--text-secondary);
+      line-height: 1.9;
+    }
+    .verse-text strong { color: var(--text-white); }
+    .verse-text em { color: var(--gold-primary); font-style: italic; }
+
+    /* ── Commandments style ── */
+    .cmd-verse {
+      background: var(--bg-card);
+      border: 1px solid var(--bg-border);
+      border-left: 3px solid var(--gold-dark);
+      border-radius: 0 var(--radius) var(--radius) 0;
+      padding: 20px 24px;
+      margin-bottom: 14px;
+      display: flex;
+      gap: 20px;
+      align-items: flex-start;
+      transition: border-left-color 0.2s;
+    }
+    .cmd-verse:hover { border-left-color: var(--gold-primary); }
+    .cmd-verse .cmd-num {
+      font-family: var(--font-fraktur);
+      font-size: 36px;
+      color: var(--gold-dark);
+      line-height: 1;
+      flex-shrink: 0;
+      min-width: 44px;
+    }
+    .cmd-verse .cmd-body { font-family: var(--font-body); font-size: 16px; color: var(--text-white); line-height: 1.7; }
+    .cmd-verse .cmd-body em { color: var(--text-secondary); font-style: italic; font-size: 14px; display: block; margin-top: 6px; }
+
+    /* ── Psalms style ── */
+    .psalm-card {
+      background: var(--bg-card);
+      border: 1px solid var(--bg-border);
+      border-radius: var(--radius-lg);
+      padding: 28px 32px;
+      margin-bottom: 20px;
+      position: relative;
+    }
+    .psalm-card::before {
+      content: '"';
+      font-family: var(--font-display);
+      font-size: 80px;
+      color: rgba(0,230,118,0.08);
+      position: absolute;
+      top: 10px; left: 16px;
+      line-height: 1;
+    }
+    .psalm-num {
+      font-family: var(--font-heading);
+      font-size: 9px;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--gold-primary);
+      margin-bottom: 10px;
+    }
+    .psalm-text {
+      font-family: var(--font-body);
+      font-style: italic;
+      font-size: 18px;
+      color: var(--text-white);
+      line-height: 1.8;
+    }
+    .psalm-attribution {
+      font-family: var(--font-heading);
+      font-size: 11px;
+      letter-spacing: 0.1em;
+      color: var(--text-muted);
+      margin-top: 12px;
+      text-align: right;
+    }
+
+    /* ── Prophecy milestones ── */
+    .milestone {
+      background: var(--bg-card);
+      border: 1px solid var(--bg-border);
+      border-radius: var(--radius-lg);
+      padding: 28px 32px 28px 72px;
+      margin-bottom: 20px;
+      position: relative;
+    }
+    .milestone::before {
+      content: '◆';
+      position: absolute;
+      left: 28px; top: 30px;
+      color: var(--gold-primary);
+      font-size: 20px;
+      text-shadow: 0 0 10px rgba(0,230,118,0.5);
+    }
+    .milestone-phase {
+      font-family: var(--font-heading);
+      font-size: 9px;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--gold-primary);
+      margin-bottom: 6px;
+    }
+    .milestone-title {
+      font-family: var(--font-heading);
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--text-white);
+      margin-bottom: 10px;
+    }
+    .milestone-body { font-family: var(--font-body); font-size: 15px; color: var(--text-secondary); line-height: 1.8; }
+
+    /* ── Parables ── */
+    .parable {
+      background: var(--bg-card);
+      border: 1px solid var(--bg-border);
+      border-radius: var(--radius-lg);
+      padding: 32px;
+      margin-bottom: 28px;
+    }
+    .parable-title {
+      font-family: var(--font-heading);
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--gold-primary);
+      letter-spacing: 0.05em;
+      margin-bottom: 20px;
+      text-transform: uppercase;
+    }
+    .parable-body { font-family: var(--font-body); font-size: 16px; color: var(--text-secondary); line-height: 2; }
+    .parable-body p { margin-bottom: 14px; }
+    .parable-moral {
+      font-family: var(--font-body);
+      font-style: italic;
+      font-size: 15px;
+      color: var(--gold-primary);
+      border-top: 1px solid var(--bg-border);
+      padding-top: 14px;
+      margin-top: 14px;
+    }
+
+    /* ── Testimonials ── */
+    .testimonial-placeholder {
+      background: var(--bg-card);
+      border: 1px dashed var(--bg-border);
+      border-radius: var(--radius-lg);
+      padding: 32px;
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    .testimonial-placeholder .icon { font-size: 32px; margin-bottom: 12px; }
+    .testimonial-placeholder p { font-family: var(--font-body); font-style: italic; font-size: 15px; color: var(--text-muted); line-height: 1.7; }
+
+    /* ── Daily verse callout ── */
+    .daily-verse-banner {
+      background: linear-gradient(135deg, rgba(0,230,118,0.06), rgba(0,100,50,0.06));
+      border: 1px solid rgba(0,230,118,0.2);
+      border-radius: var(--radius-lg);
+      padding: 24px 32px;
+      text-align: center;
+      margin-bottom: 48px;
+    }
+    .daily-verse-banner p {
+      font-family: var(--font-body);
+      font-style: italic;
+      font-size: 16px;
+      color: var(--text-secondary);
+    }
+    .daily-verse-banner strong { color: var(--gold-primary); }
+
+    /* ── Mobile ── */
+    @media (max-width: 768px) {
+      .bible-layout { grid-template-columns: 1fr; }
+      .bible-nav { display: none; }
+      .bible-content { padding: 32px 20px 60px; }
+      .book-number { font-size: 52px; }
+      .book-title { font-size: 22px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="top-bar">
+    <div class="top-bar-inner">
+      <span class="top-bar-item">trenchfather.fun</span>
+      <span class="top-bar-divider">✦</span>
+      <a href="index.html" class="top-bar-item top-bar-link">← Back to The Church</a>
+      <span class="top-bar-divider">✦</span>
+      <a href="https://x.com/fatherofpumpfun" target="_blank" rel="noopener" class="top-bar-item top-bar-link">𝕏 @fatherofpumpfun</a>
+      <span class="top-bar-divider">✦</span>
+      <a href="https://t.me/fatheroftrenches" target="_blank" rel="noopener" class="top-bar-item top-bar-link">✈ Telegram</a>
+      <span class="top-bar-divider">✦</span>
+      <a href="https://t.me/padreannouncements" target="_blank" rel="noopener" class="top-bar-item top-bar-link">📢 Announcements</a>
+      <span class="top-bar-divider">✦</span>
+      <a href="https://www.tiktok.com/@thetrenchfather" target="_blank" rel="noopener" class="top-bar-item top-bar-link"><svg viewBox="0 0 24 24" class="icon" style="width:12px;height:12px;margin-right:3px;"><path d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-2.88 2.5 2.89 2.89 0 01-2.89-2.89 2.89 2.89 0 012.89-2.89c.28 0 .54.04.79.1V9.01a6.33 6.33 0 00-.79-.05 6.34 6.34 0 00-6.34 6.34 6.34 6.34 0 006.34 6.34 6.34 6.34 0 006.33-6.34V8.69a8.16 8.16 0 004.84 1.56V6.8a4.85 4.85 0 01-1.07-.11z"/></svg> TikTok</a>
+    </div>
+  </div>
+
+  <header class="site-header">
+    <div class="header-inner">
+      <div class="header-logo">
+        <a href="index.html" class="logo-link">
+          <div class="logo-cross">✝</div>
+          <div class="logo-text">
+            <span class="logo-ticker">$PADRE</span>
+            <span class="logo-tagline">Father of Trenches</span>
+          </div>
+        </a>
+      </div>
+      <button class="mobile-menu-toggle" id="menuToggle"><span></span><span></span><span></span></button>
+      <nav class="main-nav" id="mainNav">
+        <ul class="nav-list">
+          <li><a href="about.html" class="nav-link">About</a></li>
+          <li><a href="flywheel.html" class="nav-link">How It Works</a></li>
+          <li><a href="sermons.html" class="nav-link">Sermons</a></li>
+          <li><a href="bible.html" class="nav-link nav-highlight">The Bible</a></li>
+          <li><a href="dashboard.html" class="nav-link">Dashboard</a></li>
+          <li><a href="leaderboard.html" class="nav-link">Leaderboard</a></li>
+          <li><a href="offerings.html" class="nav-link nav-highlight">Offerings</a></li>
+          <li><a href="connect-wallet.html" class="nav-link nav-wallet">Connect Wallet</a></li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+
+  <!-- ── HERO ── -->
+  <section class="bible-hero">
+    <div class="hero-cross">📖</div>
+    <h1 class="section-title">The $PADRE Bible</h1>
+    <p class="bible-subtitle">Written in Faith · Sealed on the Blockchain · Eternal as the Burned Liquidity</p>
+    <div class="title-ornament" style="margin-top:20px;">◆────────────────────────────────◆</div>
+    <p style="font-family:var(--font-body);font-style:italic;font-size:14px;color:var(--text-muted);margin-top:16px;">CA: HNVYhd7CMfCYDgDiRBKzx1gvZVqYohjMMFmRS1n8pump</p>
+  </section>
+
+  <!-- ── DAILY VERSE BANNER ── -->
+  <div class="section-inner" style="padding-top:32px;padding-bottom:0;">
+    <div class="daily-verse-banner">
+      <strong>✝ Daily Verse</strong>
+      <p style="margin-top:8px;">"He who holds through the red candles shall feast upon the green ones. The dip is the door. Faith is the key."</p>
+      <p style="font-size:12px;margin-top:8px;color:var(--text-muted);">Type <strong>/bible</strong> in the Telegram community for a random verse · <strong>/bible psalms</strong> for all psalms</p>
+    </div>
+  </div>
+
+  <!-- ── LAYOUT ── -->
+  <div class="bible-layout section-inner" style="padding-top:0;">
+
+    <!-- Sidebar nav -->
+    <nav class="bible-nav">
+      <div class="bible-nav-title">Books of the Bible</div>
+      <a href="#genesis"><span class="nav-book-num">I</span> Genesis</a>
+      <a href="#commandments"><span class="nav-book-num">II</span> Commandments</a>
+      <a href="#psalms"><span class="nav-book-num">III</span> The Psalms</a>
+      <a href="#prophecies"><span class="nav-book-num">IV</span> The Prophecies</a>
+      <a href="#parables"><span class="nav-book-num">V</span> The Parables</a>
+      <a href="#testimonials"><span class="nav-book-num">VI</span> Testimonials</a>
+    </nav>
+
+    <!-- Content -->
+    <div class="bible-content">
+
+      <!-- ════════════════════════════════════════
+           BOOK I — GENESIS
+           ════════════════════════════════════════ -->
+      <div class="bible-book" id="genesis">
+        <div class="book-header">
+          <span class="book-number">I</span>
+          <div class="book-title">Genesis</div>
+          <div class="book-subtitle">How The Church Was Created · The Arrival of The Father</div>
+          <div class="book-ornament">◆ ─────────── ◆ ─────────── ◆</div>
+        </div>
+
+        <div class="bible-chapter">
+          <div class="chapter-heading">Chapter 1 — The Before Times</div>
+          <div class="verse"><span class="verse-num">1</span><div class="verse-text">In the beginning, the markets were void. And the void was filled with noise — ten thousand tokens launched and ten thousand tokens perished, and the traders who chased them grew weary unto death.</div></div>
+          <div class="verse"><span class="verse-num">2</span><div class="verse-text">For a year the crypto winter had come, not of ice and silence, but of disappointment and distraction. The pumps came fast and went faster still. <strong>The bags grew heavy, and faith grew thin.</strong></div></div>
+          <div class="verse"><span class="verse-num">3</span><div class="verse-text">And the traders, who once rose with fire in their hearts and conviction in their hands, began to lay down their wallets and close their charts. They called it <em>rest</em>. It was, in truth, the beginning of forgetting.</div></div>
+          <div class="verse"><span class="verse-num">4</span><div class="verse-text">The art of the bag worker — the one who posts, who evangelizes, who carries the coin like a torch into dark places — had been lost. Communities went silent. The faithful became the fearful.</div></div>
+          <div class="verse"><span class="verse-num">5</span><div class="verse-text">And so the Lord of the Trenches looked upon this generation and He saw that <strong>they needed not a coin, but a calling</strong>. Not a chart, but a church. Not a token, but a Father.</div></div>
+        </div>
+
+        <div class="bible-chapter">
+          <div class="chapter-heading">Chapter 2 — The Arrival</div>
+          <div class="verse"><span class="verse-num">6</span><div class="verse-text">And so it came to pass that <strong>The Father descended into Pump.fun</strong>, not with a presale, not with venture capital, not with insider allocations or team tokens. He arrived with nothing but truth and an open door.</div></div>
+          <div class="verse"><span class="verse-num">7</span><div class="verse-text">He set the tax at zero, for <em>The Father asks nothing of the faithful</em>. He burned the liquidity, for <em>The Father makes no rug</em>. He held no coins for himself, for <em>The Father is not here to extract — he is here to elevate</em>.</div></div>
+          <div class="verse"><span class="verse-num">8</span><div class="verse-text">And He called the coin <strong>$PADRE</strong> — Father. The Father of Trenches. The one who wades into the filth of the market not for his own gain, but to lead his congregation out the other side.</div></div>
+          <div class="verse"><span class="verse-num">9</span><div class="verse-text">The first believers came as all first believers do — skeptical, small in bag, large in curiosity. They read the contract. They saw the burned LP. They saw the zero tax. They saw the open community. <strong>And they stayed.</strong></div></div>
+          <div class="verse"><span class="verse-num">10</span><div class="verse-text">For there is something different about this church. The stream runs nightly. The Father shows his face. He speaks. He answers. He laughs with his congregation and prays with them through the dips. He is <em>real</em>. In a market of phantoms, The Father is flesh and faith.</div></div>
+        </div>
+
+        <div class="bible-chapter">
+          <div class="chapter-heading">Chapter 3 — The Purpose</div>
+          <div class="verse"><span class="verse-num">11</span><div class="verse-text">The Father did not arrive to fix the market. Markets are not fixed — they are endured. The Father arrived to fix the <strong>people</strong> who play in it.</div></div>
+          <div class="verse"><span class="verse-num">12</span><div class="verse-text">He saw that the crypto faithful had forgotten how to hold. They had been trained, by a thousand rugs, to run. Their fingers hovered always over the sell button, trembling with the trauma of a hundred bags that went to zero.</div></div>
+          <div class="verse"><span class="verse-num">13</span><div class="verse-text">The Father said unto them: <em>"You are not cursed. You have been poorly led. Come into the church. Set down your fear. Pick up your faith. The one who holds through the desert shall drink at the promised market cap."</em></div></div>
+          <div class="verse"><span class="verse-num">14</span><div class="verse-text">And He established the covenant: <strong>100% of trading fees flow back to the congregation</strong>. Half in buybacks. Half to those who do the work of the church — who post, who share, who carry the gospel forward.</div></div>
+          <div class="verse"><span class="verse-num">15</span><div class="verse-text">This is not tokenomics. This is theology. The church grows when its members give. And when the church grows, every member is lifted. <strong>We are all the tide. We are all the rising boat.</strong></div></div>
+          <div class="verse"><span class="verse-num">16</span><div class="verse-text">And so The Church of $PADRE was born — not from code alone, but from covenant. Not from hype alone, but from <em>faith</em>. The kind of faith that holds a bag through forty red candles because it knows what lies on the other side.</div></div>
+          <div class="verse"><span class="verse-num">17</span><div class="verse-text">Amen. The church is open. The Father is here. <strong>And the liquidity is burned.</strong></div></div>
+        </div>
+      </div>
+
+      <!-- ════════════════════════════════════════
+           BOOK II — THE COMMANDMENTS
+           ════════════════════════════════════════ -->
+      <div class="bible-book" id="commandments">
+        <div class="book-header">
+          <span class="book-number">II</span>
+          <div class="book-title">The Commandments</div>
+          <div class="book-subtitle">Twenty-Five Laws of the Faithful · Holding · Posting · Faith · Purity</div>
+          <div class="book-ornament">◆ ─────────── ◆ ─────────── ◆</div>
+        </div>
+
+        <div class="bible-chapter">
+          <div class="chapter-heading">The Twenty-Five Commandments of $PADRE</div>
+
+          <div class="cmd-verse"><span class="cmd-num">I</span><div class="cmd-body">Thou shalt have no other coins before $PADRE.<em>In the kingdom of the trenches, there is one true Father. All others are idols dressed in utility.</em></div></div>
+          <div class="cmd-verse"><span class="cmd-num">II</span><div class="cmd-body">Thou shalt not paper hand thy $PADRE.<em>Diamond hands are the armor of the faithful. To sell in weakness is to hand your blessing to a stranger.</em></div></div>
+          <div class="cmd-verse"><span class="cmd-num">III</span><div class="cmd-body">Thou shalt buy every dip with righteous conviction.<em>Red candles are not punishment. They are the gate through which only the faithful may pass to the other side.</em></div></div>
+          <div class="cmd-verse"><span class="cmd-num">IV</span><div class="cmd-body">Remember the liquidity, to keep it holy.<em>LP is burned and eternal. No rug shall come from The Father's hands. The covenant cannot be undone.</em></div></div>
+          <div class="cmd-verse"><span class="cmd-num">V</span><div class="cmd-body">Honor thy community and thy congregation.<em>The holders are the church. Their faith moves the market cap. Every new soul welcomed is a candle lit in the dark.</em></div></div>
+          <div class="cmd-verse"><span class="cmd-num">VI</span><div class="cmd-body">Thou shalt not spread FUD in the congregation.<em>Fear, uncertainty and doubt are the weapons of the ungodly. Cast them out with scripture and green charts.</em></div></div>
+          <div class="cmd-verse"><span class="cmd-num">VII</span><div class="cmd-body">Thou shalt spread The Father's gospel on all platforms.<em>Evangelize without ceasing. Post. Reply. Share. Tag. The algorithm is the pulpit — preach from it daily.</em></div></div>
+          <div class="cmd-verse"><span class="cmd-num">VIII</span><div class="cmd-body">Thou shalt not covet thy neighbor's bag size.<em>Stack at thine own pace. The Father's church has pews for all — from the one-dollar congregation to the Saint with ten thousand.</em></div></div>
+          <div class="cmd-verse"><span class="cmd-num">IX</span><div class="cmd-body">Thou shalt verify the contract address before aping.<em>False prophets launch daily on Pump.fun. There is only one Father. Always use trenchfather.fun. HNVYhd7CMfCYDgDiRBKzx1gvZVqYohjMMFmRS1n8pump.</em></div></div>
+          <div class="cmd-verse"><span class="cmd-num">X</span><div class="cmd-body">Thou shalt not sell before the prophecy is fulfilled.<em>The milestones are written. Hold until the promised land appears. The faithful who arrive at 20,000 holders shall receive the Father's full treasury.</em></div></div>
+          <div class="cmd-verse"><span class="cmd-num">XI</span><div class="cmd-body">Thou shalt bag work with full heart and open hands.<em>Post in the community daily. Reply to the lost. Welcome the newcomers. Your effort is your tithe — and the rewards return to you.</em></div></div>
+          <div class="cmd-verse"><span class="cmd-num">XII</span><div class="cmd-body">Thou shalt not sell on red days to buy back on green ones.<em>This is the way of the fool. Buy red. Hold green. Never reverse the sacred order.</em></div></div>
+          <div class="cmd-verse"><span class="cmd-num">XIII</span><div class="cmd-body">Thou shalt attend the stream and make thy presence known.<em>The stream is the sermon. To be present is to receive. The Father preaches. The congregation listens. The chart responds.</em></div></div>
+          <div class="cmd-verse"><span class="cmd-num">XIV</span><div class="cmd-body">Thou shalt take no false profits before their time.<em>Small bags taken early are small blessings. The full blessing comes to those who wait for the throne of prophecy to be reached.</em></div></div>
+          <div class="cmd-verse"><span class="cmd-num">XV</span><div class="cmd-body">Thou shalt not mock the new believer who buys a small bag.<em>Every Saint began as a Sinner. Every Cardinal was once Congregation. Welcome all. Judge none.</em></div></div>
+          <div class="cmd-verse"><span class="cmd-num">XVI</span><div class="cmd-body">Thou shalt DCA into thy position with discipline and patience.<em>The faithful do not FOMO in one chunk. They build. They average. They accumulate like the tide — slowly, inevitably, powerfully.</em></div></div>
+          <div class="cmd-verse"><span class="cmd-num">XVII</span><div class="cmd-body">Thou shalt not engage with the haters and the doubters.<em>Do not wrestle with pigs. You get dirty and the pig enjoys it. Post the scripture. Block the blasphemers. Move on.</em></div></div>
+          <div class="cmd-verse"><span class="cmd-num">XVIII</span><div class="cmd-body">Thou shalt track thy Blessing Score and climb the ranks.<em>Every post earns points. Every hold earns points. Every referral earns points. The church rewards the diligent.</em></div></div>
+          <div class="cmd-verse"><span class="cmd-num">XIX</span><div class="cmd-body">Thou shalt not compare $PADRE to other coins in weakness.<em>Do not say "but coin X did 100x and PADRE did not." The Father's timeline is His own. The faithful do not rush the sacred.</em></div></div>
+          <div class="cmd-verse"><span class="cmd-num">XX</span><div class="cmd-body">Thou shalt hold through the sideways days with the same faith as the pump days.<em>The flatline is a test. The crab market is the proving ground. The ones who hold through nothing are the ones who deserve something.</em></div></div>
+          <div class="cmd-verse"><span class="cmd-num">XXI</span><div class="cmd-body">Thou shalt refer thy friends and thy enemies alike into the congregation.<em>Every soul you bring to the church earns you points. Every soul who buys because of you earns you a portion of the blessing pool.</em></div></div>
+          <div class="cmd-verse"><span class="cmd-num">XXII</span><div class="cmd-body">Thou shalt keep thy wallet address pure — connect it to the dashboard, let thy faith be made visible.<em>The unseen wallet receives no blessing. Show thyself. The Father sees all connected wallets and rewards the faithful accordingly.</em></div></div>
+          <div class="cmd-verse"><span class="cmd-num">XXIII</span><div class="cmd-body">Thou shalt not use leverage on thy $PADRE position.<em>Leverage is the sin of greed. The Father moves in His own time. Leverage creates timelines that do not align with His will.</em></div></div>
+          <div class="cmd-verse"><span class="cmd-num">XXIV</span><div class="cmd-body">Thou shalt celebrate every milestone — 1k holders, 5k, 10k, 20k — as a holy day.<em>Each milestone unlocks the prophecy. Each threshold crossed is a covenant fulfilled. These are not numbers. They are sacred thresholds.</em></div></div>
+          <div class="cmd-verse"><span class="cmd-num">XXV</span><div class="cmd-body">Thou shalt have faith when thy faith is hardest to find.<em>This is the final and greatest commandment. When the chart bleeds, when the market is cruel, when doubt creeps into thy bag — remember why you came to the church. And hold.</em></div></div>
+        </div>
+      </div>
+
+      <!-- ════════════════════════════════════════
+           BOOK III — THE PSALMS
+           ════════════════════════════════════════ -->
+      <div class="bible-book" id="psalms">
+        <div class="book-header">
+          <span class="book-number">III</span>
+          <div class="book-title">The Psalms</div>
+          <div class="book-subtitle">Quotable Verses · Words for the Stream · New Psalms Added Weekly</div>
+          <div class="book-ornament">◆ ─────────── ◆ ─────────── ◆</div>
+        </div>
+
+        <div class="bible-chapter">
+          <div class="chapter-heading">Psalms of the Holder</div>
+
+          <div class="psalm-card">
+            <div class="psalm-num">Psalm 1</div>
+            <div class="psalm-text">"The one who sells at the bottom waits at the top, watching others eat the meal he cooked."</div>
+            <div class="psalm-attribution">— The Father of Trenches</div>
+          </div>
+
+          <div class="psalm-card">
+            <div class="psalm-num">Psalm 2</div>
+            <div class="psalm-text">"Faith is not believing something will happen. Faith is holding even when you cannot see how."</div>
+            <div class="psalm-attribution">— The Father of Trenches</div>
+          </div>
+
+          <div class="psalm-card">
+            <div class="psalm-num">Psalm 3</div>
+            <div class="psalm-text">"He who holds through the red candles shall feast upon the green ones. The dip is the door. Faith is the key."</div>
+            <div class="psalm-attribution">— The Father of Trenches</div>
+          </div>
+
+          <div class="psalm-card">
+            <div class="psalm-num">Psalm 4</div>
+            <div class="psalm-text">"Your wallet is the church. Your bag is the candle. Your hands — diamond or paper — are the testament of your soul."</div>
+            <div class="psalm-attribution">— The Father of Trenches</div>
+          </div>
+
+          <div class="psalm-card">
+            <div class="psalm-num">Psalm 5</div>
+            <div class="psalm-text">"Every 10x began as a 2x that someone sold. Do not be the someone."</div>
+            <div class="psalm-attribution">— The Father of Trenches</div>
+          </div>
+        </div>
+
+        <div class="bible-chapter">
+          <div class="chapter-heading">Psalms of the Community</div>
+
+          <div class="psalm-card">
+            <div class="psalm-num">Psalm 6</div>
+            <div class="psalm-text">"A church of one is a man standing in a field. A church of ten thousand is an army. Post. Recruit. Build. The Father cannot move the market alone."</div>
+            <div class="psalm-attribution">— The Father of Trenches</div>
+          </div>
+
+          <div class="psalm-card">
+            <div class="psalm-num">Psalm 7</div>
+            <div class="psalm-text">"The bag worker is holier than the passive holder. Both are needed. But one moves the kingdom forward."</div>
+            <div class="psalm-attribution">— The Father of Trenches</div>
+          </div>
+
+          <div class="psalm-card">
+            <div class="psalm-num">Psalm 8</div>
+            <div class="psalm-text">"One post plants a seed. One reply waters it. One share makes it grow. Be all three."</div>
+            <div class="psalm-attribution">— The Father of Trenches</div>
+          </div>
+
+          <div class="psalm-card">
+            <div class="psalm-num">Psalm 9</div>
+            <div class="psalm-text">"Welcome the newcomer as if they are you — six months ago, looking for a reason to believe."</div>
+            <div class="psalm-attribution">— The Father of Trenches</div>
+          </div>
+
+          <div class="psalm-card">
+            <div class="psalm-num">Psalm 10</div>
+            <div class="psalm-text">"The FUD spreader is not your enemy — they are your opportunity. Meet their doubt with scripture. Their disbelief strengthens the faithful."</div>
+            <div class="psalm-attribution">— The Father of Trenches</div>
+          </div>
+        </div>
+
+        <div class="bible-chapter">
+          <div class="chapter-heading">Psalms of the Market</div>
+
+          <div class="psalm-card">
+            <div class="psalm-num">Psalm 11</div>
+            <div class="psalm-text">"The market is not a machine. It is a mirror. What the congregation believes, the chart becomes."</div>
+            <div class="psalm-attribution">— The Father of Trenches</div>
+          </div>
+
+          <div class="psalm-card">
+            <div class="psalm-num">Psalm 12</div>
+            <div class="psalm-text">"They will tell you to be realistic. The realistic man never bought at the genesis. Blessed is the unrealistic believer."</div>
+            <div class="psalm-attribution">— The Father of Trenches</div>
+          </div>
+
+          <div class="psalm-card">
+            <div class="psalm-num">Psalm 13</div>
+            <div class="psalm-text">"Liquidity burned is love made permanent. The Father cannot leave. He will not. The covenant is written in the blockchain and sealed with fire."</div>
+            <div class="psalm-attribution">— The Father of Trenches</div>
+          </div>
+
+          <div class="psalm-card">
+            <div class="psalm-num">Psalm 14</div>
+            <div class="psalm-text">"The paper hand says 'I'll buy back lower.' The lower never comes. The bag never returns. The regret is eternal."</div>
+            <div class="psalm-attribution">— The Father of Trenches</div>
+          </div>
+
+          <div class="psalm-card">
+            <div class="psalm-num">Psalm 15</div>
+            <div class="psalm-text">"Zero tax does not mean zero cost. The cost of $PADRE is your faith. Pay it fully. The returns are proportional."</div>
+            <div class="psalm-attribution">— The Father of Trenches</div>
+          </div>
+        </div>
+
+        <div class="bible-chapter">
+          <div class="chapter-heading">Psalms of the Promised Land</div>
+
+          <div class="psalm-card">
+            <div class="psalm-num">Psalm 16</div>
+            <div class="psalm-text">"At 5,000 holders, the Father gives 75% of His treasury to the congregation. He keeps only what sustains the ministry."</div>
+            <div class="psalm-attribution">— The Father of Trenches</div>
+          </div>
+
+          <div class="psalm-card">
+            <div class="psalm-num">Psalm 17</div>
+            <div class="psalm-text">"At 10,000 holders, He gives 90%. At 20,000, He takes nothing. The Father's reward is the congregation itself."</div>
+            <div class="psalm-attribution">— The Father of Trenches</div>
+          </div>
+
+          <div class="psalm-card">
+            <div class="psalm-num">Psalm 18</div>
+            <div class="psalm-text">"The man who holds from 100 wallets to 20,000 wallets has earned something no chart can show: the right to say he believed when believing was hard."</div>
+            <div class="psalm-attribution">— The Father of Trenches</div>
+          </div>
+
+          <div class="psalm-card">
+            <div class="psalm-num">Psalm 19</div>
+            <div class="psalm-text">"When The Father finally takes nothing, it is not because He has given up. It is because the congregation has become the church. And the church needs no shepherd."</div>
+            <div class="psalm-attribution">— The Father of Trenches</div>
+          </div>
+
+          <div class="psalm-card">
+            <div class="psalm-num">Psalm 20</div>
+            <div class="psalm-text">"There will come a day when new buyers ask 'are you an early holder?' and you will say yes. That day is closer than it looks from inside the dip."</div>
+            <div class="psalm-attribution">— The Father of Trenches</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ════════════════════════════════════════
+           BOOK IV — THE PROPHECIES
+           ════════════════════════════════════════ -->
+      <div class="bible-book" id="prophecies">
+        <div class="book-header">
+          <span class="book-number">IV</span>
+          <div class="book-title">The Prophecies</div>
+          <div class="book-subtitle">Five Milestones · The Sacred Thresholds · What Comes When the Faithful Gather</div>
+          <div class="book-ornament">◆ ─────────── ◆ ─────────── ◆</div>
+        </div>
+
+        <div class="bible-chapter">
+          <div class="chapter-heading">The Five Sacred Prophecies</div>
+
+          <div class="verse"><span class="verse-num">1</span><div class="verse-text">And The Father spoke unto the congregation and said: <em>"I have seen the path. It is not hidden from me. I will tell you where it leads — not as a promise of men, but as a covenant sealed in code."</em></div></div>
+          <div class="verse"><span class="verse-num">2</span><div class="verse-text">Five milestones stand between the church and the promised land. Five thresholds to be crossed by faith, by action, by the collective will of the congregation.</div></div>
+          <div class="verse"><span class="verse-num">3</span><div class="verse-text">These are not marketing promises. These are not roadmap items that may or may not be delivered. <strong>These are covenants</strong>. And the Father does not break covenants.</div></div>
+        </div>
+
+        <div class="bible-chapter">
+          <div class="chapter-heading">The Five Milestones</div>
+
+          <div class="milestone">
+            <div class="milestone-phase">✓ Prophecy I — Genesis Fulfilled</div>
+            <div class="milestone-title">The Birth · Zero to the Congregation</div>
+            <div class="milestone-body">$PADRE is launched on Pump.fun with zero taxes, zero presale, zero team allocation, and burned liquidity. The Father enters the world pure. The first congregation assembles around the altar of the contract address. Every wallet that holds is a founding stone of the church. This prophecy is fulfilled. The Father walks among us.</div>
+          </div>
+
+          <div class="milestone">
+            <div class="milestone-phase">Prophecy II — The First Gathering</div>
+            <div class="milestone-title">5,000 Holders · 75% to Community</div>
+            <div class="milestone-body">When the congregation reaches 5,000 souls, The Father restructures His treasury. Seventy-five percent of all fee income flows directly to the congregation through the reward flywheel — hourly bag workers and weekly holders. The Father retains only what is needed to sustain the ministry. This milestone transforms $PADRE from a coin into a living institution. The church funds itself. The workers are rewarded. The prophecy advances.</div>
+          </div>
+
+          <div class="milestone">
+            <div class="milestone-phase">Prophecy III — The Ministry Grows</div>
+            <div class="milestone-title">10,000 Holders · 90% to Community</div>
+            <div class="milestone-body">At ten thousand believers, The Father gives more still. Ninety percent of all fee income pours into the congregation. The ministry is established. The church has achieved critical mass. Exchange listings are sought. The Father's face appears on platforms and screens that were once beyond reach. The congregation is no longer a community — it is a movement. The Father keeps only ten cents of every dollar that flows through the treasury.</div>
+          </div>
+
+          <div class="milestone">
+            <div class="milestone-phase">Prophecy IV — The Ascension</div>
+            <div class="milestone-title">20,000 Holders · The Father Takes Nothing</div>
+            <div class="milestone-body">This is the final covenant. When twenty thousand souls hold $PADRE, The Father takes nothing. Zero. Every fee generated by the protocol — one hundred percent — flows to the congregation through the blessed reward flywheel. The Father will continue to stream, to preach, to build. But his sustenance comes from the community's generosity alone. He has given all. The church is fully self-sovereign. This is the promised land.</div>
+          </div>
+
+          <div class="milestone">
+            <div class="milestone-phase">Prophecy V — The Eternal Church</div>
+            <div class="milestone-title">Beyond the Numbers · The Father's Legacy</div>
+            <div class="milestone-body">The fifth prophecy has no holder count. It has no threshold. It is the prophecy that lives after the others are fulfilled. When the last milestone is reached, when The Father takes nothing and the church funds everything, a new question arises: what does the congregation become? The answer is written not in code but in the hearts of those who held. They become the next wave of builders, the next generation of preachers, the founders of something that was never supposed to survive — but did, because they believed when believing was irrational, and held when holding was hard.</div>
+          </div>
+        </div>
+
+        <div class="bible-chapter">
+          <div class="chapter-heading">The Prophecy of the Wallet</div>
+          <div class="verse"><span class="verse-num">4</span><div class="verse-text"><em>"Connect thy wallet to the dashboard"</em>, The Father said. <em>"For the unseen wallet receives no blessing. Let thy faith be made visible. Let thy holding be recorded."</em></div></div>
+          <div class="verse"><span class="verse-num">5</span><div class="verse-text">And it was done that every connected wallet would be ranked — Sinner rising to Believer, Congregation to Disciple, Disciple to Cardinal, Cardinal to Saint — and each rank would unlock a greater portion of the weekly blessing.</div></div>
+          <div class="verse"><span class="verse-num">6</span><div class="verse-text">The Saints who hold the most, post the most, and refer the most shall receive the greatest reward. Not because The Father favors them — but because <strong>the covenant rewards the work of faith, not the mere existence of it</strong>.</div></div>
+        </div>
+      </div>
+
+      <!-- ════════════════════════════════════════
+           BOOK V — THE PARABLES
+           ════════════════════════════════════════ -->
+      <div class="bible-book" id="parables">
+        <div class="book-header">
+          <span class="book-number">V</span>
+          <div class="book-title">The Parables</div>
+          <div class="book-subtitle">Stories of the Trenches · Lessons Written in Gains and Losses</div>
+          <div class="book-ornament">◆ ─────────── ◆ ─────────── ◆</div>
+        </div>
+
+        <div class="bible-chapter">
+          <div class="chapter-heading">The Three Great Parables</div>
+        </div>
+
+        <div class="parable">
+          <div class="parable-title">The Parable of the Paper Hand</div>
+          <div class="parable-body">
+            <p>There was a man who came to the church early. He had found $PADRE on launch day, when the market cap was still a humble thing — barely $10,000 — and the congregation numbered fewer than a hundred souls. He had seen promise in the burned liquidity and the zero tax. He had felt something when he read the covenant. And so he bought.</p>
+            <p>He held for three days. And on the fourth day, the chart went red. It was not a catastrophic red — perhaps fifteen percent — but the man had been burned before. He remembered the tokens that had gone to zero. He remembered the bags that never recovered. His finger hovered over the sell button.</p>
+            <p><em>"I will sell now,"</em> he said to himself, <em>"and buy back lower."</em></p>
+            <p>He sold. The price did not go lower. It went sideways for a week, then it went up. Then up again. The congregation gathered. The stream ran nightly. A hundred holders became five hundred. Five hundred became two thousand. The man watched from the outside, refreshing the chart, waiting for his opportunity to re-enter.</p>
+            <p>The opportunity never came in the shape he expected. The price moved through every level he had set as his re-entry. He waited for a bigger dip. The dip came — ten percent — but he hesitated, remembering why he had sold in the first place. Then the price recovered and went higher still.</p>
+            <p>At 10,000 holders, the man looked at his old wallet. He had sold his founding bag for a loss of what would have been a 47x. He still held no $PADRE.</p>
+            <p>The Father said nothing unkind about the man. He only said: <em>"The paper hand is not a sinner. He is a person who let his past trauma make decisions on behalf of his future self. We do not shame him. We grieve with him. And we hold, so that we do not become him."</em></p>
+          </div>
+          <div class="parable-moral">Moral: The paper hand does not sell because the chart is bad. He sells because he does not yet believe the covenant is real. Read the scripture. Connect your wallet. Stay in the church. Belief is built slowly — and the dip is where it is tested.</div>
+        </div>
+
+        <div class="parable">
+          <div class="parable-title">The Parable of the Diamond Hand</div>
+          <div class="parable-body">
+            <p>There was a woman who had never been called wise by anyone who knew her in the markets. She had bought many coins that had failed. She had been rugged twice, once spectacularly, losing a sum that would have fed her family for a month. She had FOMO'd into a pump and sold into a dump so perfectly timed that she had become something of a legend among her small circle — a cautionary tale that made other traders feel better about their own losses.</p>
+            <p>When she found $PADRE, she was skeptical. She read the contract three times. She searched for the team wallet. She found none. She looked for the presale participants. There were none. She checked the LP. It was burned.</p>
+            <p><em>"This is either the most honest project I have ever seen,"</em> she said, <em>"or it is so simple in its deception that I cannot find the trick."</em></p>
+            <p>She bought a small bag — not enough to change her life if it failed. And then she did something she had never done before with a crypto token. She did not watch the chart every hour. She watched the stream. She watched The Father preach. She joined the community. She posted — hesitatingly at first, then with growing conviction.</p>
+            <p>When the chart dipped, she bought more. Not because she was certain, but because she had made a decision: she would let faith be her strategy, for once, instead of fear. She had tried fear as a strategy and it had cost her everything twice. Perhaps she would try something different.</p>
+            <p>She held through three major dips. She held through a week of silence when the chart barely moved. She held on the day when a whale sold and the price fell thirty percent in an hour, and people in the community began to panic.</p>
+            <p>On that day, she posted in the community: <em>"I have been rugged twice. This is not a rug. I know the difference. I am not selling. See you at 10,000 holders."</em></p>
+            <p>The congregation rallied. New buyers came in. The price recovered. Her post was shared a hundred times. Her Blessing Score climbed into Cardinal territory. And at the next weekly distribution, she received more tokens than she had imagined.</p>
+            <p>The Father called her story the finest testimony the church had received. Not because she had made money — though she had — but because she had chosen faith over fear at the moment when fear was the easier and more rational choice.</p>
+          </div>
+          <div class="parable-moral">Moral: The diamond hand is not made of certainty. She is made of choice. The choice to hold is not a prediction. It is an act of faith that creates the outcome it believes in. When you hold, others see you holding. And they hold too. This is the miracle of the congregation.</div>
+        </div>
+
+        <div class="parable">
+          <div class="parable-title">The Parable of the Early Believer</div>
+          <div class="parable-body">
+            <p>There was a young man who spent most of his days in the trenches of Pump.fun — scanning new launches, checking for rugs, hunting the early entry that would change his life. He was good at it. He had a system. He had found winners before. But he had also found many losers, and the losers had a way of erasing the winners.</p>
+            <p>One day he came across $PADRE. The market cap was $8,000. The congregation was sixty wallets. He looked at the contract. He looked at the burned LP. He looked at the zero tax and the zero team allocation. He looked at the stream — a live feed of The Father preaching to a chat room of thirty people, calling out names of holders, answering questions, laughing, pointing at the chart with the exaggerated reverence of a priest blessing a sacrament.</p>
+            <p>The young man laughed too. It was funny. And then he realized: he had been laughing at crypto things for three years, but none of the things he had laughed at had made him any money. The things that had made him money were the things that seemed, on the surface, a little absurd but underneath had a genuine pulse — a real community, a real reason to exist, a real human being showing up for it every day.</p>
+            <p>He bought. More than he intended. His system had a rule about position sizes and he broke it, because something in his gut told him this was the one. He did not tell anyone he bought. He was afraid of being embarrassed if it went to zero.</p>
+            <p>He posted in the community under a different username. He bag worked quietly, building points, watching his Blessing Score climb. He referred three friends who bought. He watched the congregation grow — 60 wallets to 200, to 500, to 1,000. He watched the stream grow alongside it.</p>
+            <p>When the congregation reached 1,000 souls, the young man revealed himself in the community. He posted his wallet journey — from 60 holders to 1,000. He had doubled his position. He had earned more in weekly distributions than he had spent on his original buy-in. He was, by any measure, whole.</p>
+            <p>But the number he posted that meant the most was not his profit. It was 47: the number of posts he had made in the community, the sermons he had attended, the newcomers he had welcomed. These were the things, he said, that made the holding bearable when the chart was cruel.</p>
+            <p><em>"I did not hold because I was confident,"</em> he wrote. <em>"I held because I showed up. And every time I showed up, it got harder to leave."</em></p>
+            <p>The Father read this testimony on stream. He was silent for a moment. Then he said: <em>"This is why the church exists. Not for the money. For this."</em></p>
+          </div>
+          <div class="parable-moral">Moral: The early believer is not special because he found the coin first. He is special because he stayed. Arrival is nothing. Presence is everything. The community you build while you hold is the thing that makes the holding worth it — before the money ever arrives.</div>
+        </div>
+
+        <div class="parable">
+          <div class="parable-title">The Parable of the Doubter Who Returned</div>
+          <div class="parable-body">
+            <p>There was a man who had heard of The Father and dismissed him. He had posted in other communities that $PADRE was <em>"just another priest gimmick"</em> and that the burned LP was a trick and that the Father would sell his personal bag when the time was right.</p>
+            <p>He was shown the contract, which had no team allocation. He was shown the burned LP, which was verified on-chain. He was shown the commandments. He said they were marketing copy. He was shown the stream, where The Father answered questions from the congregation for three hours without a script. He said it was performance.</p>
+            <p>He sold his small test bag — the one he had bought purely to find something wrong with — at a loss of two dollars. He considered this a victory. He moved on.</p>
+            <p>Three months later, the doubter returned. The congregation had grown. The chart had moved. He did not say what had changed his mind. He simply posted: <em>"I was wrong. I am sorry. I would like to join the congregation."</em></p>
+            <p>The community welcomed him without condition. His old posts mocking the church were not raised against him. His small loss from the test bag was not mentioned. He was given the same welcome as any newcomer.</p>
+            <p>The Father said only: <em>"The church has no memory for old sins. Only new ones."</em></p>
+            <p>The doubter became one of the congregation's most active bag workers. He posted daily. He replied to every newcomer who expressed doubt — because he knew exactly what doubt felt like, and exactly what it needed to hear.</p>
+          </div>
+          <div class="parable-moral">Moral: The doubter is not your enemy. He is the believer who has not yet arrived. Welcome his return. The congregation that cannot forgive cannot grow. And the congregation that cannot grow cannot fulfill the prophecy.</div>
+        </div>
+      </div>
+
+      <!-- ════════════════════════════════════════
+           BOOK VI — TESTIMONIALS
+           ════════════════════════════════════════ -->
+      <div class="bible-book" id="testimonials">
+        <div class="book-header">
+          <span class="book-number">VI</span>
+          <div class="book-title">The Testimonials</div>
+          <div class="book-subtitle">Words of the Congregation · Stories of Faith in the Trenches</div>
+          <div class="book-ornament">◆ ─────────── ◆ ─────────── ◆</div>
+        </div>
+
+        <div class="bible-chapter">
+          <div class="chapter-heading">Community Testimonials — Added As They Come</div>
+          <div class="verse"><span class="verse-num">1</span><div class="verse-text">The Book of Testimonials is a living document. As the congregation grows and the milestones are crossed, the stories of the faithful shall be written here — in their own words, under their own name, as a permanent record of those who believed when it was still early.</div></div>
+          <div class="verse"><span class="verse-num">2</span><div class="verse-text">Share your testimony in the Telegram community or in the stream chat. The Father reads every one. The most powerful shall be enshrined in this book, where they will remain as long as the blockchain exists.</div></div>
+          <div class="verse"><span class="verse-num">3</span><div class="verse-text">To submit your testimony: post it in the <strong>$PADRE Telegram</strong> with the tag <strong>#testimony</strong>. The Father and his congregation shall bear witness.</div></div>
+        </div>
+
+        <div class="testimonial-placeholder">
+          <div class="icon">✝</div>
+          <p>The first testimonial slot awaits the first soul brave enough to write their story of faith in the trenches. Will it be yours?</p>
+          <p style="margin-top:12px;"><a href="https://t.me/fatheroftrenches" target="_blank" rel="noopener" style="color:var(--gold-primary);text-decoration:none;">→ Submit in Telegram with #testimony</a></p>
+        </div>
+
+        <div class="testimonial-placeholder">
+          <div class="icon">📜</div>
+          <p>Awaiting the testimony of the one who held through the first great dip and lived to tell the tale.</p>
+        </div>
+
+        <div class="testimonial-placeholder">
+          <div class="icon">🕯️</div>
+          <p>Reserved for the first bag worker who earns Saint rank. Their words will be the first thing newcomers read when they open this page.</p>
+        </div>
+
+        <div style="margin-top:48px;">
+          <div class="daily-verse-banner">
+            <strong>✝ Receive the Daily Verse</strong>
+            <p style="margin-top:8px;">Join the <a href="https://t.me/fatheroftrenches" target="_blank" rel="noopener" style="color:var(--gold-primary);">Telegram community</a> and type <strong>/bible</strong> for a random verse from these scriptures. A new verse is posted automatically every morning at 9am as a blessing for the faithful.</p>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- end .bible-content -->
+  </div><!-- end .bible-layout -->
+
+  <footer class="site-footer">
+    <div class="footer-top-ornament">
+      <span class="ornament-line-wide"></span>
+      <span class="ornament-cross-lg">✝</span>
+      <span class="ornament-line-wide"></span>
+    </div>
+    <div class="footer-bottom">
+      <p>© 2026 $PADRE — Father of Trenches · trenchfather.fun</p>
+      <p class="footer-disclaimer">$PADRE is a meme coin with no intrinsic value or financial promise. Not financial advice. Always DYOR.</p>
+    </div>
+  </footer>
+
+  <script src="js/main.js"></script>
+  <script>
+    // Sticky nav active state
+    const sections = document.querySelectorAll('.bible-book');
+    const navLinks = document.querySelectorAll('.bible-nav a');
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(e => {
+        if (e.isIntersecting) {
+          navLinks.forEach(a => a.classList.remove('active'));
+          const link = document.querySelector(`.bible-nav a[href="#${e.target.id}"]`);
+          if (link) link.classList.add('active');
+        }
+      });
+    }, { rootMargin: '-20% 0px -70% 0px' });
+    sections.forEach(s => observer.observe(s));
+  </script>
+</body>
+</html>

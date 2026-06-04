@@ -811,6 +811,7 @@
           <li><a href="about.html" class="nav-link">About</a></li>
           <li><a href="flywheel.html" class="nav-link nav-active">How It Works</a></li>
           <li><a href="sermons.html" class="nav-link">Sermons</a></li>
+          <li><a href="bible.html" class="nav-link">The Bible</a></li>
           <li><a href="dashboard.html" class="nav-link">Dashboard</a></li>
           <li><a href="leaderboard.html" class="nav-link">Leaderboard</a></li>
           <li><a href="offerings.html" class="nav-link nav-highlight">Offerings</a></li>
@@ -899,12 +900,6 @@
         </div>
 
         <!-- Flow arrows at midpoints between adjacent nodes -->
-        <div class="fw-arrow" style="top:16%;left:72%;animation-delay:0s;">→</div>
-        <div class="fw-arrow" style="top:50%;left:90%;animation-delay:.25s;transform:translate(-50%,-50%) rotate(90deg);">→</div>
-        <div class="fw-arrow" style="top:85%;left:72%;animation-delay:.5s;transform:translate(-50%,-50%) rotate(145deg);">→</div>
-        <div class="fw-arrow" style="top:85%;left:28%;animation-delay:.75s;transform:translate(-50%,-50%) rotate(215deg);">→</div>
-        <div class="fw-arrow" style="top:50%;left:10%;animation-delay:1s;transform:translate(-50%,-50%) rotate(270deg);">→</div>
-        <div class="fw-arrow" style="top:16%;left:28%;animation-delay:1.25s;transform:translate(-50%,-50%) rotate(325deg);">→</div>
       </div>
 
       <!-- Flow legend -->
@@ -927,240 +922,136 @@
 
   <div class="fw-layout">
 
-    <!-- ═══════ FEE SPLIT BREAKDOWN ═══════ -->
+    <!-- ═══════ HOW THE MONEY FLOWS ═══════ -->
     <div class="fw-section">
       <span class="fw-section-tag">Where Every SOL Goes</span>
-      <h2 class="fw-section-title">100% of Fees. Zero Wasted.</h2>
-      <p class="fw-section-sub">Every trade contributes. Every hour it compounds.</p>
+      <h2 class="fw-section-title">Simple. Transparent. On-Chain.</h2>
+      <p class="fw-section-sub">Every trade generates fees. Every fee gets split the same way. Every time.</p>
 
-      <!-- Step 1 -->
-      <div style="background:var(--bg-card);border:1px solid var(--bg-border);border-radius:var(--radius-lg);padding:28px;margin-bottom:12px;">
-        <div style="display:flex;align-items:center;gap:20px;flex-wrap:wrap;">
-          <div style="flex-shrink:0;text-align:center;min-width:100px;">
-            <div style="font-family:var(--font-heading);font-size:9px;letter-spacing:.2em;text-transform:uppercase;color:var(--text-dim);margin-bottom:6px;">Step 1 · Every Hour</div>
-            <div style="font-family:var(--font-display);font-size:48px;font-weight:900;color:var(--text-secondary);line-height:1;">25%</div>
-            <div style="font-family:var(--font-heading);font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:var(--text-muted);margin-top:4px;">of total fees</div>
-          </div>
-          <div style="font-family:var(--font-heading);font-size:22px;color:var(--gold-deep);flex-shrink:0;">→</div>
-          <div style="flex:1;min-width:180px;">
-            <div style="font-family:var(--font-heading);font-size:13px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--text-white);margin-bottom:6px;">Hourly Buyback</div>
-            <p style="font-size:13px;color:var(--text-secondary);line-height:1.7;margin:0;">The bot uses 25% of that hour's fees to <strong style="color:var(--text-white);">buy $PADRE from the open market</strong>. This happens every single hour — 24 times a day — creating constant upward pressure on price.</p>
+      <!-- Flow: 3 big steps -->
+      <div style="display:flex;flex-direction:column;gap:8px;max-width:680px;margin:0 auto;">
+
+        <!-- Step 1 -->
+        <div style="display:flex;align-items:center;gap:16px;background:var(--bg-card);border:1px solid var(--bg-border);border-radius:var(--radius-lg);padding:20px 24px;">
+          <div style="font-family:var(--font-display);font-size:36px;font-weight:900;color:var(--text-muted);line-height:1;min-width:60px;text-align:center;">50%</div>
+          <div style="font-size:18px;color:var(--gold-deep);flex-shrink:0;">→</div>
+          <div>
+            <div style="font-family:var(--font-heading);font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--text-secondary);margin-bottom:4px;">Father's Cut</div>
+            <p style="font-size:13px;color:var(--text-muted);margin:0;line-height:1.6;">Stays in the dev wallet. Funds operations, marketing, and growing the church.</p>
           </div>
         </div>
-      </div>
 
-      <!-- Arrow down -->
-      <div style="text-align:center;font-family:var(--font-heading);font-size:20px;color:var(--gold-deep);margin:4px 0;">↓</div>
+        <div style="text-align:center;color:var(--gold-deep);font-size:18px;line-height:1;">↓</div>
 
-      <!-- Step 2 — splits into two -->
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
-        <div style="background:var(--bg-card);border:1px solid var(--gold-dark);border-radius:var(--radius-lg);padding:24px 20px;text-align:center;box-shadow:0 0 20px rgba(0,230,118,0.06);">
-          <div style="font-family:var(--font-heading);font-size:9px;letter-spacing:.2em;text-transform:uppercase;color:rgba(0,230,118,0.5);margin-bottom:8px;">Step 2a · Of Bought Tokens</div>
-          <div style="font-family:var(--font-display);font-size:42px;font-weight:900;color:var(--gold-primary);text-shadow:0 0 20px rgba(0,230,118,0.3);margin-bottom:8px;">25%</div>
-          <div style="font-family:var(--font-heading);font-size:10px;letter-spacing:.15em;text-transform:uppercase;color:var(--text-muted);margin-bottom:12px;">Top 5 Bag Workers</div>
-          <p style="font-size:12px;color:var(--text-secondary);line-height:1.7;">Split between the 5 most active community members that hour, proportionally by their hourly points.</p>
+        <!-- Step 2 -->
+        <div style="display:flex;align-items:center;gap:16px;background:var(--bg-card);border:1px solid var(--gold-dark);border-radius:var(--radius-lg);padding:20px 24px;box-shadow:0 0 20px rgba(0,230,118,0.05);">
+          <div style="font-family:var(--font-display);font-size:36px;font-weight:900;color:var(--gold-primary);line-height:1;min-width:60px;text-align:center;text-shadow:0 0 20px rgba(0,230,118,0.3);">50%</div>
+          <div style="font-size:18px;color:var(--gold-deep);flex-shrink:0;">→</div>
+          <div>
+            <div style="font-family:var(--font-heading);font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--gold-primary);margin-bottom:4px;">Buyback — Buys $PADRE from the market</div>
+            <p style="font-size:13px;color:var(--text-muted);margin:0;line-height:1.6;">Every hour, 50% of fees is used to buy back $PADRE tokens. Creates constant upward pressure.</p>
+          </div>
         </div>
-        <div style="background:var(--bg-card);border:1px solid var(--gold-primary);border-radius:var(--radius-lg);padding:24px 20px;text-align:center;box-shadow:0 0 30px rgba(0,230,118,0.1);">
-          <div style="font-family:var(--font-heading);font-size:9px;letter-spacing:.2em;text-transform:uppercase;color:rgba(0,230,118,0.5);margin-bottom:8px;">Step 2b · Of Bought Tokens</div>
-          <div style="font-family:var(--font-display);font-size:42px;font-weight:900;color:var(--gold-bright);text-shadow:0 0 30px rgba(57,255,20,0.4);margin-bottom:8px;">75%</div>
-          <div style="font-family:var(--font-heading);font-size:10px;letter-spacing:.15em;text-transform:uppercase;color:var(--text-muted);margin-bottom:12px;">Weekly Pool</div>
-          <p style="font-size:12px;color:var(--text-secondary);line-height:1.7;">Accumulates all week. Every Sunday distributed to qualifying holders by Blessing Score.</p>
-        </div>
-      </div>
 
-      <!-- Remaining 75% of fees note -->
-      <div style="margin-top:12px;padding:14px 20px;background:var(--bg-dark);border:1px solid var(--bg-border);border-radius:var(--radius);font-family:var(--font-heading);font-size:11px;letter-spacing:.06em;color:var(--text-muted);">
-        <strong style="color:var(--text-secondary);">The remaining 75% of total fees</strong> go to The Father for operations, development, marketing, and growing the church's mission.
+        <div style="text-align:center;color:var(--gold-deep);font-size:18px;line-height:1;">↓</div>
+
+        <!-- Step 3 — splits -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+          <div style="background:var(--bg-card);border:1px solid var(--gold-dark);border-radius:var(--radius-lg);padding:20px;text-align:center;box-shadow:0 0 16px rgba(0,230,118,0.06);">
+            <div style="font-family:var(--font-display);font-size:40px;font-weight:900;color:var(--gold-primary);text-shadow:0 0 20px rgba(0,230,118,0.3);margin-bottom:6px;">15%</div>
+            <div style="font-family:var(--font-heading);font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--gold-primary);margin-bottom:10px;">⚡ Hourly Winners</div>
+            <p style="font-size:12px;color:var(--text-secondary);line-height:1.7;margin:0;">Of the bought tokens, 15% goes to the top bag workers that hour — split proportionally by points earned.</p>
+          </div>
+          <div style="background:var(--bg-card);border:1px solid var(--gold-primary);border-radius:var(--radius-lg);padding:20px;text-align:center;box-shadow:0 0 24px rgba(0,230,118,0.08);">
+            <div style="font-family:var(--font-display);font-size:40px;font-weight:900;color:var(--gold-bright);text-shadow:0 0 24px rgba(57,255,20,0.4);margin-bottom:6px;">85%</div>
+            <div style="font-family:var(--font-heading);font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--gold-primary);margin-bottom:10px;">📅 Weekly Pool</div>
+            <p style="font-size:12px;color:var(--text-secondary);line-height:1.7;margin:0;">Accumulates all week. Every Sunday distributed to qualifying holders based on their Blessing Score.</p>
+          </div>
+        </div>
       </div>
     </div>
 
     <div class="fw-divider"><span class="fw-divider-icon">✝</span></div>
 
-    <!-- ═══════ 3 WAYS ═══════ -->
+    <!-- ═══════ HOW TO EARN ═══════ -->
     <div>
-      <span class="fw-section-tag">Three Ways to Earn</span>
-      <h2 class="fw-section-title">Pick Your Path. Stack Your Blessings.</h2>
-      <p class="fw-section-sub">You can earn from all three simultaneously.</p>
+      <span class="fw-section-tag">Two Ways to Earn</span>
+      <h2 class="fw-section-title">Post. Hold. Get Paid.</h2>
+      <p class="fw-section-sub">Both pay out in $PADRE tokens, straight to your wallet.</p>
 
-      <div class="fw-ways-grid">
+      <div class="fw-ways-grid" style="grid-template-columns:1fr 1fr;">
 
-        <!-- Way 1 -->
+        <!-- Way 1 — Hourly -->
         <div class="fw-way-card">
-          <div class="fw-way-num">I</div>
-          <div class="fw-way-title">⚡ Hourly Prizes</div>
+          <div class="fw-way-num">⚡</div>
+          <div class="fw-way-title">Hourly Bag Worker Prize</div>
           <div class="fw-way-body">
-            Post in the $PADRE community every hour.<br><br>
-            <strong>Top 5 most active bag workers win.</strong><br><br>
-            Paid in $PADRE tokens directly to your wallet.<br><br>
+            Every hour, the top bag workers split 15% of that hour's buyback tokens.<br><br>
+            <strong>How you earn points:</strong><br>
+            Post → <strong style="color:var(--gold-primary);">25 pts</strong><br>
+            Reply → <strong style="color:var(--gold-primary);">10 pts</strong><br>
+            Like → <strong style="color:var(--gold-primary);">5 pts</strong><br><br>
+            <strong>More points = bigger share of the 15%.</strong><br>
+            Top grinder wins the most. Simple.<br><br>
             <span class="fw-big">Every. Single. Hour.</span>
-            No minimum bag required.<br>
-            Just grind.
+            No bag required. Just grind.
           </div>
-          <span class="fw-way-tag">Posts ×25 · Replies ×10 · Likes ×5</span>
+          <span class="fw-way-tag">Resets every hour · Paid instantly</span>
         </div>
 
-        <!-- Way 2 -->
+        <!-- Way 2 — Weekly -->
         <div class="fw-way-card">
-          <div class="fw-way-num">II</div>
-          <div class="fw-way-title">📅 Weekly Distribution</div>
+          <div class="fw-way-num">📅</div>
+          <div class="fw-way-title">Weekly Holder Distribution</div>
           <div class="fw-way-body">
-            Hold 0.2% minimum.<br>
-            Stay active in community.<br><br>
-            <strong>Every Sunday the church distributes.</strong><br><br>
-            The longer you hold + the more you grind = the bigger your share.<br><br>
+            Every Sunday the 85% weekly pool gets distributed to qualifying holders.<br><br>
+            <strong>To qualify:</strong><br>
+            ✓ Be in the <strong style="color:var(--gold-primary);">$PADRE community</strong> (requires $8+ hold — built in)<br>
+            ✓ Post at least once that week<br>
+            ✓ Don't sell<br><br>
+            <strong>Your share = your Blessing Score ÷ total scores of all qualifiers.</strong><br><br>
             <span class="fw-big">Saints earn the most.<br>Sinners earn nothing.</span>
-            Choose wisely.
           </div>
-          <span class="fw-way-tag">Must hold 7+ days · No sells</span>
-        </div>
-
-        <!-- Way 3 -->
-        <div class="fw-way-card">
-          <div class="fw-way-num">III</div>
-          <div class="fw-way-title">💎 Accumulate & Multiply</div>
-          <div class="fw-way-body">
-            Don't claim immediately.<br>
-            Let your rewards build.<br><br>
-            <strong>The longer you wait, the more you get.</strong>
-          </div>
-          <div class="fw-mult-grid" style="margin-top:16px;">
-            <div class="fw-mult-cell">
-              <div class="fw-mult-week">Week 1</div>
-              <div class="fw-mult-val">1×</div>
-              <div class="fw-mult-label">Base</div>
-            </div>
-            <div class="fw-mult-cell">
-              <div class="fw-mult-week">Week 2</div>
-              <div class="fw-mult-val">1.2×</div>
-              <div class="fw-mult-label">+20%</div>
-            </div>
-            <div class="fw-mult-cell">
-              <div class="fw-mult-week">Week 4</div>
-              <div class="fw-mult-val">1.5×</div>
-              <div class="fw-mult-label">+50%</div>
-            </div>
-            <div class="fw-mult-cell">
-              <div class="fw-mult-week">Week 8</div>
-              <div class="fw-mult-val">2×</div>
-              <div class="fw-mult-label">Double</div>
-            </div>
-          </div>
-          <span class="fw-way-tag" style="margin-top:16px;">Diamond hands get diamond rewards</span>
-        </div>
-      </div>
-    </div>
-
-    <div class="fw-divider"><span class="fw-divider-icon">💰</span></div>
-
-    <!-- ═══════ THE MATH ═══════ -->
-    <div>
-      <span class="fw-section-tag">Run The Numbers</span>
-      <h2 class="fw-section-title">What Does This Actually Pay?</h2>
-      <p class="fw-section-sub">Weekly distribution estimates by rank and volume</p>
-
-      <div class="fw-math-cols">
-        <!-- $50K -->
-        <div class="fw-math-card">
-          <div class="fw-math-head">At $50,000 Weekly Fees</div>
-          <div class="fw-math-row">
-            <div class="fw-math-icon">✝</div>
-            <div>
-              <div class="fw-math-tier">Saint</div>
-              <div style="font-size:10px;color:var(--text-dim);font-family:var(--font-heading);">15,000+ pts</div>
-            </div>
-            <div>
-              <div class="fw-math-amt">$937</div>
-              <div class="fw-math-per">/week avg</div>
-            </div>
-          </div>
-          <div class="fw-math-row">
-            <div class="fw-math-icon">🔴</div>
-            <div>
-              <div class="fw-math-tier">Cardinal</div>
-              <div style="font-size:10px;color:var(--text-dim);font-family:var(--font-heading);">5,000–14,999 pts</div>
-            </div>
-            <div>
-              <div class="fw-math-amt">$187</div>
-              <div class="fw-math-per">/week avg</div>
-            </div>
-          </div>
-          <div class="fw-math-row">
-            <div class="fw-math-icon">📿</div>
-            <div>
-              <div class="fw-math-tier">Disciple</div>
-              <div style="font-size:10px;color:var(--text-dim);font-family:var(--font-heading);">2,000–4,999 pts</div>
-            </div>
-            <div>
-              <div class="fw-math-amt">$62</div>
-              <div class="fw-math-per">/week avg</div>
-            </div>
-          </div>
-          <div class="fw-math-row">
-            <div class="fw-math-icon">⛪</div>
-            <div>
-              <div class="fw-math-tier">Congregation</div>
-              <div style="font-size:10px;color:var(--text-dim);font-family:var(--font-heading);">500–1,999 pts</div>
-            </div>
-            <div>
-              <div class="fw-math-amt">$11</div>
-              <div class="fw-math-per">/week avg</div>
-            </div>
-          </div>
-        </div>
-
-        <!-- $200K -->
-        <div class="fw-math-card">
-          <div class="fw-math-head">At $200,000 Weekly Fees</div>
-          <div class="fw-math-row">
-            <div class="fw-math-icon">✝</div>
-            <div>
-              <div class="fw-math-tier">Saint</div>
-              <div style="font-size:10px;color:var(--text-dim);font-family:var(--font-heading);">15,000+ pts</div>
-            </div>
-            <div>
-              <div class="fw-math-amt">$3,750</div>
-              <div class="fw-math-per">/week avg</div>
-            </div>
-          </div>
-          <div class="fw-math-row">
-            <div class="fw-math-icon">🔴</div>
-            <div>
-              <div class="fw-math-tier">Cardinal</div>
-              <div style="font-size:10px;color:var(--text-dim);font-family:var(--font-heading);">5,000–14,999 pts</div>
-            </div>
-            <div>
-              <div class="fw-math-amt">$750</div>
-              <div class="fw-math-per">/week avg</div>
-            </div>
-          </div>
-          <div class="fw-math-row">
-            <div class="fw-math-icon">📿</div>
-            <div>
-              <div class="fw-math-tier">Disciple</div>
-              <div style="font-size:10px;color:var(--text-dim);font-family:var(--font-heading);">2,000–4,999 pts</div>
-            </div>
-            <div>
-              <div class="fw-math-amt">$250</div>
-              <div class="fw-math-per">/week avg</div>
-            </div>
-          </div>
-          <div class="fw-math-row">
-            <div class="fw-math-icon">⛪</div>
-            <div>
-              <div class="fw-math-tier">Congregation</div>
-              <div style="font-size:10px;color:var(--text-dim);font-family:var(--font-heading);">500–1,999 pts</div>
-            </div>
-            <div>
-              <div class="fw-math-amt">$45</div>
-              <div class="fw-math-per">/week avg</div>
-            </div>
-          </div>
+          <span class="fw-way-tag">Every Sunday · Hold to qualify</span>
         </div>
       </div>
 
-      <p style="font-size:11px;color:var(--text-dim);font-family:var(--font-heading);letter-spacing:.06em;margin-top:16px;text-align:center;">
-        * Estimates based on proportional Blessing Score distribution. Actual amounts depend on total weekly fees, number of eligible wallets, and individual scores. Accumulate multiplier not included above.
-      </p>
+      <!-- Rank table -->
+      <div style="margin-top:24px;background:var(--bg-card);border:1px solid var(--bg-border);border-radius:var(--radius-lg);padding:24px;">
+        <div style="font-family:var(--font-heading);font-size:10px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:var(--gold-primary);margin-bottom:16px;text-align:center;">Blessing Score Ranks</div>
+        <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:8px;text-align:center;">
+          <div style="padding:12px 8px;background:var(--bg-dark);border-radius:var(--radius);border:1px solid var(--bg-border);">
+            <div style="font-size:18px;margin-bottom:4px;">😈</div>
+            <div style="font-family:var(--font-heading);font-size:10px;font-weight:700;color:var(--text-muted);text-transform:uppercase;margin-bottom:4px;">Sinner</div>
+            <div style="font-family:var(--font-heading);font-size:10px;color:var(--text-dim);">0–99 pts</div>
+            <div style="font-size:11px;color:var(--text-dim);margin-top:6px;">No rewards</div>
+          </div>
+          <div style="padding:12px 8px;background:var(--bg-dark);border-radius:var(--radius);border:1px solid var(--bg-border);">
+            <div style="font-size:18px;margin-bottom:4px;">🙏</div>
+            <div style="font-family:var(--font-heading);font-size:10px;font-weight:700;color:var(--text-secondary);text-transform:uppercase;margin-bottom:4px;">Believer</div>
+            <div style="font-family:var(--font-heading);font-size:10px;color:var(--text-dim);">100–499 pts</div>
+            <div style="font-size:11px;color:var(--text-dim);margin-top:6px;">Shoutout</div>
+          </div>
+          <div style="padding:12px 8px;background:var(--bg-dark);border-radius:var(--radius);border:1px solid rgba(0,230,118,0.2);">
+            <div style="font-size:18px;margin-bottom:4px;">⛪</div>
+            <div style="font-family:var(--font-heading);font-size:10px;font-weight:700;color:var(--gold-primary);text-transform:uppercase;margin-bottom:4px;">Congregation</div>
+            <div style="font-family:var(--font-heading);font-size:10px;color:var(--text-dim);">500–1,999</div>
+            <div style="font-size:11px;color:var(--gold-primary);margin-top:6px;">Weekly eligible</div>
+          </div>
+          <div style="padding:12px 8px;background:var(--bg-dark);border-radius:var(--radius);border:1px solid rgba(0,230,118,0.3);">
+            <div style="font-size:18px;margin-bottom:4px;">📿</div>
+            <div style="font-family:var(--font-heading);font-size:10px;font-weight:700;color:var(--gold-primary);text-transform:uppercase;margin-bottom:4px;">Disciple</div>
+            <div style="font-family:var(--font-heading);font-size:10px;color:var(--text-dim);">2,000–4,999</div>
+            <div style="font-size:11px;color:var(--gold-primary);margin-top:6px;">Bigger share</div>
+          </div>
+          <div style="padding:12px 8px;background:rgba(0,230,118,0.04);border-radius:var(--radius);border:1px solid var(--gold-primary);box-shadow:0 0 16px rgba(0,230,118,0.1);">
+            <div style="font-size:18px;margin-bottom:4px;">✝️</div>
+            <div style="font-family:var(--font-heading);font-size:10px;font-weight:700;color:var(--gold-bright);text-transform:uppercase;margin-bottom:4px;">Saint</div>
+            <div style="font-family:var(--font-heading);font-size:10px;color:var(--text-dim);">15,000+ pts</div>
+            <div style="font-size:11px;color:var(--gold-bright);margin-top:6px;">Largest share</div>
+          </div>
+        </div>
+      </div>
     </div>
 
     <div class="fw-divider"><span class="fw-divider-icon">⚠️</span></div>
@@ -1232,15 +1123,15 @@
         <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:12px;">
           <div style="display:flex;align-items:center;gap:10px;font-family:var(--font-heading);font-size:12px;color:var(--text-secondary);">
             <span style="color:var(--gold-primary);font-size:14px;flex-shrink:0;">✓</span>
-            Hold minimum <strong style="color:var(--text-white);">0.2% of total supply</strong>
+            Hold minimum <strong style="color:var(--text-white);">$8 worth of $PADRE</strong>
           </div>
           <div style="display:flex;align-items:center;gap:10px;font-family:var(--font-heading);font-size:12px;color:var(--text-secondary);">
             <span style="color:var(--gold-primary);font-size:14px;flex-shrink:0;">✓</span>
-            Minimum <strong style="color:var(--text-white);">500 pts</strong> (Congregation rank)
+            Minimum <strong style="color:var(--text-white);">1,000,000 $PADRE</strong> held
           </div>
           <div style="display:flex;align-items:center;gap:10px;font-family:var(--font-heading);font-size:12px;color:var(--text-secondary);">
             <span style="color:var(--gold-primary);font-size:14px;flex-shrink:0;">✓</span>
-            Held <strong style="color:var(--text-white);">7+ days continuously</strong>
+            Post in the community at least once
           </div>
           <div style="display:flex;align-items:center;gap:10px;font-family:var(--font-heading);font-size:12px;color:var(--text-secondary);">
             <span style="color:var(--gold-primary);font-size:14px;flex-shrink:0;">✓</span>

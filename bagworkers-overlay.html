@@ -240,15 +240,15 @@
     <span class="cross">✝</span>
   </div>
   <div class="panel-sub">
-    <span class="sub-label">Top 5 this hour</span>
-    <span class="sub-countdown">resets in <span id="countdown">—</span></span>
+    <span class="sub-label">Top bag workers this hour</span>
+    <span class="sub-countdown">proportional by points</span>
   </div>
   <div class="workers-list" id="workersList">
     <div class="empty">No activity yet this hour.<br>Post in the community to take the lead!</div>
   </div>
   <div class="panel-footer">
-    <span class="footer-label">Hourly Pool</span>
-    <span class="footer-pool" id="poolAmt">—</span>
+    <span class="footer-label">15% of buyback → top grinders</span>
+    <span class="footer-pool" id="poolAmt">resets in <span id="countdown">—</span></span>
   </div>
 </div>
 
@@ -261,8 +261,8 @@
   const MEDALS  = ['𝟏','𝟐','𝟑','𝟒','𝟓'];
 
   const listEl     = document.getElementById('workersList');
-  const countdownEl= document.getElementById('countdown');
-  const poolEl     = document.getElementById('poolAmt');
+  const countdownEl= document.getElementById('countdown'); // inside footer-pool span
+  const poolEl     = null; // pool label is now static text
 
   /* ── countdown to next hour ── */
   function updateCountdown() {
@@ -283,7 +283,6 @@
 
   /* ── render workers ── */
   function render(workers, pool) {
-    poolEl.textContent = pool || '—';
 
     if (!workers || workers.length === 0) {
       listEl.innerHTML = '<div class="empty">No activity yet this hour.<br>Post in the community to take the lead!</div>';
