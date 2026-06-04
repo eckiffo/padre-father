@@ -89,25 +89,27 @@ Server-side functions read from Vercel env var `PADRE_TOKEN_ADDRESS`.
 
 ### Fee Flow
 - **100% of all trading fees** go to dev wallet (`8YnUQEZY9beCZQMiTcB8wswUrouW6naJj6W3MgCGerVA`)
-- When fees arrive: bot detects SOL deposit → DMs Ray → Ray approves → **50% buyback** via pumpdev.io
-- Bought tokens split: **50% to hourly bag workers** / **50% → weekly pool**
+- **50% stays in dev wallet** (Father's cut — covers expenses, never touched for rewards)
+- **50% → buyback** via pumpdev.io — buys $PADRE off the market
+- Bought tokens split: **15% → hourly bag workers** / **85% → weekly pool**
 - **Weekly pool** distributed every Sunday to qualifying holders
 
 ### Fee Collection Flow (LIVE)
 1. Ray manually collects fees from pump.fun UI
 2. Bot's fee deposit watcher (`logsSubscribe` on dev wallet) detects incoming SOL
-3. Bot DMs Ray: "Received X SOL — buyback Y SOL?" 
+3. Bot DMs Ray: "Received X SOL — buyback Y SOL?"
 4. Ray `/approve` → pumpdev.io executes buy → tokens distributed
 - pumpdev.io endpoint: `POST https://pumpdev.io/api/trade-lightning` with `X-Api-Key` header
 
 ### Hourly Race
 - Points this hour: posts × 25 + replies × 10 + likes × 5
-- **Top workers** split 50% of hourly buyback tokens proportionally by points
-- Resets every hour, no activity → all rolls to weekly pool
+- **Top workers** split **15%** of bought tokens proportionally by points (`HOURLY_PCT = 0.15` in distribution.js)
+- Resets every hour, no activity → 15% rolls to weekly pool too
 
 ### Weekly Distribution (Every Sunday)
-- Qualifying: hold > 0, 500+ pts, held 7+ days, did not sell
-- Distribution by Blessing Score weight (Saint > Cardinal > Disciple > Congregation)
+- Pool = accumulated 85% shares from every hourly buyback that week
+- Qualifying: score > 0 (must have posted in community — CC requires holding $8+ to post)
+- Distribution proportional by Blessing Score
 
 ### Rank Tiers
 | Rank | Points | Benefit |
@@ -246,11 +248,16 @@ Current function count: 12 (at limit — do not add more without removing one).
 
 ## System Status (as of 2026-06-03)
 
+### Token Info
+- **CA:** `HNVYhd7CMfCYDgDiRBKzx1gvZVqYohjMMFmRS1n8pump`
+- **Dev wallet:** `8YnUQEZY9beCZQMiTcB8wswUrouW6naJj6W3MgCGerVA`
+- **Website:** https://trenchfather.fun (live on Vercel)
+- **MC (last checked 2026-06-03):** ~$5,339 — still on bonding curve
+- **5% of supply locked on stakepoint.app**
+
 ### ✅ Working
-- Community reward system end-to-end (fee detect → buyback → distribute)
-- Pumpdev.io buyback (tested, got real tx signature)
-- Father quotes posting to coincommunities every 10 minutes
-- Hourly fee announcement to coincommunities
+- Father Agent running on VPS via PM2 (`father-agent`, pid uptime confirmed)
+- Communities posting via JWT auth (CC_ACCESS_TOKEN) — quotes every 10 min, hourly announcements
 - Sell shaming + buy alerts via Solana WebSocket
 - Telegram approval flow (approve/skip buybacks)
 - Leaderboard + hourly race showing real data
@@ -259,22 +266,26 @@ Current function count: 12 (at limit — do not add more without removing one).
 - All Vercel env vars set + deployed
 - CC access token daily auto-refresh cron
 - Blessing score dashboard (social score working)
+- Pumpdev.io buyback (tested, got real tx signature)
 
 ### ❌ Broken / Incomplete
-- **X/Twitter posting** — persistent 401 despite new keys. Tried: new consumer keys, new access token, twitter-api-v2 library. Possible fix: set up Account Automation on @fatherofpumpfun in X Settings
-- **Dashboard hold data = 0** — dev wallet holds 0 $PADRE. Buy some $PADRE into `8YnU…erVA` to fix
-- **Sync job frequency** — Vercel Hobby only allows 1 cron/day. Sync runs manually or when score page is visited. Consider upgrading to Pro ($20/mo) for 15-min sync
+- **Volume / fee calculation** — BROKEN. Current code estimates fees from Dexscreener 1h volume × 1%. Must be replaced with pump.fun's official `collect_creator_fee_v2` API to get real fee data. **This is the #1 priority.**
+- **Buyback flow** — pending fix (depends on real fee data above)
+- **X/Twitter posting** — persistent 401 despite new keys. Tried: new consumer keys, new access token, twitter-api-v2 library. Possible fix: enable Account Automation on @fatherofpumpfun in X Settings
+- **Dashboard hold data = 0** — dev wallet holds 0 $PADRE. Buy some into `8YnU…erVA` to fix
+- **Sync job frequency** — Vercel Hobby = 1 cron/day max. Consider Pro ($20/mo) for 15-min sync
 
 ### ⚠️ Watch Out For
-- CC access token expires every ~24h — daily cron refreshes at 8am UTC. If cron misses, call `/api/blessing/sync?action=refresh-token&secret=padre_sync_2026` manually
+- CC access token expires every ~24h — daily cron refreshes at 8am UTC. If missed: call `/api/blessing/sync?action=refresh-token&secret=padre_sync_2026` manually
 - pumpdev.io API key: `evtT_beiiNN6LkpeBZqGPDNRU2zwCDiCCEX5gd1fcQ-Wixdkgww41P7ookvtOZ6R`
 - Father quote every 10 min = ~144 CC API calls/day — monitor for rate limits
+- pump-sdk (`@pump-fun/pump-sdk`) is installed on VPS — it's the "pump agent payments" program, NOT creator fee collection. Don't confuse the two.
 
 ---
 
 ## Next Priorities
-1. Fix X/Twitter 401 — enable Account Automation on @fatherofpumpfun
-2. Buy $PADRE into dev wallet so hold score shows on dashboard
-3. Explore pump-fun SDK for auto fee collection (permissionless `collect_creator_fee_v2`)
-4. Consider Vercel Pro for 15-min sync cron
-5. pump-fun-skills repo — `coin-fees` skill has fee inspection + collection tools worth integrating
+1. **Fix fee collection** — implement pump.fun `collect_creator_fee_v2` (permissionless on-chain call) to replace broken Dexscreener estimate
+2. Fix buyback flow once real fee data is available
+3. Fix X/Twitter 401 — enable Account Automation on @fatherofpumpfun
+4. Buy $PADRE into dev wallet so hold score shows on dashboard
+5. Consider Vercel Pro for 15-min sync cron
