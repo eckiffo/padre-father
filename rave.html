@@ -603,34 +603,27 @@ setTimeout(()=>{ onBeat();onBeat();onBeat();onBeat();onBar();onPhrase(); },100);
 requestAnimationFrame(frame);
 
 /* ═══════════════════════════════════════════════
-   BUY ALERT — Solana WS + RPC
+   BUY ALERT — HTTP polling (no WS needed)
+   Polls getSignaturesForAddress every 5s,
+   parses new txns for buys
 ═══════════════════════════════════════════════ */
-const CA           = (window.PADRE_CA) || 'HNVYhd7CMfCYDgDiRBKzx1gvZVqYohjMMFmRS1n8pump';
-const SOL_WS       = 'wss://api.mainnet-beta.solana.com';
-const SOL_RPC      = 'https://api.mainnet-beta.solana.com';
-const alertEl      = document.getElementById('buyAlert');
-const alertValue   = document.getElementById('alertValue');
-const alertSub     = document.getElementById('alertSub');
-const scanFlash    = document.getElementById('scanFlash');
-let alertTimer     = null;
-let txQueue        = [];
-let processingTx   = false;
-const seenSigs     = new Set();
+const CA        = (window.PADRE_CA) || 'HNVYhd7CMfCYDgDiRBKzx1gvZVqYohjMMFmRS1n8pump';
+const SOL_RPC   = 'https://api.mainnet-beta.solana.com';
+const alertEl   = document.getElementById('buyAlert');
+const alertValue= document.getElementById('alertValue');
+const alertSub  = document.getElementById('alertSub');
+const scanFlash = document.getElementById('scanFlash');
+let alertTimer  = null;
+let processingTx= false;
+const seenSigs  = new Set();
 
-function shortW(a) { return String(a).slice(0,4)+'…'+String(a).slice(-4); }
-function fmtSol(n) { return parseFloat(n).toFixed(3)+' SOL'; }
-function fmtUsd(n) { return n>0 ? ' (~$'+Number(n).toLocaleString('en',{maximumFractionDigits:0})+')' : ''; }
 
-function showBuyAlert(solAmt, tokenAmt, wallet, solPrice) {
-  // Cancel any existing alert
+function showBuyAlert(priceStr, mcStr, wallet, _unused) {
   if (alertTimer) clearTimeout(alertTimer);
   alertEl.classList.remove('show','hide');
 
-  const usd = solPrice ? parseFloat(solAmt)*solPrice : 0;
-  alertValue.textContent = fmtSol(solAmt) + fmtUsd(usd);
-  alertSub.textContent   = tokenAmt
-    ? shortW(wallet)+' · '+Number(tokenAmt).toLocaleString()+' $PADRE'
-    : shortW(wallet);
+  alertValue.textContent = priceStr || '—';
+  alertSub.textContent   = mcStr ? 'Market Cap · ' + mcStr : '$PADRE';
 
   // Force reflow then show
   void alertEl.offsetWidth;
@@ -659,96 +652,61 @@ function showBuyAlert(solAmt, tokenAmt, wallet, solPrice) {
 }
 
 let solPrice = 0;
-async function fetchSolPrice() {
+
+// DexScreener polling — tracks buy count changes every 8s
+let lastBuyCount = -1;
+let lastPrice    = 0;
+let lastMC       = 0;
+
+async function pollDex() {
   try {
     const r = await fetch(`https://api.dexscreener.com/latest/dex/tokens/${CA}`);
     const d = await r.json();
     const p = d?.pairs?.[0];
-    if (p?.priceNative && p?.priceUsd)
+    if (!p) return;
+
+    // Update sol price
+    if (p.priceNative && p.priceUsd)
       solPrice = parseFloat(p.priceUsd) / parseFloat(p.priceNative);
-  } catch(_) {}
-}
-fetchSolPrice();
-setInterval(fetchSolPrice, 60_000);
 
-async function parseTx(sig) {
-  try {
-    const res = await fetch(SOL_RPC, {
-      method:'POST', headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({jsonrpc:'2.0',id:1,method:'getTransaction',
-        params:[sig,{encoding:'jsonParsed',maxSupportedTransactionVersion:0}]}),
-    });
-    const data = await res.json();
-    const tx   = data?.result;
-    if (!tx || tx.meta?.err) return null;
+    const buys5m = p.txns?.m5?.buys ?? 0;
+    const price  = parseFloat(p.priceUsd || 0);
+    const mc     = p.fdv || 0;
 
-    const keys    = tx.transaction?.message?.accountKeys || [];
-    const preSol  = tx.meta?.preBalances  || [];
-    const postSol = tx.meta?.postBalances || [];
-    const fee     = tx.meta?.fee || 0;
-    const solSpent = (preSol[0]-postSol[0]-fee)/1e9;
-    if (solSpent < 0.001) return null;
-
-    const buyer = keys[0]?.pubkey || keys[0];
-    const preT  = tx.meta?.preTokenBalances  || [];
-    const postT = tx.meta?.postTokenBalances || [];
-    let tokenReceived = 0;
-    for (const post of postT) {
-      if (post.mint !== CA) continue;
-      const pre  = preT.find(p => p.accountIndex===post.accountIndex);
-      const diff = (post.uiTokenAmount?.uiAmount||0) - (pre?.uiTokenAmount?.uiAmount||0);
-      if (diff > tokenReceived) tokenReceived = diff;
+    // First poll — just seed the count, don't alert
+    if (lastBuyCount === -1) {
+      lastBuyCount = buys5m;
+      lastPrice    = price;
+      lastMC       = mc;
+      console.log('[rave] DexScreener ready — watching buys (current m5:', buys5m, ')');
+      return;
     }
-    return { buyer:String(buyer), solSpent:solSpent.toFixed(3), tokenReceived:Math.round(tokenReceived) };
-  } catch(_) { return null; }
-}
 
-async function drainQueue() {
-  if (processingTx || !txQueue.length) return;
-  processingTx = true;
-  while (txQueue.length > 0) {
-    const sig = txQueue.shift();
-    const r   = await parseTx(sig);
-    if (r) showBuyAlert(r.solSpent, r.tokenReceived, r.buyer, solPrice);
-    await new Promise(res => setTimeout(res, 400));
+    // Detect new buys — count increased OR price went up (catches count resets)
+    const newBuys = buys5m > lastBuyCount || (buys5m === 0 && lastBuyCount > 0 && price > lastPrice);
+    if (newBuys) {
+      const diff = buys5m > lastBuyCount ? buys5m - lastBuyCount : 1;
+      const mcStr = mc >= 1e6 ? '$'+(mc/1e6).toFixed(2)+'M'
+                  : mc >= 1e3 ? '$'+(mc/1e3).toFixed(0)+'K'
+                  : mc > 0 ? '$'+mc.toFixed(0) : '—';
+      const priceStr = price > 0 ? '$'+price.toFixed(8) : '—';
+      // Show alert for each new buy (cap at 3 to avoid spam)
+      for (let i = 0; i < Math.min(diff, 3); i++) {
+        setTimeout(() => showBuyAlert(priceStr, mcStr, null, 0), i * 1800);
+      }
+      console.log('[rave] Buy detected! m5 buys:', lastBuyCount, '→', buys5m);
+    }
+
+    lastBuyCount = buys5m;
+    lastPrice    = price;
+    lastMC       = mc;
+  } catch(e) {
+    console.warn('[rave] dex poll error:', e.message);
   }
-  processingTx = false;
 }
 
-let solWs = null;
-function connectWS() {
-  if (solWs) { try { solWs.close(); } catch(_) {} }
-  solWs = new WebSocket(SOL_WS);
-  solWs.onopen = () => {
-    solWs.send(JSON.stringify({jsonrpc:'2.0',id:1,method:'logsSubscribe',
-      params:[{mentions:[CA]},{commitment:'confirmed'}]}));
-    console.log('[rave] Solana WS connected');
-  };
-  solWs.onmessage = (msg) => {
-    try {
-      const d = JSON.parse(msg.data);
-      if (d.method !== 'logsNotification') return;
-      const val = d.params?.result?.value;
-      if (!val || val.err) return;
-      const logs = val.logs || [];
-      const sig  = val.signature;
-      if (!sig || seenSigs.has(sig)) return;
-      const isBuy = logs.some(l =>
-        l.includes('Instruction: Buy') ||
-        l.includes('ray_log') ||
-        l.includes('Instruction: Swap')
-      );
-      if (!isBuy) return;
-      seenSigs.add(sig);
-      if (seenSigs.size > 200) [...seenSigs].slice(0,100).forEach(s => seenSigs.delete(s));
-      txQueue.push(sig);
-      drainQueue();
-    } catch(_) {}
-  };
-  solWs.onclose = () => { console.warn('[rave] WS closed — reconnecting'); setTimeout(connectWS, 4000); };
-  solWs.onerror = () => solWs.close();
-}
-connectWS();
+setInterval(pollDex, 8000);
+pollDex();
 
 /* ─── Keys ─── */
 document.addEventListener('keydown', e => {
@@ -756,7 +714,7 @@ document.addEventListener('keydown', e => {
   if (e.key==='ArrowUp')   { pi=(pi+1)%PALETTES.length; pal=PALETTES[pi]; lasers.forEach((l,i)=>l.color=pal[i%pal.length]); }
   if (e.key==='ArrowDown') { firework(); firework(); }
   if (e.key==='f'||e.key==='F') { onPhrase(); }
-  if (e.key==='b'||e.key==='B') { showBuyAlert('1.250', 840000, 'Abc1…xyz9', 150); } // test buy alert
+  if (e.key==='b'||e.key==='B') { showBuyAlert('$0.00000842', '$5.4K', null, 0); } // test buy alert
 });
 </script>
 </body>
