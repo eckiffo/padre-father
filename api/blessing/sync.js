@@ -29,6 +29,11 @@ export default async function handler(req, res) {
     return handleRefreshToken(req, res);
   }
 
+  // POST ?action=reset-seller — wipe score for a seller wallet
+  if (req.method === 'POST' && req.query?.action === 'reset-seller') {
+    return handleResetSeller(req, res);
+  }
+
   // Allow GET (from cron) or POST (manual trigger)
   // If SYNC_SECRET is set, require it (except for Vercel cron which sends Authorization header)
   const cronHeader = req.headers['authorization'] || '';
@@ -146,7 +151,7 @@ export default async function handler(req, res) {
                   score: socialScore + holdData.holdScore,
                   lastUpdated: new Date().toISOString(),
                 },
-                { ex: 2 * 60 * 60 } // 2h TTL — sync refreshes every 15min
+                { ex: 25 * 60 * 60 } // 25h TTL — survives between daily syncs on Hobby plan
               );
               await kvZadd('leaderboard', { score: socialScore + holdData.holdScore, member: wallet });
             }
@@ -228,6 +233,32 @@ async function fetchHoldData(wallet) {
     console.warn('[sync] fetchHoldData failed for', wallet, e.message);
   }
   return result;
+}
+
+/* ── Reset seller score (merged to stay under Vercel's 12-function limit) ── */
+async function handleResetSeller(req, res) {
+  const { wallet, secret } = req.body || {};
+  if (!wallet || wallet.length < 32) return res.status(400).json({ error: 'wallet required' });
+  if (secret !== (process.env.SYNC_SECRET || 'padre_sync_2026')) return res.status(403).json({ error: 'unauthorized' });
+
+  try {
+    const existing = await kvGet(`wallet:${wallet}`);
+    const reset = {
+      ...(existing || {}),
+      wallet,
+      score: 0, socialScore: 0, holdScore: 0, referralScore: 0,
+      posts: 0, replies: 0, likes: 0, claimable: 0,
+      sold: true, soldAt: new Date().toISOString(),
+      holdDays: 0, holdStart: null,
+      lastUpdated: new Date().toISOString(),
+    };
+    await kvSet(`wallet:${wallet}`, reset);
+    await kvZadd('leaderboard', { score: 0, member: wallet });
+    console.log(`[sync] Reset seller score: ${wallet.slice(0,8)}…`);
+    return res.status(200).json({ ok: true, wallet });
+  } catch (e) {
+    return res.status(500).json({ error: e.message });
+  }
 }
 
 /* ── CC access token refresh (merged to stay under Vercel's 12-function limit) ── */

@@ -144,6 +144,7 @@ async function tryKvLeaderboard(limit) {
         position:    i + 1,
         wallet,
         walletShort: wallet.slice(0, 4) + '…' + wallet.slice(-4),
+        username:    detail?.username || '',
         score,
         rank:        rank.name,
         rankIcon:    rank.icon,
