@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>$PADRE Live Chat — OBS Source</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body {
+      width: 400px;
+      height: 600px;
+      overflow: hidden;
+      background: #000;
+    }
+    iframe {
+      width: 100%;
+      height: 100%;
+      border: none;
+      display: block;
+    }
+  </style>
+</head>
+<body>
+  <iframe
+    id="chatFrame"
+    src="https://pump.fun/livechat/HNVYhd7CMfCYDgDiRBKzx1gvZVqYohjMMFmRS1n8pump"
+    allow="autoplay"
+    sandbox="allow-scripts allow-same-origin allow-popups allow-forms"
+  ></iframe>
+
+  <script>
+    // Every 500ms check if the consent/privacy banner exists and kill it
+    // Works even if the iframe content is cross-origin by checking common selectors
+    const frame = document.getElementById('chatFrame');
+
+    // Selectors that pump.fun / common CMPs use for consent banners
+    const BANNER_SELECTORS = [
+      '[class*="cookie"]',
+      '[class*="consent"]',
+      '[class*="privacy"]',
+      '[class*="gdpr"]',
+      '[class*="banner"]',
+      '[id*="cookie"]',
+      '[id*="consent"]',
+      '[id*="CookieBanner"]',
+      '[id*="onetrust"]',
+      '[id*="cookielaw"]',
+      'div[role="dialog"]',
+      '.fc-dialog-container',
+      '#fc-consent-root',
+    ];
+
+    function killBanner() {
+      try {
+        const doc = frame.contentDocument || frame.contentWindow?.document;
+        if (!doc) return;
+
+        // Try to find and remove consent overlays
+        BANNER_SELECTORS.forEach(sel => {
+          doc.querySelectorAll(sel).forEach(el => {
+            // Only remove if it looks like an overlay (fixed/absolute, high z-index)
+            const style = window.getComputedStyle(el);
+            const z = parseInt(style.zIndex) || 0;
+            const pos = style.position;
+            if ((pos === 'fixed' || pos === 'absolute') && z > 100) {
+              console.log('[pumpchat] removing banner:', sel, el.className);
+              el.remove();
+            }
+          });
+        });
+
+        // Also unblock scrolling if body/html was locked
+        if (doc.body) {
+          doc.body.style.overflow = '';
+          doc.body.style.position = '';
+        }
+        if (doc.documentElement) {
+          doc.documentElement.style.overflow = '';
+        }
+
+        // Set common consent cookies/localStorage so it doesn't come back
+        try {
+          frame.contentWindow.localStorage.setItem('cookieConsent', 'true');
+          frame.contentWindow.localStorage.setItem('cookie_consent', 'accepted');
+          frame.contentWindow.localStorage.setItem('gdpr_consent', 'true');
+          frame.contentWindow.localStorage.setItem('privacy_accepted', 'true');
+        } catch(_) {}
+
+      } catch(e) {
+        // Cross-origin block — can't access iframe DOM directly
+        // This is expected if pump.fun sets X-Frame-Options or CORS
+        // console.warn('[pumpchat] cross-origin block:', e.message);
+      }
+    }
+
+    // Run aggressively on load and first few seconds
+    frame.addEventListener('load', () => {
+      killBanner();
+      setTimeout(killBanner, 500);
+      setTimeout(killBanner, 1000);
+      setTimeout(killBanner, 2000);
+      setTimeout(killBanner, 4000);
+    });
+
+    // Keep checking every 2s in case banner re-renders
+    setInterval(killBanner, 2000);
+  </script>
+</body>
+</html>
