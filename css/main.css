@@ -1542,6 +1542,109 @@ img { max-width: 100%; display: block; }
   .ticker-label { border-right: none; padding-right: 0; }
 }
 
+/* ═══════════════════════════════════════════════════════════
+   MOBILE — comprehensive fixes for all key degen pages
+   ═══════════════════════════════════════════════════════════ */
+@media (max-width: 768px) {
+
+  /* ── Core layout ── */
+  .section-inner { padding: 48px 16px !important; }
+  .top-bar { display: none; }  /* too cluttered on mobile */
+
+  /* ── Hero sections ── */
+  .hero-title, .section-title {
+    font-size: clamp(22px, 7vw, 36px) !important;
+  }
+  .section-subtitle { font-size: 13px !important; }
+  .hero-actions { flex-direction: column; align-items: stretch; gap: 12px; }
+  .btn { width: 100%; text-align: center; justify-content: center; }
+
+  /* ── CA copy row ── */
+  .ca-row, .ca-display {
+    flex-direction: column !important;
+    gap: 10px !important;
+  }
+  .ca-addr {
+    font-size: 10px !important;
+    word-break: break-all;
+    overflow-wrap: anywhere;
+  }
+
+  /* ── Stats bar ── */
+  .stats-row, .stats-inner {
+    flex-wrap: wrap;
+    gap: 12px;
+    padding: 24px 16px;
+  }
+  .stat-item { flex: 1 1 40%; min-width: 120px; padding: 14px; }
+  .stat-value { font-size: 22px !important; }
+
+  /* ── Grids → single column ── */
+  .footer-inner,
+  .reward-tiers-grid,
+  .tokenomics-grid,
+  [class*="-grid"] {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* ── Leaderboard table ── */
+  .lb-table-wrap {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    border-radius: var(--radius);
+  }
+  .lb-table { min-width: 480px; font-size: 12px; }
+  .lb-table th, .lb-table td { padding: 10px 10px !important; }
+  .lb-table th:nth-child(4),
+  .lb-table td:nth-child(4) { display: none; } /* hide Hold Days on very small screens */
+
+  /* ── Blessing dashboard ── */
+  .blessing-hero { padding: 48px 16px 40px !important; }
+  .score-display { flex-direction: column; gap: 20px; }
+  .score-number { font-size: 64px !important; }
+  .wallet-connect-btn, .btn-connect { width: 100% !important; }
+
+  /* ── Offerings / buy page ── */
+  .offerings-hero { padding: 48px 16px 40px !important; }
+  .offering-card { padding: 24px 16px !important; }
+  .offering-price { font-size: 28px !important; }
+  .dex-embed-wrap { height: 400px !important; }
+
+  /* ── Flywheel / how it works ── */
+  .fw-hero { padding: 48px 16px 40px !important; }
+  .fw-hero-title { font-size: clamp(26px, 8vw, 48px) !important; }
+  .fw-pills { gap: 6px; }
+  .fw-pill { font-size: 10px; padding: 6px 12px; }
+  .fw-flow-row { flex-direction: column !important; align-items: center; }
+  .fw-flow-arrow { transform: rotate(90deg); }
+  .fw-step { width: 100% !important; max-width: 360px; }
+
+  /* ── Scripture / Bible ── */
+  .scripture-tabs { flex-wrap: wrap; gap: 4px; padding: 16px 12px 0; }
+  .stab { font-size: 10px; padding: 10px 14px; }
+
+  /* ── Roadmap ── */
+  .roadmap-timeline::before { left: 12px; }
+  .roadmap-item { padding-left: 40px; }
+
+  /* ── Cards general ── */
+  .card, .step-card, .reward-tier-card {
+    padding: 20px 16px !important;
+  }
+
+  /* ── Background crosses — prevent horizontal scroll ── */
+  .scripture-hero::before,
+  .fw-hero::before,
+  .hero::before {
+    font-size: 280px !important;
+    opacity: 0.04 !important;
+  }
+
+  /* ── Section header ── */
+  .section-header { margin-bottom: 40px !important; }
+  .title-ornament { font-size: 10px; letter-spacing: 2px; }
+}
+
 /* ═══════════════════════════ DESIGN REFRESH ═══════════════════════════
    More breathing room, better cards, cleaner hierarchy
    ═══════════════════════════════════════════════════════════════════ */
