@@ -5,373 +5,511 @@
   <title>$PADRE Rave — OBS Source</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    html, body {
-      width: 1920px; height: 1080px;
-      overflow: hidden;
-      background: #000;
-      font-family: 'Arial Black', sans-serif;
-    }
+    html, body { width: 1920px; height: 1080px; overflow: hidden; background: #000; }
     canvas { display: block; position: absolute; top: 0; left: 0; }
     #ui {
-      position: absolute;
-      bottom: 32px; right: 48px;
-      display: flex; gap: 12px; align-items: center;
-      opacity: 0.5;
-      font-size: 13px;
-      color: #ffffff;
-      letter-spacing: 0.15em;
-      text-transform: uppercase;
-      font-family: 'Courier New', monospace;
-      pointer-events: none;
+      position: absolute; bottom: 28px; right: 44px;
+      font: 600 12px 'Courier New', monospace;
+      color: #fff; letter-spacing: .18em; text-transform: uppercase;
+      opacity: 0.4; pointer-events: none;
     }
   </style>
 </head>
 <body>
 <canvas id="c"></canvas>
 <div id="ui">$PADRE · trenchfather.fun</div>
-
 <script>
 const canvas = document.getElementById('c');
-const ctx    = canvas.getContext('2d');
+const ctx = canvas.getContext('2d');
 canvas.width  = 1920;
 canvas.height = 1080;
+const W = 1920, H = 1080, CX = W/2, CY = H/2;
 
-const W = canvas.width;
-const H = canvas.height;
-const CX = W / 2;
-const CY = H / 2;
+/* ─── BPM ─── */
+const BPM     = 128;
+const BEAT_MS = 60000 / BPM;   // 468ms
 
-/* ── BPM config (128 default — house/techno) ── */
-const BPM       = 128;
-const BEAT_MS   = 60000 / BPM;        // ~468ms
-const BAR_MS    = BEAT_MS * 4;        // ~1875ms
-const PHRASE_MS = BAR_MS  * 8;        // ~15000ms
-
-/* ── Colour palette ── */
+/* ─── Palettes ─── */
 const PALETTES = [
-  ['#FF006E','#FB5607','#FFBE0B','#8338EC','#3A86FF'],  // pop rave
-  ['#00FFFF','#FF00FF','#00FF00','#FFFF00','#FF0080'],  // classic rave
   ['#00E676','#69FF47','#00BCD4','#1DE9B6','#FFFFFF'],  // $PADRE green
+  ['#00FFFF','#FF00FF','#00FF00','#FFFF00','#FF0080'],  // classic rave
+  ['#FF006E','#FB5607','#FFBE0B','#8338EC','#3A86FF'],  // pop rave
   ['#FF4081','#E040FB','#7C4DFF','#40C4FF','#FFFFFF'],  // purple dream
-  ['#FF6B35','#F7C59F','#EFEFD0','#004E89','#1A936F'],  // sunset
+  ['#FF6B35','#FFD700','#FF1493','#00CED1','#ADFF2F'],  // festival
 ];
-let paletteIdx = 2; // start on $PADRE green
-let palette    = PALETTES[paletteIdx];
+let pi = 2, pal = PALETTES[pi];
 
-function randColor() { return palette[Math.floor(Math.random() * palette.length)]; }
-function hexToRgb(hex) {
-  const r = parseInt(hex.slice(1,3),16);
-  const g = parseInt(hex.slice(3,5),16);
-  const b = parseInt(hex.slice(5,7),16);
-  return [r,g,b];
-}
+function rc()  { return pal[Math.floor(Math.random() * pal.length)]; }
+function rgb(h){ return [parseInt(h.slice(1,3),16), parseInt(h.slice(3,5),16), parseInt(h.slice(5,7),16)]; }
 
-/* ── State ── */
-let t          = 0;      // ms since start
-let lastBeat   = 0;
-let beatCount  = 0;
-let barCount   = 0;
-let phraseCount= 0;
-let beatFlash  = 0;      // 0-1, decays
-let barFlash   = 0;
-let phraseFlash= 0;
-let lastFrame  = performance.now();
+/* ─── State ─── */
+let t=0, lastBeat=0, beatN=0, barN=0, lastFrame=performance.now();
+let bF=0, brF=0, phF=0;   // beat / bar / phrase flash
 
-/* ── Particles ── */
-const MAX_P = 800;
-const particles = [];
-class Particle {
-  constructor(x,y,vx,vy,life,size,color) {
+/* ═══════════════════════════════════════════════
+   PARTICLE SYSTEM — 3 layers
+   Layer 0: stars (static bg, no shadow)
+   Layer 1: main particles (no shadow, high volume)
+   Layer 2: sparks (glow shadow, lower volume)
+═══════════════════════════════════════════════ */
+const MAX_MAIN  = 2400;
+const MAX_SPARK = 300;
+const main_p    = [];
+const spark_p   = [];
+
+class P {
+  constructor(x,y,vx,vy,life,size,color,rot,vrot,type) {
     this.x=x; this.y=y; this.vx=vx; this.vy=vy;
-    this.life=life; this.maxLife=life;
+    this.life=life; this.ml=life;
     this.size=size; this.color=color;
+    this.rot=rot||0; this.vrot=vrot||0;
+    this.type=type||0; // 0=circle, 1=confetti rect, 2=star shape
   }
   update(dt) {
-    this.x  += this.vx * dt * 0.06;
-    this.y  += this.vy * dt * 0.06;
-    this.vy += 0.02 * dt;  // slight gravity
+    this.x   += this.vx * dt * 0.06;
+    this.y   += this.vy * dt * 0.06;
+    this.vy  += 0.025 * dt;
+    this.rot += this.vrot * dt;
     this.life -= dt;
   }
-  draw() {
-    const a = Math.max(0, this.life / this.maxLife);
-    const [r,g,b] = hexToRgb(this.color);
+}
+
+function spawnMain(x,y,vx,vy,life,size,color,type=0) {
+  if (main_p.length >= MAX_MAIN) return;
+  main_p.push(new P(x,y,vx,vy,life,size,color, Math.random()*Math.PI*2, (Math.random()-.5)*.04, type));
+}
+function spawnSpark(x,y,vx,vy,life,size,color) {
+  if (spark_p.length >= MAX_SPARK) return;
+  spark_p.push(new P(x,y,vx,vy,life,size,color));
+}
+
+function burst(x,y,n,spd,life,size,fn=spawnMain,type=0) {
+  for (let i=0;i<n;i++) {
+    const a = Math.PI*2*i/n + Math.random()*.4;
+    const s = spd*(0.4+Math.random());
+    fn(x,y,Math.cos(a)*s,Math.sin(a)*s, life*(0.5+Math.random()), size*(0.5+Math.random()*1.2), rc(), type);
+  }
+}
+function burstSpark(x,y,n,spd,life,size) { burst(x,y,n,spd,life,size,spawnSpark); }
+
+/* Confetti burst — flat coloured rects */
+function burstConfetti(x,y,n) {
+  for (let i=0;i<n;i++) {
+    const a = Math.PI*2*Math.random();
+    const s = 4+Math.random()*12;
+    spawnMain(x,y,Math.cos(a)*s,Math.sin(a)*s-5, 800+Math.random()*800, 4+Math.random()*8, rc(), 1);
+  }
+}
+
+/* Rain from top */
+function rain(n=1) {
+  for (let i=0;i<n;i++) {
+    if (main_p.length >= MAX_MAIN) break;
+    spawnMain(Math.random()*W, -10, (Math.random()-.5)*3, 5+Math.random()*10,
+      350+Math.random()*500, 2+Math.random()*3, rc(), 0);
+  }
+}
+
+/* Edge spray */
+function edgeSpray() {
+  const sides = [[0,Math.random()*H,8,0],[W,Math.random()*H,-8,0],
+                 [Math.random()*W,0,0,8],[Math.random()*W,H,0,-8]];
+  sides.forEach(([x,y,bx,by]) => {
+    for (let i=0;i<12;i++) {
+      spawnMain(x,y, bx+(Math.random()-.5)*6, by+(Math.random()-.5)*6,
+        600+Math.random()*400, 3+Math.random()*4, rc());
+    }
+  });
+}
+
+/* Firework */
+function firework() {
+  const x = W*0.1 + Math.random()*W*0.8;
+  const y = H*0.05 + Math.random()*H*0.5;
+  burstSpark(x,y, 60, 16, 900, 5);
+  burst(x,y, 80, 10, 700, 3);
+}
+
+/* Draw all particles */
+function drawParticles() {
+  // Main particles — no shadow, batched by type for performance
+  main_p.forEach(p => {
+    const a = Math.max(0, p.life/p.ml);
+    const [r,g,b] = rgb(p.color);
+    ctx.globalAlpha = a;
+    if (p.type===1) {
+      // confetti rectangle
+      ctx.save();
+      ctx.translate(p.x, p.y);
+      ctx.rotate(p.rot);
+      ctx.fillStyle = `rgb(${r},${g},${b})`;
+      ctx.fillRect(-p.size/2, -p.size/4, p.size, p.size/2);
+      ctx.restore();
+    } else {
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.size*a+0.5, 0, Math.PI*2);
+      ctx.fillStyle = `rgb(${r},${g},${b})`;
+      ctx.fill();
+    }
+  });
+
+  // Spark particles — with glow
+  spark_p.forEach(p => {
+    const a = Math.max(0, p.life/p.ml);
+    const [r,g,b] = rgb(p.color);
+    ctx.globalAlpha = a;
     ctx.beginPath();
-    ctx.arc(this.x, this.y, this.size * a, 0, Math.PI*2);
-    ctx.fillStyle = `rgba(${r},${g},${b},${a})`;
-    ctx.shadowColor = this.color;
-    ctx.shadowBlur  = this.size * 4;
+    ctx.arc(p.x, p.y, p.size*a+0.5, 0, Math.PI*2);
+    ctx.fillStyle = `rgb(${r},${g},${b})`;
+    ctx.shadowColor = p.color;
+    ctx.shadowBlur  = p.size * 6;
     ctx.fill();
     ctx.shadowBlur  = 0;
+  });
+
+  ctx.globalAlpha = 1;
+}
+
+/* ═══════════════════════════════════════════════
+   STARS — static twinkling background
+═══════════════════════════════════════════════ */
+const STARS = Array.from({length:400}, () => ({
+  x: Math.random()*W, y: Math.random()*H,
+  s: 0.5+Math.random()*2,
+  phase: Math.random()*Math.PI*2,
+  spd: 0.001+Math.random()*0.003,
+}));
+
+function drawStars() {
+  STARS.forEach(s => {
+    s.phase += s.spd * 16;
+    const a = 0.2 + Math.sin(s.phase) * 0.3 + bF * 0.3;
+    ctx.beginPath();
+    ctx.arc(s.x, s.y, s.s, 0, Math.PI*2);
+    ctx.fillStyle = `rgba(255,255,255,${Math.max(0,a)})`;
+    ctx.fill();
+  });
+}
+
+/* ═══════════════════════════════════════════════
+   SHOCKWAVE RINGS
+═══════════════════════════════════════════════ */
+const rings = [];
+function spawnRing(x,y,color,speed=2.5,maxR=900) {
+  rings.push({x,y,r:10,speed,maxR,color,life:1});
+}
+function updateRings(dt) {
+  for (let i=rings.length-1;i>=0;i--) {
+    const rg = rings[i];
+    rg.r += rg.speed * dt * 0.06 * 60;
+    rg.life = Math.max(0, 1 - rg.r/rg.maxR);
+    if (rg.life <= 0) { rings.splice(i,1); continue; }
+    const [r,g,b] = rgb(rg.color);
+    ctx.beginPath();
+    ctx.arc(rg.x, rg.y, rg.r, 0, Math.PI*2);
+    ctx.strokeStyle = `rgba(${r},${g},${b},${rg.life*0.8})`;
+    ctx.lineWidth = 3 * rg.life;
+    ctx.shadowColor = rg.color;
+    ctx.shadowBlur  = 20 * rg.life;
+    ctx.stroke();
+    ctx.shadowBlur = 0;
   }
 }
 
-function spawnBurst(x, y, count, speed, life, size) {
-  for (let i = 0; i < count; i++) {
-    if (particles.length >= MAX_P) break;
-    const angle = (Math.PI * 2 * i) / count + Math.random() * 0.3;
-    const s     = speed * (0.5 + Math.random());
-    particles.push(new Particle(x, y, Math.cos(angle)*s, Math.sin(angle)*s,
-      life * (0.6+Math.random()*0.8), size*(0.5+Math.random()), randColor()));
-  }
-}
-
-function spawnRain() {
-  if (particles.length >= MAX_P) return;
-  const x = Math.random() * W;
-  const c = randColor();
-  particles.push(new Particle(x, -10, (Math.random()-0.5)*2, 4+Math.random()*8,
-    400+Math.random()*600, 2+Math.random()*3, c));
-}
-
-/* ── Lasers ── */
-const NUM_LASERS = 12;
-const lasers = Array.from({length: NUM_LASERS}, (_, i) => ({
-  angle: (Math.PI * 2 * i) / NUM_LASERS,
-  speed: (Math.random() > 0.5 ? 1 : -1) * (0.3 + Math.random() * 0.4),
-  color: PALETTES[2][i % PALETTES[2].length],
-  width: 1 + Math.random() * 2,
-  length: 0.4 + Math.random() * 0.6,
+/* ═══════════════════════════════════════════════
+   LASERS — 20 from center
+═══════════════════════════════════════════════ */
+const lasers = Array.from({length:20}, (_,i) => ({
+  angle: Math.PI*2*i/20,
+  speed: (Math.random()>.5?1:-1)*(0.2+Math.random()*0.5),
+  color: pal[i%pal.length],
+  w: 1+Math.random()*2.5,
+  len: 0.3+Math.random()*0.7,
 }));
 
 function drawLasers(dt) {
-  const beatPulse = 1 + beatFlash * 0.5;
-  lasers.forEach((l, i) => {
-    l.angle += l.speed * dt * 0.001;
-    const len = (Math.min(W,H) * 0.7 * l.length) * beatPulse;
-    const x2  = CX + Math.cos(l.angle) * len;
-    const y2  = CY + Math.sin(l.angle) * len;
-    const [r,g,b] = hexToRgb(l.color);
-    const alpha = 0.6 + beatFlash * 0.4;
+  const pulse = 1 + bF*0.6;
+  lasers.forEach(l => {
+    l.angle += l.speed*dt*0.001;
+    const len = Math.min(W,H)*0.75*l.len*pulse;
+    const x2  = CX+Math.cos(l.angle)*len;
+    const y2  = CY+Math.sin(l.angle)*len;
+    const [r,g,b] = rgb(l.color);
+    ctx.beginPath();
+    ctx.moveTo(CX,CY);
+    ctx.lineTo(x2,y2);
+    ctx.strokeStyle = `rgba(${r},${g},${b},${0.55+bF*0.45})`;
+    ctx.lineWidth   = l.w*pulse;
+    ctx.shadowColor = l.color;
+    ctx.shadowBlur  = 18+bF*50;
+    ctx.stroke();
+    ctx.shadowBlur  = 0;
+  });
+}
 
+/* ═══════════════════════════════════════════════
+   CORNER SPOTLIGHTS — 4 sweeping beams from corners
+═══════════════════════════════════════════════ */
+const spots = [
+  {x:0,   y:0,   angle:0.6,  speed: 0.25, color:'#FF006E'},
+  {x:W,   y:0,   angle:2.5,  speed:-0.3,  color:'#00FFFF'},
+  {x:0,   y:H,   angle:-0.6, speed: 0.2,  color:'#FFBE0B'},
+  {x:W,   y:H,   angle:3.8,  speed:-0.22, color:'#8338EC'},
+];
+function drawSpotlights(dt) {
+  spots.forEach(s => {
+    s.angle += s.speed*dt*0.001;
+    const len = 1600;
+    const spread = 0.04 + bF*0.04;
+    const x2 = s.x + Math.cos(s.angle)*len;
+    const y2 = s.y + Math.sin(s.angle)*len;
+    const [r,g,b] = rgb(s.color);
+    const grad = ctx.createLinearGradient(s.x, s.y, x2, y2);
+    grad.addColorStop(0,   `rgba(${r},${g},${b},${0.35+bF*0.3})`);
+    grad.addColorStop(1,   `rgba(${r},${g},${b},0)`);
     ctx.save();
     ctx.beginPath();
-    ctx.moveTo(CX, CY);
-    ctx.lineTo(x2, y2);
-    ctx.strokeStyle = `rgba(${r},${g},${b},${alpha})`;
-    ctx.lineWidth   = l.width * beatPulse;
-    ctx.shadowColor = l.color;
-    ctx.shadowBlur  = 20 + beatFlash * 40;
-    ctx.stroke();
+    ctx.moveTo(s.x, s.y);
+    ctx.lineTo(s.x+Math.cos(s.angle-spread)*len, s.y+Math.sin(s.angle-spread)*len);
+    ctx.lineTo(s.x+Math.cos(s.angle+spread)*len, s.y+Math.sin(s.angle+spread)*len);
+    ctx.closePath();
+    ctx.fillStyle = grad;
+    ctx.shadowColor = s.color;
+    ctx.shadowBlur  = 30+bF*40;
+    ctx.fill();
+    ctx.shadowBlur  = 0;
     ctx.restore();
   });
 }
 
-/* ── Tunnel ── */
-let tunnelOffset = 0;
+/* ═══════════════════════════════════════════════
+   TUNNEL
+═══════════════════════════════════════════════ */
+let tunOff=0;
 function drawTunnel(dt) {
-  tunnelOffset = (tunnelOffset + dt * 0.15) % 80;
-  const rings = 16;
-  for (let i = rings; i >= 0; i--) {
-    const d = ((i / rings) + tunnelOffset / 80) % 1;
-    const r = d * Math.min(W, H) * 0.8;
-    if (r <= 0) continue;
-    const colorIdx = Math.floor((d * palette.length + beatCount) % palette.length);
-    const [cr,cg,cb] = hexToRgb(palette[colorIdx]);
-    const alpha = (1 - d) * 0.15 + barFlash * 0.1;
+  tunOff = (tunOff + dt*0.18) % 80;
+  for (let i=20;i>=0;i--) {
+    const d = ((i/20)+tunOff/80)%1;
+    const r = d*Math.min(W,H)*0.85;
+    if (r<=0) continue;
+    const ci = Math.floor((d*pal.length+beatN)%pal.length);
+    const [cr,cg,cb] = rgb(pal[ci]);
+    const a = (1-d)*0.18+brF*0.12;
     ctx.beginPath();
-    ctx.arc(CX, CY, r, 0, Math.PI*2);
-    ctx.strokeStyle = `rgba(${cr},${cg},${cb},${alpha})`;
+    ctx.arc(CX,CY,r,0,Math.PI*2);
+    ctx.strokeStyle = `rgba(${cr},${cg},${cb},${a})`;
     ctx.lineWidth   = 1.5;
-    ctx.shadowColor = palette[colorIdx];
-    ctx.shadowBlur  = 8;
+    ctx.shadowColor = pal[ci];
+    ctx.shadowBlur  = 10;
     ctx.stroke();
     ctx.shadowBlur  = 0;
   }
 }
 
-/* ── Grid floor ── */
-let gridZ = 0;
+/* ═══════════════════════════════════════════════
+   GRID FLOOR
+═══════════════════════════════════════════════ */
+let gz=0;
 function drawGrid(dt) {
-  gridZ = (gridZ + dt * 0.05) % 80;
-  const LINES = 20;
-  const HORIZON = H * 0.62;
-  const FLOOR   = H;
+  gz = (gz + dt*0.07)%80;
+  const HRZ = H*0.6, FLOOR=H, LINES=28;
+  const gc = pal[0];
+  const [r,g,b] = rgb(gc);
   ctx.save();
-  ctx.strokeStyle = `rgba(0,230,118,${0.12 + beatFlash * 0.15})`;
+  ctx.strokeStyle = `rgba(${r},${g},${b},${0.15+bF*0.2})`;
   ctx.lineWidth   = 1;
-  ctx.shadowColor = '#00E676';
-  ctx.shadowBlur  = 6;
-
-  // horizontal lines
-  for (let i = 0; i <= LINES; i++) {
-    const pct = (i / LINES + gridZ / 80) % 1;
-    const y   = HORIZON + (FLOOR - HORIZON) * (pct * pct);
-    ctx.beginPath();
-    ctx.moveTo(0, y);
-    ctx.lineTo(W, y);
-    ctx.stroke();
+  ctx.shadowColor = gc;
+  ctx.shadowBlur  = 8;
+  for (let i=0;i<=LINES;i++) {
+    const pct = (i/LINES+gz/80)%1;
+    const y   = HRZ+(FLOOR-HRZ)*(pct*pct);
+    ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(W,y); ctx.stroke();
   }
-  // vertical lines
-  for (let i = 0; i <= LINES; i++) {
-    const x = (i / LINES) * W;
-    ctx.beginPath();
-    ctx.moveTo(CX, HORIZON);
-    ctx.lineTo(x, FLOOR);
-    ctx.stroke();
+  for (let i=0;i<=LINES;i++) {
+    const x=(i/LINES)*W;
+    ctx.beginPath(); ctx.moveTo(CX,HRZ); ctx.lineTo(x,FLOOR); ctx.stroke();
   }
   ctx.restore();
 }
 
-/* ── Center cross / logo ── */
-let crossRot = 0;
+/* ═══════════════════════════════════════════════
+   CENTER CROSS
+═══════════════════════════════════════════════ */
+let cRot=0;
 function drawCross(dt) {
-  crossRot += dt * 0.0008 * (1 + beatFlash);
-  const size  = 80 + beatFlash * 40 + barFlash * 20;
-  const alpha = 0.7 + beatFlash * 0.3;
-  const color = palette[beatCount % palette.length];
-
+  cRot += dt*0.001*(1+bF*2);
+  const sz    = 90+bF*60+brF*30;
+  const color = pal[beatN%pal.length];
   ctx.save();
-  ctx.translate(CX, CY * 0.52);
-  ctx.rotate(crossRot);
-  ctx.font = `bold ${size}px serif`;
+  ctx.translate(CX, CY*0.5);
+  ctx.rotate(cRot);
+  ctx.font         = `bold ${sz}px serif`;
   ctx.textAlign    = 'center';
   ctx.textBaseline = 'middle';
   ctx.fillStyle    = color;
-  ctx.globalAlpha  = alpha;
+  ctx.globalAlpha  = 0.75+bF*0.25;
   ctx.shadowColor  = color;
-  ctx.shadowBlur   = 40 + beatFlash * 60;
-  ctx.fillText('✝', 0, 0);
+  ctx.shadowBlur   = 50+bF*80;
+  ctx.fillText('✝',0,0);
   ctx.restore();
 }
 
-/* ── $PADRE text pulse ── */
-let textAlpha  = 0;
-let textTarget = 0;
+/* ═══════════════════════════════════════════════
+   $PADRE TITLE
+═══════════════════════════════════════════════ */
+let tA=0, tTgt=0;
 function drawTitle() {
-  textAlpha += (textTarget - textAlpha) * 0.05;
-  if (textAlpha < 0.01) return;
-  const color = palette[0];
-  const [r,g,b] = hexToRgb(color);
+  tA += (tTgt-tA)*0.04;
+  if (tA<0.01) return;
+  const c = pal[0];
+  const [r,g,b] = rgb(c);
   ctx.save();
-  ctx.textAlign    = 'center';
-  ctx.textBaseline = 'middle';
-  ctx.font         = 'bold 140px Arial Black';
-  ctx.letterSpacing = '0.2em';
-  ctx.fillStyle    = `rgba(${r},${g},${b},${textAlpha * 0.9})`;
-  ctx.shadowColor  = color;
-  ctx.shadowBlur   = 80;
-  ctx.fillText('$PADRE', CX, CY * 0.52 + 10);
-  ctx.shadowBlur   = 0;
+  ctx.textAlign='center'; ctx.textBaseline='middle';
+  ctx.font='bold 160px Arial Black';
+  ctx.fillStyle=`rgba(${r},${g},${b},${tA*0.95})`;
+  ctx.shadowColor=c; ctx.shadowBlur=100;
+  ctx.fillText('$PADRE',CX,CY*0.5);
   ctx.restore();
 }
 
-/* ── Strobe flash ── */
+/* ═══════════════════════════════════════════════
+   STROBE
+═══════════════════════════════════════════════ */
 function drawStrobe() {
-  if (beatFlash < 0.05 && barFlash < 0.05) return;
-  const a = Math.max(beatFlash, barFlash) * 0.15;
-  ctx.fillStyle = `rgba(255,255,255,${a})`;
-  ctx.fillRect(0, 0, W, H);
+  const a = Math.max(bF,brF)*0.18;
+  if (a<0.02) return;
+  ctx.fillStyle=`rgba(255,255,255,${a})`;
+  ctx.fillRect(0,0,W,H);
 }
 
-/* ── Background colour shift ── */
-function drawBackground() {
-  const hue  = (t * 0.006) % 360;
-  const hue2 = (hue + 120) % 360;
-  const grad = ctx.createRadialGradient(CX, CY, 0, CX, CY, Math.max(W,H) * 0.7);
-  grad.addColorStop(0,   `hsla(${hue}, 80%, 8%, 1)`);
-  grad.addColorStop(0.5, `hsla(${hue2}, 60%, 4%, 1)`);
-  grad.addColorStop(1,   `rgba(0,0,0,1)`);
-  ctx.fillStyle = grad;
-  ctx.fillRect(0, 0, W, H);
+/* ═══════════════════════════════════════════════
+   BACKGROUND
+═══════════════════════════════════════════════ */
+function drawBg() {
+  const hue=(t*0.006)%360, hue2=(hue+140)%360, hue3=(hue+280)%360;
+  const grad=ctx.createRadialGradient(CX,CY*0.5,0,CX,CY,Math.max(W,H)*0.8);
+  grad.addColorStop(0,  `hsla(${hue},  90%, 7%, 1)`);
+  grad.addColorStop(0.4,`hsla(${hue2}, 70%, 4%, 1)`);
+  grad.addColorStop(1,  `hsla(${hue3}, 50%, 2%, 1)`);
+  ctx.fillStyle=grad;
+  ctx.fillRect(0,0,W,H);
 }
 
-/* ── Beat handler ── */
+/* ═══════════════════════════════════════════════
+   BEAT / BAR / PHRASE EVENTS
+═══════════════════════════════════════════════ */
+let nextFirework = 2000;
+
 function onBeat() {
-  beatCount++;
-  beatFlash = 1;
-  spawnBurst(CX, CY * 0.52, 16, 8, 500, 4);
-  for (let i = 0; i < 6; i++) spawnRain();
-
-  if (beatCount % 4 === 0) onBar();
+  beatN++; bF=1;
+  // center burst
+  burst(CX, CY*0.5, 20, 9, 550, 4);
+  burstSpark(CX, CY*0.5, 8, 7, 400, 5);
+  // ring
+  spawnRing(CX, CY, rc(), 2.8, 1000);
+  // heavy rain
+  rain(12);
+  if (beatN % 4 === 0) onBar();
 }
 
 function onBar() {
-  barCount++;
-  barFlash = 1;
-  spawnBurst(CX, CY, 40, 14, 900, 6);
+  barN++; brF=1;
+  // big center burst
+  burst(CX, CY, 50, 14, 1000, 6);
+  burstSpark(CX, CY, 20, 12, 800, 7);
+  burstConfetti(CX, CY*0.3, 40);
+  // edge spray
+  edgeSpray();
+  // rings from corners
+  [[0,0],[W,0],[0,H],[W,H]].forEach(([x,y]) => spawnRing(x,y,rc(),2,900));
+  // rain burst
+  rain(30);
 
-  // swap palette every 4 bars
-  if (barCount % 4 === 0) {
-    paletteIdx = (paletteIdx + 1) % PALETTES.length;
-    palette    = PALETTES[paletteIdx];
-    lasers.forEach((l, i) => l.color = palette[i % palette.length]);
+  if (barN % 4 === 0) {
+    pi = (pi+1)%PALETTES.length;
+    pal = PALETTES[pi];
+    lasers.forEach((l,i)=>l.color=pal[i%pal.length]);
+    spots.forEach((s,i)=>s.color=pal[i%pal.length]);
     onPhrase();
   }
-
-  // show title every 8 bars
-  if (barCount % 8 === 0) {
-    textTarget = 1;
-    setTimeout(() => { textTarget = 0; }, 3000);
+  if (barN % 8 === 0) {
+    tTgt=1; setTimeout(()=>{tTgt=0;},3500);
   }
 }
 
 function onPhrase() {
-  phraseCount++;
-  phraseFlash = 1;
-  // big burst from corners
-  [[0,0],[W,0],[0,H],[W,H]].forEach(([x,y]) => spawnBurst(x,y,30,12,1200,5));
+  phF=1;
+  // huge corner blasts
+  [[0,0],[W,0],[0,H],[W,H],[CX,0],[0,CY],[W,CY],[CX,H]].forEach(([x,y])=>{
+    burst(x,y,50,16,1400,7);
+    burstSpark(x,y,20,14,1000,8);
+    spawnRing(x,y,rc(),3.5,1400);
+  });
+  burstConfetti(CX,CY,100);
+  rain(60);
 }
 
-/* ── Main loop ── */
+/* ═══════════════════════════════════════════════
+   MAIN LOOP
+═══════════════════════════════════════════════ */
 function frame(now) {
   requestAnimationFrame(frame);
-  const dt = Math.min(now - lastFrame, 50); // cap at 50ms to avoid spiral
-  lastFrame = now;
-  t += dt;
+  const dt = Math.min(now-lastFrame, 50);
+  lastFrame=now; t+=dt;
 
-  // Beat detection (clock-based)
-  if (t - lastBeat >= BEAT_MS) {
-    lastBeat += BEAT_MS;
-    onBeat();
+  // beat clock
+  if (t-lastBeat >= BEAT_MS) { lastBeat+=BEAT_MS; onBeat(); }
+
+  // random fireworks
+  if (t > nextFirework) {
+    firework();
+    nextFirework = t + 1500 + Math.random()*3000;
   }
 
-  // Decay flashes
-  beatFlash   = Math.max(0, beatFlash   - dt * 0.008);
-  barFlash    = Math.max(0, barFlash    - dt * 0.003);
-  phraseFlash = Math.max(0, phraseFlash - dt * 0.001);
+  // continuous heavy rain
+  if (Math.random()<0.8) rain(3);
 
-  // Update particles
-  for (let i = particles.length - 1; i >= 0; i--) {
-    particles[i].update(dt);
-    if (particles[i].life <= 0) particles.splice(i, 1);
+  // decay flashes
+  bF  = Math.max(0, bF  - dt*0.009);
+  brF = Math.max(0, brF - dt*0.004);
+  phF = Math.max(0, phF - dt*0.001);
+
+  // update particles
+  for (let i=main_p.length-1;i>=0;i--) {
+    main_p[i].update(dt);
+    if (main_p[i].life<=0) main_p.splice(i,1);
+  }
+  for (let i=spark_p.length-1;i>=0;i--) {
+    spark_p[i].update(dt);
+    if (spark_p[i].life<=0) spark_p.splice(i,1);
   }
 
-  // Continuous rain
-  if (Math.random() < 0.3) spawnRain();
-
-  // Draw
-  drawBackground();
+  // DRAW
+  drawBg();
+  drawStars();
   drawGrid(dt);
   drawTunnel(dt);
+  drawSpotlights(dt);
   drawLasers(dt);
-
-  // Particles
-  ctx.save();
-  particles.forEach(p => p.draw());
-  ctx.restore();
-
+  updateRings(dt);
+  drawParticles();
   drawCross(dt);
   drawTitle();
   drawStrobe();
 }
 
-// Kick off showing title on load
-setTimeout(() => { textTarget = 1; setTimeout(() => { textTarget = 0; }, 4000); }, 500);
+// Show title on load
+setTimeout(()=>{tTgt=1;setTimeout(()=>{tTgt=0;},4500);},400);
+// Kick off a phrase immediately so it looks full right away
+setTimeout(()=>{ onBeat();onBeat();onBeat();onBeat();onBar();onPhrase(); },100);
 requestAnimationFrame(frame);
 
-/* ── Keyboard shortcuts ── */
+/* ─── Keys ─── */
 document.addEventListener('keydown', e => {
-  if (e.key === 'ArrowRight' || e.key === ' ') {
-    // manual beat trigger
-    lastBeat = t;
-    onBeat();
-  }
-  if (e.key === 'ArrowUp') {
-    // palette cycle
-    paletteIdx = (paletteIdx + 1) % PALETTES.length;
-    palette    = PALETTES[paletteIdx];
-    lasers.forEach((l, i) => l.color = palette[i % palette.length]);
-  }
+  if (e.key===' '||e.key==='ArrowRight') { lastBeat=t; onBeat(); }
+  if (e.key==='ArrowUp')   { pi=(pi+1)%PALETTES.length; pal=PALETTES[pi]; lasers.forEach((l,i)=>l.color=pal[i%pal.length]); }
+  if (e.key==='ArrowDown') { firework(); firework(); }
+  if (e.key==='f'||e.key==='F') { onPhrase(); }
 });
 </script>
 </body>
