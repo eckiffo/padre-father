@@ -431,12 +431,35 @@ body {
 }
 
 .field-card:hover { transform: scale(1.07) translateY(-3px); z-index: 5; box-shadow: 0 8px 24px rgba(0,0,0,0.8), 0 0 12px rgba(255,215,0,0.2); }
-.field-card.defense { transform: rotate(90deg); }
-.field-card.defense:hover { transform: rotate(90deg) scale(1.07); }
-.field-card.face-down {
-  background: repeating-linear-gradient(45deg, #1a0800, #1a0800 5px, #0d0400 5px, #0d0400 10px);
-  border-color: #5a2a00;
+.field-card.defense img {
+  width: 140%;
+  height: 140%;
+  object-fit: cover;
+  transform: rotate(90deg) scale(0.72);
+  transform-origin: center center;
 }
+.field-card.defense .fc-stats { display: none; }
+.field-card.defense::after {
+  content: 'DEF';
+  position: absolute;
+  bottom: 3px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-family: var(--font-heading);
+  font-size: 8px;
+  color: #6bcaff;
+  background: rgba(0,0,0,0.7);
+  padding: 1px 5px;
+  border-radius: 2px;
+  pointer-events: none;
+  z-index: 3;
+}
+.field-card.face-down {
+  background: repeating-linear-gradient(135deg, #1a0800, #1a0800 5px, #0d0400 5px, #0d0400 10px);
+  border-color: #5a2a00;
+  transform: rotate(90deg) scale(0.92);
+}
+.field-card.face-down:hover { transform: rotate(90deg) scale(0.99); }
 .field-card.face-down::after { content: ''; position: absolute; inset: 3px; border: 1px solid #8B4513; border-radius: 2px; opacity: 0.5; }
 
 .field-card img {
