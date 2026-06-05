@@ -115,6 +115,7 @@ const G = {
       graveyard: [],
       normalSummonUsed: false,
       attackedThisTurn: new Set(),
+      positionChangedThisTurn: new Set(),
     };
   },
 
@@ -232,6 +233,7 @@ const G = {
     // reset
     me.normalSummonUsed = false;
     me.attackedThisTurn = new Set();
+    me.positionChangedThisTurn = new Set();
     // switch turn
     s.turn = s.turn === 'player' ? 'opponent' : 'player';
     s.turnNum++;
@@ -411,6 +413,7 @@ const G = {
     if (me.field.spells[slotIdx] !== null) { this._toast('Zone occupied'); return; }
     me.hand.splice(handIdx, 1);
     card.faceDown = true;
+    card._setTurnNum = s.turnNum; // cannot activate this turn (official rule)
     me.field.spells[slotIdx] = card;
     this.selectedHandIdx = null;
     this._log(`Set a card face-down`, 'summon');
@@ -874,8 +877,20 @@ const G = {
     const card = me.field.monsters[slotIdx];
     if (!card) return;
     if (me.attackedThisTurn.has(slotIdx)) { this._toast('Cannot change position after attacking'); return; }
-    card.position = card.position === 'attack' ? 'defense' : 'attack';
-    if (card.faceDown) { card.faceDown = false; this._log(`Flip summoned ${card.name}!`,'summon'); this._onFlipEffect(card,'player'); }
+    if (!card.faceDown && me.positionChangedThisTurn.has(slotIdx)) { this._toast('Already changed position this turn'); return; }
+    const isFaceDown = card.faceDown;
+    card.faceDown = false;
+    if (!isFaceDown) {
+      // normal position change: ATK↔DEF, mark as changed (can't attack or change again)
+      card.position = card.position === 'attack' ? 'defense' : 'attack';
+      me.positionChangedThisTurn.add(slotIdx);
+      this._log(`${card.name} switched to ${card.position} position`, 'phase');
+    } else {
+      // Flip Summon: face-down → face-up attack, triggers FLIP effect, does NOT use normal summon
+      card.position = 'attack';
+      this._log(`Flip Summon! ${card.name}!`, 'summon');
+      this._onFlipEffect(card, 'player');
+    }
     this._renderField();
   },
 
@@ -1238,7 +1253,9 @@ const G = {
   _triggerResponseWindow(trigger, triggerCard, onDone) {
     const activatable = [];
     this.state.player.field.spells.forEach((card, i) => {
-      if (card && card.faceDown && (card.type === 'confession' || card.type === 'trap') && this._trapCanActivate(card, trigger, triggerCard)) {
+      // can't activate a trap the same turn it was set (official Konami rule)
+      const setThisTurn = card && card._setTurnNum === this.state.turnNum;
+      if (card && card.faceDown && !setThisTurn && (card.type === 'confession' || card.type === 'trap') && this._trapCanActivate(card, trigger, triggerCard)) {
         activatable.push({ card, slotIdx: i });
       }
     });
@@ -1957,12 +1974,20 @@ const G = {
       this._toast('Already attacked this turn');
       return;
     }
+    if (s.player.positionChangedThisTurn.has(idx)) {
+      this._toast('Cannot attack after changing position');
+      return;
+    }
     if (card._lockAttacks) {
       this._toast('This monster cannot attack');
       return;
     }
     if (s.player._lockTurns > 0) {
-      this._toast('Diamond Hands Lock — cannot attack');
+      this._toast('Cannot attack — Swords of Revealing Light!');
+      return;
+    }
+    if (card.position !== 'attack') {
+      this._toast('Switch to Attack Position first');
       return;
     }
 
@@ -2011,23 +2036,54 @@ const G = {
   },
 
   _showFieldCardMenu(card, idx, who) {
+    const s = this.state;
+    const me = s.player;
     const menu = document.getElementById('action-menu');
     menu.innerHTML = '';
 
     if (card.type === 'monster' && !card.faceDown) {
+      // Position change — only if haven't attacked or already changed position this turn
+      const canChangePos = !me.attackedThisTurn.has(idx) && !me.positionChangedThisTurn.has(idx);
       const pos = document.createElement('button');
-      pos.className = 'action-btn';
-      pos.textContent = card.position === 'attack' ? 'Switch to Defense' : 'Switch to Attack';
-      pos.addEventListener('click', () => { this._changePosition(idx); this._hideActionMenu(); });
+      pos.className = 'action-btn' + (canChangePos ? '' : ' disabled-btn');
+      pos.textContent = card.position === 'attack' ? '🛡 Switch to Defense' : '⚔ Switch to Attack';
+      pos.addEventListener('click', () => {
+        if (!canChangePos) { this._toast(me.attackedThisTurn.has(idx) ? 'Cannot change position after attacking' : 'Already changed position this turn'); return; }
+        this._changePosition(idx); this._hideActionMenu();
+      });
       menu.appendChild(pos);
+
+      // Monster effects
+      const effectMonsters = ['time_wizard','relinquished','thousand_eyes_restrict','cycle_wizard','lord_of_d_'];
+      if (effectMonsters.includes(card.id)) {
+        const fx = document.createElement('button');
+        fx.className = 'action-btn';
+        fx.textContent = '✨ Activate Effect';
+        fx.addEventListener('click', () => { this._hideActionMenu(); this._activateMonsterEffect(card, idx); });
+        menu.appendChild(fx);
+      }
     }
 
     if (card.faceDown) {
       const flip = document.createElement('button');
       flip.className = 'action-btn';
-      flip.textContent = 'Flip Summon';
+      flip.textContent = '🔄 Flip Summon';
       flip.addEventListener('click', () => { this._changePosition(idx); this._hideActionMenu(); });
       menu.appendChild(flip);
+    }
+
+    // Face-up trap/spell on field — can activate its effect
+    const isSpellTrap = card.type === 'blessing' || card.type === 'spell' || card.type === 'confession' || card.type === 'trap';
+    if (isSpellTrap && !card.faceDown && (card.subtype === 'continuous' || card.subtype === 'equip' || card.subtype === 'field')) {
+      const fx = document.createElement('button');
+      fx.className = 'action-btn danger';
+      fx.textContent = '🗑 Send to Graveyard';
+      fx.addEventListener('click', () => {
+        this._hideActionMenu();
+        const fi = me.field.spells.indexOf(card);
+        if (fi > -1) { me.field.spells[fi] = null; me.graveyard.push(card); this._log(`${card.name} removed from field`, 'destroy'); this._renderField(); }
+      });
+      menu.appendChild(fx);
     }
 
     const cancel = document.createElement('button');
@@ -2042,6 +2098,88 @@ const G = {
     menu.style.top = (rect.bottom + 6) + 'px';
     menu.style.left = rect.left + 'px';
     menu.style.transform = 'none';
+  },
+
+  // ── MONSTER EFFECTS (field activation) ───────
+
+  _activateMonsterEffect(card, idx) {
+    const s = this.state;
+    const me = s.player;
+    const opp = s.opponent;
+
+    switch(card.id) {
+      case 'time_wizard':
+      case 'cycle_wizard': {
+        // Coin flip: heads = win, tails = lose
+        const win = Math.random() < 0.5;
+        if (win) {
+          this._log('Time Wizard coin flip — HEADS! All opponent monsters destroyed!', 'destroy');
+          opp.field.monsters.forEach((c,i) => {
+            if (c) { opp.graveyard.push(c); opp.field.monsters[i] = null; this._onDestroyEffect(c, 'opponent'); }
+          });
+          // All destroyed monsters also deal half their ATK as damage to opponent
+          this._animEffect('time_wizard');
+        } else {
+          this._log('Time Wizard coin flip — TAILS! YOUR monsters are destroyed and you take damage!', 'damage');
+          let dmg = 0;
+          me.field.monsters.forEach((c,i) => {
+            if (c) {
+              dmg += Math.floor((c.atk||0) / 2);
+              me.graveyard.push(c); me.field.monsters[i] = null; this._onDestroyEffect(c, 'player');
+            }
+          });
+          me.faith = Math.max(0, me.faith - dmg);
+          this._log(`Lost ${dmg} Faith from Time Wizard backfire!`, 'damage');
+          this._flashDamage('player'); this._animDamage('player', dmg);
+        }
+        this._renderField(); this._renderTopbar(); this._checkWin();
+        break;
+      }
+
+      case 'relinquished': {
+        // Absorb an opponent monster (equip it)
+        const targets = opp.field.monsters.filter(Boolean);
+        if (!targets.length) { this._toast('No opponent monsters to absorb'); return; }
+        const target = targets.sort((a,b)=>(b.atk||0)-(a.atk||0))[0];
+        const ti = opp.field.monsters.indexOf(target);
+        opp.field.monsters[ti] = null;
+        card._equippedMonster = target;
+        card._atk = target.atk; card._def = target.def; card.atk = target.atk; card.def = target.def;
+        this._log(`Relinquished absorbed ${target.name}! (ATK/DEF: ${target.atk}/${target.def})`, 'summon');
+        this._renderField();
+        break;
+      }
+
+      case 'lord_of_d_': {
+        // Activate Flute of Summoning Dragon if in hand
+        const fluteIdx = me.hand.findIndex(c => c.id === 'the_flute_of_summoning_dragon');
+        if (fluteIdx > -1) {
+          me.hand.splice(fluteIdx, 1);
+          // Special summon up to 2 dragons from hand
+          let summoned = 0;
+          for (let i = me.hand.length - 1; i >= 0 && summoned < 2; i--) {
+            if (me.hand[i].type === 'monster' && (me.hand[i].id.includes('dragon') || (me.hand[i].name||'').toLowerCase().includes('dragon'))) {
+              const slot = me.field.monsters.findIndex(m => !m);
+              if (slot > -1) {
+                const d = me.hand.splice(i, 1)[0];
+                d.position = 'attack'; d.faceDown = false; d._atk = d.atk; d._def = d.def;
+                me.field.monsters[slot] = d;
+                this._log(`${d.name} Special Summoned by Flute of Summoning Dragon!`, 'summon');
+                summoned++;
+              }
+            }
+          }
+          if (!summoned) this._log('No Dragons in hand to summon', 'muted');
+          this._renderField(); this._renderHand();
+        } else {
+          this._toast('Flute of Summoning Dragon not in hand');
+        }
+        break;
+      }
+
+      default:
+        this._toast(`${card.name} effect activated`);
+    }
   },
 
   // ── PREVIEW ───────────────────────────────────

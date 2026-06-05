@@ -615,6 +615,8 @@ body {
 .action-btn:hover { background: #222; color: var(--gold); }
 .action-btn.danger { color: var(--red); }
 .action-btn.danger:hover { background: rgba(255,68,68,0.1); }
+.action-btn.disabled-btn { opacity: 0.4; cursor: not-allowed; }
+.action-btn.disabled-btn:hover { background: transparent; color: var(--muted); }
 
 /* ── CARD PREVIEW ───────────────────────────── */
 
