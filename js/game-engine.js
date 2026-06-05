@@ -1361,10 +1361,14 @@ const G = {
       // highlight logic
       slot.classList.remove('highlight', 'attack-target', 'droppable');
 
+      const oppHasMonsters = !isPlayer && s.opponent.field.monsters.some(Boolean);
+
       if (isPlayer && this.mode === 'summon-target' && !card) slot.classList.add('highlight');
       if (isPlayer && this.mode === 'set-target' && !card) slot.classList.add('highlight');
       if (isPlayer && this.mode === 'tribute' && card) slot.classList.add('highlight');
       if (!isPlayer && this.mode === 'attack-target' && card) slot.classList.add('attack-target');
+      // direct attack: glow all empty opponent slots when opponent has no monsters
+      if (!isPlayer && this.mode === 'attack-target' && !card && !oppHasMonsters) slot.classList.add('attack-target');
 
       slot.onclick = null;
 
@@ -1376,6 +1380,8 @@ const G = {
         slot.onclick = () => this._selectTribute(i);
       } else if (this.mode === 'attack-target' && !isPlayer && card) {
         slot.onclick = () => { this._resolveAttack('player', this.attackSource, 'opponent', i); };
+      } else if (this.mode === 'attack-target' && !isPlayer && !card && !oppHasMonsters) {
+        slot.onclick = () => { this._resolveAttack('player', this.attackSource, 'opponent', 'direct'); };
       }
 
       if (!card) {
