@@ -278,53 +278,49 @@ const G = {
 
   // ── TRIBUTE SUMMON ────────────────────────────
 
-  _startTribute(card, targetZoneIdx) {
-    const needed = card.stars <= 6 ? 1 : 2;
-    this.tributesNeeded = needed;
-    this.pendingTributes = [];
-    this.pendingCard = { card, targetZoneIdx };
-    this.mode = 'tribute';
-    this._log(`Select ${needed} monster(s) to tribute`, 'phase');
-    this._highlightTributeTargets();
-    this._renderField();
-  },
-
-  _highlightTributeTargets() {
-    document.querySelectorAll('.player-monster-slot .field-card').forEach((el, i) => {
-      el.classList.add('tribute-glow');
-    });
-  },
-
   _selectTribute(slotIdx) {
     if (!this.pendingTributes.includes(slotIdx)) {
       this.pendingTributes.push(slotIdx);
+      // flash the tributed slot
+      const slotEl = document.getElementById(`player-m-${slotIdx}`);
+      if (slotEl) slotEl.classList.add('tribute-selected');
     }
     if (this.pendingTributes.length >= this.tributesNeeded) {
       this._completeTribute();
+    } else {
+      const left = this.tributesNeeded - this.pendingTributes.length;
+      this._log(`Select ${left} more monster(s) to tribute`, 'phase');
     }
   },
 
   _completeTribute() {
     const s = this.state;
     const me = s.player;
-    const { card, targetZoneIdx } = this.pendingCard;
-    // remove tributed monsters
+    const { card } = this.pendingCard;
+    // remove tributed monsters from field
     this.pendingTributes.forEach(idx => {
       const tributed = me.field.monsters[idx];
       if (tributed) {
+        const el = document.getElementById(`player-m-${idx}`);
+        if (el) this._animDestroy(el, () => {});
         me.graveyard.push(tributed);
         me.field.monsters[idx] = null;
         this._log(`Tributed ${tributed.name}`, 'destroy');
       }
     });
-    // place card
+    // auto-place in first open slot (tributes just freed slots)
+    const slot = me.field.monsters.findIndex(m => !m);
+    if (slot === -1) { this._toast('No field space!'); return; }
     card._atk = card.atk;
     card._def = card.def;
     card.position = 'attack';
-    me.field.monsters[targetZoneIdx] = card;
+    card.faceDown = false;
+    me.field.monsters[slot] = card;
     me.normalSummonUsed = true;
-    this._log(`Tribute Summoned ${card.name}!`, 'summon');
+    this._log(`Tribute Summoned ${card.name}! (${card.atk}/${card.def})`, 'summon');
     this._onSummonEffect(card, 'player');
+    const slotEl = document.getElementById(`player-m-${slot}`);
+    if (slotEl) this._animSummon(slotEl, card.attribute === 'DARK' ? 'red' : card.attribute === 'LIGHT' ? '' : 'blue');
     this.mode = null;
     this.pendingCard = null;
     this.pendingTributes = [];
@@ -339,17 +335,6 @@ const G = {
     const me = s.player;
     const card = me.hand[handIdx];
     if (!card) return;
-
-    // check tribute needed
-    if (card.stars >= 5) {
-      // remove from hand first
-      me.hand.splice(handIdx, 1);
-      this.selectedHandIdx = null;
-      this._startTribute(card, slotIdx);
-      return;
-    }
-
-    // normal summon
     if (me.normalSummonUsed) { this._toast('Already summoned this turn'); return; }
     if (me.field.monsters[slotIdx] !== null) { this._toast('Zone occupied'); return; }
 
@@ -360,6 +345,7 @@ const G = {
     me.field.monsters[slotIdx] = card;
     me.normalSummonUsed = true;
     this.selectedHandIdx = null;
+    this.mode = null;
     this._log(`You summoned ${card.name} (${card.atk}/${card.def})`, 'summon');
     this._renderField();
     this._renderHand();
@@ -452,66 +438,144 @@ const G = {
         if(side==='player') this._renderHand(); else this._renderOppHand();
         break;
 
-      case 'second_chance': {
-        // resurrect strongest from either graveyard
+      case 'graceful_charity': {
+        for(let i=0;i<3;i++) { if(me.deck.length>0) me.hand.push(me.deck.splice(0,1)[0]); }
+        // discard 2 weakest (or random for AI / no-ui)
+        for(let i=0;i<2;i++) {
+          if(me.hand.length>0) {
+            const wi = me.hand.reduce((bi,c,ci) => ((c.atk||0)<(me.hand[bi].atk||0) ? ci : bi), 0);
+            me.graveyard.push(me.hand.splice(wi,1)[0]);
+          }
+        }
+        this._log(`${side} drew 3, discarded 2`, 'summon');
+        if(side==='player') this._renderHand(); else this._renderOppHand();
+        break;
+      }
+
+      case 'card_destruction': {
+        const pd = s.player.hand.length, od = s.opponent.hand.length;
+        s.player.graveyard.push(...s.player.hand.splice(0));
+        s.opponent.graveyard.push(...s.opponent.hand.splice(0));
+        for(let i=0;i<pd;i++) { if(s.player.deck.length>0) s.player.hand.push(s.player.deck.splice(0,1)[0]); }
+        for(let i=0;i<od;i++) { if(s.opponent.deck.length>0) s.opponent.hand.push(s.opponent.deck.splice(0,1)[0]); }
+        this._log('Card Destruction — both players discard and redraw!', 'destroy');
+        this._renderHand(); this._renderOppHand();
+        break;
+      }
+
+      case 'second_chance':
+      case 'monster_reborn':
+      case 'premature_burial': {
         const allGrave = [...me.graveyard, ...opp.graveyard].filter(c=>c.type==='monster');
-        if(allGrave.length===0){this._log('No monsters in Trenches','muted');break;}
+        if(allGrave.length===0){this._log('No monsters in graveyard','muted');break;}
         const best = allGrave.sort((a,b)=>(b.atk||0)-(a.atk||0))[0];
         const slot = me.field.monsters.findIndex(m=>!m);
         if(slot===-1){this._log('No space on field','muted');break;}
-        // remove from graveyard
-        const gi = me.graveyard.indexOf(best);
+        if(card.id==='premature_burial') { me.faith=Math.max(0,me.faith-800); this._log('Paid 800 LP for Premature Burial','damage'); }
+        const gi=me.graveyard.indexOf(best);
         if(gi>-1) me.graveyard.splice(gi,1);
-        else { const ogi = opp.graveyard.indexOf(best); if(ogi>-1) opp.graveyard.splice(ogi,1); }
-        best.position='attack'; best.faceDown=false;
+        else { const ogi=opp.graveyard.indexOf(best); if(ogi>-1) opp.graveyard.splice(ogi,1); }
+        best.position='attack'; best.faceDown=false; best._atk=best.atk; best._def=best.def;
         me.field.monsters[slot]=best;
-        this._log(`${best.name} rises from The Trenches!`,'summon');
+        this._log(`${best.name} Special Summoned from the Graveyard!`,'summon');
+        this._renderField();
+        break;
+      }
+
+      case 'call_of_the_haunted': {
+        const grave = me.graveyard.filter(c=>c.type==='monster');
+        if(!grave.length){this._log('No monsters in graveyard','muted');break;}
+        const target = grave.sort((a,b)=>(b.atk||0)-(a.atk||0))[0];
+        const slot = me.field.monsters.findIndex(m=>!m);
+        if(slot===-1){this._log('No space on field','muted');break;}
+        const gi = me.graveyard.indexOf(target);
+        if(gi>-1) me.graveyard.splice(gi,1);
+        target.position='attack'; target.faceDown=false; target._atk=target.atk; target._def=target.def;
+        me.field.monsters[slot]=target;
+        this._log(`${target.name} Special Summoned by Call of the Haunted!`,'summon');
         this._renderField();
         break;
       }
 
       case 'market_crash':
+      case 'dark_hole':
         [...s.player.field.monsters,...s.opponent.field.monsters].forEach((c,i)=>{
           if(!c) return;
           if(i<5) { s.player.field.monsters[i]=null; s.player.graveyard.push(c); }
           else { s.opponent.field.monsters[i-5]=null; s.opponent.graveyard.push(c); }
         });
-        this._log('Market Crash — all monsters destroyed!','destroy');
+        this._log('Dark Hole — all monsters destroyed!','destroy');
         this._renderField();
         break;
 
       case 'diamond_hands_lock':
+      case 'swords_of_revealing_light':
         opp._lockTurns = 3;
-        this._log(`${opp.who} cannot attack for 3 turns`,'summon');
+        this._log(`${opp.who} cannot attack for 3 turns (Swords of Revealing Light)!`,'summon');
         break;
 
-      case 'narrative_shift': {
+      case 'narrative_shift':
+      case 'change_of_heart': {
         const targets = opp.field.monsters.filter(Boolean);
         if(targets.length===0){this._log('No targets','muted');break;}
-        const stolen = targets[0];
+        const stolen = targets.sort((a,b)=>(b.atk||0)-(a.atk||0))[0];
         const oi = opp.field.monsters.indexOf(stolen);
         opp.field.monsters[oi]=null;
         const slot = me.field.monsters.findIndex(m=>!m);
-        if(slot>-1){ me.field.monsters[slot]=stolen; this._log(`${stolen.name} stolen until End Phase`,'summon'); }
+        if(slot>-1){ me.field.monsters[slot]=stolen; this._log(`${stolen.name} stolen until End Phase!`,'summon'); }
+        this._renderField();
+        break;
+      }
+
+      case 'snatch_steal': {
+        const targets2 = opp.field.monsters.filter(Boolean);
+        if(!targets2.length){this._log('No targets','muted');break;}
+        const stolen2 = targets2.sort((a,b)=>(b.atk||0)-(a.atk||0))[0];
+        const oi2 = opp.field.monsters.indexOf(stolen2);
+        opp.field.monsters[oi2]=null;
+        const slot2 = me.field.monsters.findIndex(m=>!m);
+        if(slot2>-1){ me.field.monsters[slot2]=stolen2; this._log(`${stolen2.name} permanently stolen! (Opponent gains 1000 LP per turn)`,'summon'); opp.faith=Math.min(8000,opp.faith+1000); }
         this._renderField();
         break;
       }
 
       case 'market_wipe':
+      case 'heavy_storm':
         [...s.player.field.spells,...s.opponent.field.spells].forEach((c,i)=>{
           if(!c) return;
           if(i<5){s.player.graveyard.push(c); s.player.field.spells[i]=null;}
           else{s.opponent.graveyard.push(c); s.opponent.field.spells[i-5]=null;}
         });
-        this._log('All spells and traps wiped!','destroy');
+        this._log('Heavy Storm — all spells and traps destroyed!','destroy');
         this._renderField();
         break;
 
-      case 'ct_wipes_the_board':
-        opp.field.spells.forEach((c,i)=>{if(c){opp.graveyard.push(c);opp.field.spells[i]=null;}});
-        this._log('CT Wipes the Board — all opponent S/T destroyed!','destroy');
+      case 'mystical_space_typhoon': {
+        const oppST = opp.field.spells.map((c,i)=>c?i:null).filter(i=>i!==null);
+        if(!oppST.length){this._log('No opponent S/T to destroy','muted');break;}
+        const ti = oppST[0];
+        this._log(`Mystical Space Typhoon destroyed ${opp.field.spells[ti].name}!`,'destroy');
+        opp.graveyard.push(opp.field.spells[ti]);
+        opp.field.spells[ti]=null;
         this._renderField();
         break;
+      }
+
+      case 'ct_wipes_the_board':
+      case 'harpie_s_feather_duster':
+        opp.field.spells.forEach((c,i)=>{if(c){opp.graveyard.push(c);opp.field.spells[i]=null;}});
+        this._log("Harpie's Feather Duster — all opponent S/T destroyed!",'destroy');
+        this._renderField();
+        break;
+
+      case 'giant_trunade': {
+        // return all S/T to owners' hands
+        s.player.field.spells.forEach((c,i)=>{ if(c){s.player.hand.push(c);s.player.field.spells[i]=null;} });
+        s.opponent.field.spells.forEach((c,i)=>{ if(c){s.opponent.hand.push(c);s.opponent.field.spells[i]=null;} });
+        this._log('Giant Trunade — all spells/traps returned to hand!','summon');
+        this._renderField(); this._renderHand(); this._renderOppHand();
+        break;
+      }
 
       case 'green_candle': {
         const target = me.field.monsters.find(Boolean);
@@ -534,22 +598,74 @@ const G = {
         break;
       }
 
-      case 'paper_bag': {
-        const target = opp.field.monsters.find(Boolean);
+      case 'paper_bag':
+      case 'shrink': {
+        const target = opp.field.monsters.filter(Boolean).sort((a,b)=>(b.atk||0)-(a.atk||0))[0];
         if(!target){this._log('No targets','muted');break;}
-        target.atk=Math.floor(target.atk/2);
-        this._log(`Paper Bag: ${target.name} ATK halved to ${target.atk}`,'destroy');
+        target.atk=Math.floor((target._atk||target.atk)/2);
+        this._log(`Shrink: ${target.name} ATK halved to ${target.atk}`,'destroy');
         this._renderField();
         break;
       }
 
-      case 'airdrop_wallets': {
+      case 'book_of_secret_arts':
+      case 'mage_power': {
+        const myMonster = me.field.monsters.find(Boolean);
+        if(!myMonster) break;
+        const stBonus = me.field.spells.filter(Boolean).length * 500;
+        myMonster._atk = (myMonster._atk||myMonster.atk) + (card.id==='mage_power' ? stBonus : 300);
+        myMonster.atk = myMonster._atk;
+        this._log(`${card.name}: ${myMonster.name} gains ${card.id==='mage_power' ? stBonus : 300} ATK!`,'summon');
+        this._renderField();
+        break;
+      }
+
+      case 'graceful_dice':
+      case 'green_candle': {
+        const target = me.field.monsters.find(Boolean);
+        if(!target){this._log('No monsters to buff','muted');break;}
+        const roll = Math.ceil(Math.random()*6);
+        const old = target._atk || target.atk;
+        target.atk = old * roll; target._atk = target.atk;
+        this._log(`Graceful Dice! Rolled ${roll}. ${target.name} ATK: ${old} → ${target.atk}`,'summon');
+        this._renderField();
+        break;
+      }
+
+      case 'skull_dice': {
+        const target2 = opp.field.monsters.filter(Boolean).sort((a,b)=>(b.atk||0)-(a.atk||0))[0];
+        if(!target2){this._log('No targets','muted');break;}
+        const roll2 = Math.ceil(Math.random()*6);
+        const old2 = target2._atk || target2.atk;
+        target2.atk = Math.floor(old2 / roll2); target2._atk = target2.atk;
+        this._log(`Skull Dice! Rolled ${roll2}. ${target2.name} ATK: ${old2} → ${target2.atk}`,'destroy');
+        this._renderField();
+        break;
+      }
+
+      case 'elegant_egotist':
+      case 'elegant_algorithm': {
+        const hasCT = me.field.monsters.some(c=>c&&(c.id==='ct_lady'||c.id==='harpie_lady'));
+        if(!hasCT){this._log('Need Harpie Lady on field','muted');break;}
+        const slot=me.field.monsters.findIndex(m=>!m);
+        if(slot===-1) break;
+        const base = me.field.monsters.find(c=>c&&(c.id==='ct_lady'||c.id==='harpie_lady'));
+        const copy = {...base, uid:Math.random().toString(36).slice(2)};
+        copy.position='attack'; copy.faceDown=false;
+        me.field.monsters[slot]=copy;
+        this._log('Elegant Egotist — another Harpie Lady special summoned!','summon');
+        this._renderField();
+        break;
+      }
+
+      case 'airdrop_wallets':
+      case 'scapegoat': {
         for(let i=0;i<4;i++){
           const slot=me.field.monsters.findIndex(m=>!m);
           if(slot===-1) break;
-          me.field.monsters[slot]={ id:'airdrop_token', name:'Airdrop Token', atk:0, def:0, stars:1, type:'monster', subtype:'token', position:'defense', uid:Math.random().toString(36).slice(2), rarity:'common' };
+          me.field.monsters[slot]={ id:'sheep_token', name:'Sheep Token', atk:0, def:0, stars:1, type:'monster', subtype:'token', position:'defense', uid:Math.random().toString(36).slice(2), rarity:'common', image:'' };
         }
-        this._log('Airdrop! 4 tokens summoned','summon');
+        this._log('Scapegoat — 4 Sheep Tokens summoned in defense!','summon');
         this._renderField();
         break;
       }
@@ -594,10 +710,52 @@ const G = {
         break;
       }
 
-      case 'rug_virus': {
-        // destroy opponent monsters with 1500+ atk
-        opp.field.monsters.forEach((c,i)=>{ if(c&&c.atk>=1500){ opp.graveyard.push(c); opp.field.monsters[i]=null; this._log(`Rug Virus destroyed ${c.name}`,'destroy'); } });
+      case 'rug_virus':
+      case 'crush_card_virus': {
+        // destroy all opponent monsters with 1500+ ATK (simplified — real card looks at hand/deck too)
+        opp.field.monsters.forEach((c,i)=>{ if(c&&(c.atk||0)>=1500){ opp.graveyard.push(c); opp.field.monsters[i]=null; this._log(`Crush Card Virus destroyed ${c.name}`,'destroy'); } });
+        // also destroy from hand
+        for(let i=opp.hand.length-1;i>=0;i--){ if((opp.hand[i].atk||0)>=1500){ opp.graveyard.push(opp.hand.splice(i,1)[0]); } }
+        this._renderField(); this._renderOppHand();
+        break;
+      }
+
+      case 'ring_of_destruction': {
+        const biggest = opp.field.monsters.filter(Boolean).sort((a,b)=>(b.atk||0)-(a.atk||0))[0];
+        if(!biggest){this._log('No targets','muted');break;}
+        const dmg = biggest.atk||0;
+        opp.field.monsters[opp.field.monsters.indexOf(biggest)]=null;
+        opp.graveyard.push(biggest);
+        me.faith=Math.max(0,me.faith-dmg);
+        opp.faith=Math.max(0,opp.faith-dmg);
+        this._log(`Ring of Destruction! ${biggest.name} destroyed — both take ${dmg} damage!`,'damage');
+        this._flashDamage('player'); this._flashDamage('opponent');
         this._renderField();
+        break;
+      }
+
+      case 'black_illusion_ritual': {
+        // Ritual summon Relinquished — needs Relinquished in hand
+        const ri = me.hand.findIndex(c=>c.id==='relinquished');
+        if(ri===-1){this._log('No Relinquished in hand!','muted');break;}
+        const tribute = me.field.monsters.find(Boolean);
+        if(!tribute){this._log('Need a monster to tribute for ritual','muted');break;}
+        const ti = me.field.monsters.indexOf(tribute);
+        me.graveyard.push(tribute); me.field.monsters[ti]=null;
+        const slot=me.field.monsters.findIndex(m=>!m);
+        if(slot===-1){this._log('No field space','muted');break;}
+        const rel = me.hand.splice(ri,1)[0];
+        rel.position='attack'; rel.faceDown=false; rel._atk=rel.atk; rel._def=rel.def;
+        me.field.monsters[slot]=rel;
+        this._log('Relinquished Ritual Summoned!','summon');
+        this._renderField(); this._renderHand();
+        break;
+      }
+
+      case 'toon_table_of_contents': {
+        const toon = me.deck.find(c=>(c.name||'').toLowerCase().includes('toon'));
+        if(toon){ const di=me.deck.indexOf(toon); me.hand.push(me.deck.splice(di,1)[0]); this._log(`Toon Table of Contents: added ${toon.name} to hand!`,'summon'); this._renderHand(); }
+        else { this._log('No Toon cards in deck','muted'); }
         break;
       }
 
@@ -657,6 +815,54 @@ const G = {
         }
         break;
       }
+      case 'time_wizard': {
+        // Coin flip — player activates by clicking during main phase
+        this._log('Time Wizard summoned! Activate its effect from the field during your Main Phase.','summon');
+        break;
+      }
+      case 'dark_magician_girl': {
+        const bonus = [...me.graveyard,...opp.graveyard].filter(c=>c.id==='dark_magician'||c.id==='dark_magician_girl').length * 300;
+        if(bonus>0){ card._atk=(card._atk||card.atk)+bonus; card.atk=card._atk; this._log(`Dark Magician Girl gains ${bonus} ATK from Graveyard! (ATK: ${card.atk})`,'summon'); this._renderField(); }
+        break;
+      }
+      case 'lord_of_d_': {
+        this._log("Lord of D.: Dragon-type monsters can't be targeted by spells or traps!",'summon');
+        me._dragonLordActive = true;
+        break;
+      }
+      case 'relinquished': {
+        // Absorb first available opponent monster
+        const t=opp.field.monsters.find(Boolean);
+        if(t){
+          const ti=opp.field.monsters.indexOf(t);
+          opp.field.monsters[ti]=null;
+          card._equippedMonster=t;
+          card._atk=t.atk; card._def=t.def; card.atk=t.atk; card.def=t.def;
+          this._log(`Relinquished absorbed ${t.name}! (ATK/DEF: ${t.atk}/${t.def})`,'summon');
+          this._renderField();
+        }
+        break;
+      }
+      case 'thousand_eyes_restrict': {
+        // Freeze all monsters on field + absorb one
+        [...me.field.monsters,...opp.field.monsters].filter(Boolean).forEach(c=>{ c._lockAttacks=true; });
+        const t2=opp.field.monsters.find(Boolean);
+        if(t2){
+          const ti2=opp.field.monsters.indexOf(t2);
+          opp.field.monsters[ti2]=null;
+          card._equippedMonster=t2; card._atk=t2.atk; card._def=t2.def; card.atk=t2.atk; card.def=t2.def;
+          this._log(`Thousand-Eyes Restrict: all monsters frozen! Absorbed ${t2.name}!`,'summon');
+        } else {
+          this._log('Thousand-Eyes Restrict: all monsters frozen!','summon');
+        }
+        this._renderField();
+        break;
+      }
+      case 'goblin_attack_force': {
+        this._log('Goblin Attack Force: must switch to Defense after attacking!','summon');
+        card._goblin=true;
+        break;
+      }
     }
   },
 
@@ -678,21 +884,45 @@ const G = {
     const me = side==='player' ? s.player : s.opponent;
     const opp = side==='player' ? s.opponent : s.player;
     switch(card.id) {
-      case 'rug_eater': {
-        const targets=[...me.field.monsters,...opp.field.monsters].filter(Boolean);
-        if(targets.length>1){
-          const target=targets[Math.floor(Math.random()*targets.length)];
-          const idx=me.field.monsters.indexOf(target);
-          if(idx>-1){me.graveyard.push(target);me.field.monsters[idx]=null;}
-          else{const oi=opp.field.monsters.indexOf(target);if(oi>-1){opp.graveyard.push(target);opp.field.monsters[oi]=null;}}
-          this._log(`Rug Eater destroyed ${target.name}!`,'destroy');
-          this._renderField();
+      case 'rug_eater':
+      case 'man_eater_bug': {
+        // destroy 1 monster (prefer opponent's strongest)
+        const oppTargets = opp.field.monsters.filter(Boolean);
+        if(oppTargets.length>0){
+          const t = oppTargets.sort((a,b)=>(b.atk||0)-(a.atk||0))[0];
+          const oi=opp.field.monsters.indexOf(t);
+          opp.graveyard.push(t); opp.field.monsters[oi]=null;
+          this._log(`Man-Eater Bug FLIP! Destroyed ${t.name}!`,'destroy');
+        } else {
+          const myTargets=me.field.monsters.filter(c=>c&&c!==card);
+          if(myTargets.length>0){
+            const t=myTargets[0]; const mi=me.field.monsters.indexOf(t);
+            me.graveyard.push(t); me.field.monsters[mi]=null;
+            this._log(`Man-Eater Bug — no opponent monsters, destroyed ${t.name}`,'destroy');
+          }
         }
+        this._renderField();
         break;
       }
-      case 'parasite_wallet': {
+      case 'morphing_jar': {
+        const pd=me.hand.length||5, od=opp.hand.length||5;
+        me.graveyard.push(...me.hand.splice(0));
+        opp.graveyard.push(...opp.hand.splice(0));
+        for(let i=0;i<5;i++){ if(me.deck.length>0) me.hand.push(me.deck.splice(0,1)[0]); }
+        for(let i=0;i<5;i++){ if(opp.deck.length>0) opp.hand.push(opp.deck.splice(0,1)[0]); }
+        this._log('Morphing Jar FLIP! Both players discard and draw 5!','summon');
+        this._renderHand(); this._renderOppHand();
+        break;
+      }
+      case 'magician_of_faith': {
+        const spell=me.graveyard.filter(c=>c.type==='blessing'||c.type==='spell').pop();
+        if(spell){ const gi=me.graveyard.lastIndexOf(spell); me.graveyard.splice(gi,1); me.hand.push(spell); this._log(`Magician of Faith: returned ${spell.name} to hand!`,'summon'); if(side==='player')this._renderHand(); }
+        break;
+      }
+      case 'parasite_wallet':
+      case 'parasite_paracide': {
         const slot=opp.field.monsters.findIndex(m=>!m);
-        if(slot>-1){ me.field.monsters[me.field.monsters.indexOf(card)]=null; opp.field.monsters[slot]=card; this._log('Parasite Wallet infected opponent field!','destroy'); this._renderField(); }
+        if(slot>-1){ me.field.monsters[me.field.monsters.indexOf(card)]=null; opp.field.monsters[slot]=card; this._log('Parasite Paracide infected opponent field!','destroy'); this._renderField(); }
         break;
       }
     }
@@ -865,7 +1095,7 @@ const G = {
     let spellsPlayed = 0;
     for (const card of [...ai.hand]) {
       if (spellsPlayed >= 2) break;
-      if (card.type === 'blessing' && card.subtype === 'normal') {
+      if ((card.type === 'blessing' || card.type === 'spell') && card.subtype === 'normal') {
         const c = card;
         actions.push(next => {
           this._triggerResponseWindow('spell', c, negated => {
@@ -930,7 +1160,7 @@ const G = {
     }
 
     // 3. Set one trap face-down
-    const trap = ai.hand.find(c => c.type === 'confession');
+    const trap = ai.hand.find(c => c.type === 'confession' || c.type === 'trap');
     if (trap) {
       actions.push(next => {
         const slot = ai.field.spells.findIndex(sp => !sp);
@@ -1008,7 +1238,7 @@ const G = {
   _triggerResponseWindow(trigger, triggerCard, onDone) {
     const activatable = [];
     this.state.player.field.spells.forEach((card, i) => {
-      if (card && card.faceDown && card.type === 'confession' && this._trapCanActivate(card, trigger, triggerCard)) {
+      if (card && card.faceDown && (card.type === 'confession' || card.type === 'trap') && this._trapCanActivate(card, trigger, triggerCard)) {
         activatable.push({ card, slotIdx: i });
       }
     });
@@ -1089,9 +1319,19 @@ const G = {
 
   _trapCanActivate(card, trigger, triggerCard) {
     switch(trigger) {
-      case 'attack': return ['rugback','stop_loss','locked_liquidity','red_candle','stop_the_pump','liquidation','take_you_with_me','jeet_shield'].includes(card.id);
-      case 'summon': return ['sniper_hole','fomo_trap','dev_exit'].includes(card.id);
-      case 'spell':  return ['dip_trap','tx_rejected'].includes(card.id);
+      case 'attack': return [
+        'rugback','stop_loss','locked_liquidity','red_candle','stop_the_pump','liquidation','take_you_with_me','jeet_shield',
+        'mirror_force','negate_attack','magic_cylinder','ring_of_destruction','widespread_ruin',
+        'spellbinding_circle','kunai_with_chain','michizure','bottomless_trap_hole','fairy_box',
+      ].includes(card.id);
+      case 'summon': return [
+        'sniper_hole','fomo_trap','dev_exit',
+        'trap_hole','bottomless_trap_hole','shadow_of_eyes',
+      ].includes(card.id);
+      case 'spell':  return [
+        'dip_trap','tx_rejected',
+        'trap_jammer','magic_jammer','judgment_of_anubis',
+      ].includes(card.id);
       default: return false;
     }
   },
@@ -1179,12 +1419,87 @@ const G = {
         break;
 
       case 'fomo_trap':
-        if (triggerCard) { triggerCard.position = 'defense'; this._log(`FOMO Trap! ${triggerCard.name} forced into defense!`, 'summon'); }
+      case 'shadow_of_eyes':
+        if (triggerCard) { triggerCard.position = 'attack'; this._log(`${card.name}! ${triggerCard.name} forced into Attack Position!`, 'summon'); }
         break;
 
       case 'dip_trap':
       case 'tx_rejected':
-        this._log(`${card.name}! Opponent's spell negated!`, 'summon');
+      case 'trap_jammer':
+      case 'magic_jammer':
+        this._log(`${card.name}! Opponent's spell/trap negated!`, 'summon');
+        negated = true;
+        break;
+
+      case 'mirror_force':
+        s.opponent.field.monsters.forEach((c,i) => {
+          if (c && c.position === 'attack') {
+            s.opponent.graveyard.push(c); s.opponent.field.monsters[i] = null;
+            this._log(`Mirror Force destroyed ${c.name}!`, 'destroy');
+            this._onDestroyEffect(c, 'opponent');
+          }
+        });
+        negated = true;
+        break;
+
+      case 'negate_attack':
+        this._log(`Negate Attack! ${triggerCard.name}'s attack negated!`, 'summon');
+        negated = true;
+        break;
+
+      case 'magic_cylinder': {
+        const dmg = triggerCard.atk || 0;
+        s.opponent.faith = Math.max(0, s.opponent.faith - dmg);
+        this._log(`Magic Cylinder! ${triggerCard.name}'s attack reflected — Opponent takes ${dmg} damage!`, 'damage');
+        this._flashDamage('opponent');
+        negated = true;
+        break;
+      }
+
+      case 'trap_hole':
+        if ((triggerCard.atk||0) >= 1000) {
+          const idx = s.opponent.field.monsters.indexOf(triggerCard);
+          if (idx > -1) { s.opponent.graveyard.push(triggerCard); s.opponent.field.monsters[idx] = null; this._log(`Trap Hole! ${triggerCard.name} destroyed!`, 'destroy'); }
+        } else { this._log('Trap Hole: ATK too low to trigger', 'muted'); }
+        break;
+
+      case 'bottomless_trap_hole':
+        if ((triggerCard.atk||0) >= 1500) {
+          const idx2 = s.opponent.field.monsters.indexOf(triggerCard);
+          if (idx2 > -1) { s.opponent.graveyard.push(triggerCard); s.opponent.field.monsters[idx2] = null; this._log(`Bottomless Trap Hole! ${triggerCard.name} destroyed and banished!`, 'destroy'); }
+        } else { this._log('Bottomless Trap Hole: ATK too low', 'muted'); }
+        break;
+
+      case 'ring_of_destruction': {
+        const rdmg = triggerCard.atk || 0;
+        const ridx = s.opponent.field.monsters.indexOf(triggerCard);
+        if (ridx > -1) { s.opponent.graveyard.push(triggerCard); s.opponent.field.monsters[ridx] = null; }
+        s.player.faith = Math.max(0, s.player.faith - rdmg);
+        s.opponent.faith = Math.max(0, s.opponent.faith - rdmg);
+        this._log(`Ring of Destruction! ${triggerCard.name} destroyed — both take ${rdmg} damage!`, 'damage');
+        this._flashDamage('player'); this._flashDamage('opponent');
+        negated = true;
+        break;
+      }
+
+      case 'spellbinding_circle':
+        if (triggerCard) { triggerCard._lockAttacks = true; this._log(`Spellbinding Circle! ${triggerCard.name} is bound — cannot attack!`, 'summon'); }
+        negated = true;
+        break;
+
+      case 'michizure': {
+        const t = s.opponent.field.monsters.find(Boolean);
+        if (t) { const ti=s.opponent.field.monsters.indexOf(t); s.opponent.graveyard.push(t); s.opponent.field.monsters[ti]=null; this._log(`Michizure! ${t.name} dragged to the grave!`, 'destroy'); }
+        break;
+      }
+
+      case 'kunai_with_chain':
+        if (triggerCard) { triggerCard.position = 'defense'; this._log(`Kunai with Chain! ${triggerCard.name} switched to defense!`, 'summon'); }
+        negated = true;
+        break;
+
+      case 'judgment_of_anubis':
+        this._log('Judgment of Anubis! Spell negated — destroyed!', 'destroy');
         negated = true;
         break;
     }
@@ -1405,16 +1720,40 @@ const G = {
   _showCardActionMenu(card, idx) {
     const menu = document.getElementById('action-menu');
     menu.innerHTML = '';
+    const isSpell = card.type === 'blessing' || card.type === 'spell';
+    const isTrap  = card.type === 'confession' || card.type === 'trap';
 
     if (card.type === 'monster') {
+      const isTribute = card.stars >= 5;
+      const needed = card.stars <= 6 ? 1 : 2;
       const btn1 = document.createElement('button');
       btn1.className = 'action-btn';
-      btn1.textContent = card.stars >= 5 ? `Tribute Summon (${card.stars <= 6 ? 1 : 2}x)` : 'Normal Summon';
+      btn1.textContent = isTribute ? `Tribute Summon (${needed}×)` : 'Normal Summon';
       btn1.addEventListener('click', () => {
         this._hideActionMenu();
-        this.mode = 'summon-target';
-        this._renderField();
-        this._log('Select a monster zone', 'phase');
+        const me = this.state.player;
+        if (me.normalSummonUsed) { this._toast('Already summoned this turn'); return; }
+        if (isTribute) {
+          const onField = me.field.monsters.filter(Boolean).length;
+          if (onField < needed) {
+            this._toast(`Need ${needed} monster${needed > 1 ? 's' : ''} on field to tribute`);
+            return;
+          }
+          // Remove from hand, go straight to tribute selection
+          me.hand.splice(idx, 1);
+          this.selectedHandIdx = null;
+          this.tributesNeeded = needed;
+          this.pendingTributes = [];
+          this.pendingCard = { card };
+          this.mode = 'tribute';
+          this._log(`Select ${needed} monster${needed > 1 ? 's' : ''} to tribute for ${card.name}`, 'phase');
+          this._renderField();
+          this._renderHand();
+        } else {
+          this.mode = 'summon-target';
+          this._renderField();
+          this._log('Select a monster zone', 'phase');
+        }
       });
       menu.appendChild(btn1);
 
@@ -1428,13 +1767,13 @@ const G = {
         this._log('Select a monster zone to set', 'phase');
       });
       menu.appendChild(btn2);
-    } else if (card.type === 'blessing') {
+    } else if (isSpell) {
       const btn = document.createElement('button');
       btn.className = 'action-btn';
-      btn.textContent = card.subtype === 'continuous' || card.subtype === 'field' ? 'Activate' : 'Activate';
+      btn.textContent = 'Activate';
       btn.addEventListener('click', () => {
         this._hideActionMenu();
-        if (card.subtype === 'normal') {
+        if (card.subtype === 'normal' || card.subtype === 'quick') {
           this._playSpell(idx, 0);
         } else {
           this.mode = 'spell-target';
@@ -1443,7 +1782,7 @@ const G = {
         }
       });
       menu.appendChild(btn);
-    } else if (card.type === 'confession') {
+    } else if (isTrap) {
       const btn = document.createElement('button');
       btn.className = 'action-btn';
       btn.textContent = 'Set face-down';
@@ -1490,13 +1829,13 @@ const G = {
       const card = side.field.monsters[i];
 
       // highlight logic
-      slot.classList.remove('highlight', 'attack-target', 'droppable');
+      slot.classList.remove('highlight', 'attack-target', 'droppable', 'tribute-selected', 'tribute-slot');
 
       const oppHasMonsters = !isPlayer && this.state.opponent.field.monsters.some(Boolean);
 
       if (isPlayer && this.mode === 'summon-target' && !card) slot.classList.add('highlight');
       if (isPlayer && this.mode === 'set-target' && !card) slot.classList.add('highlight');
-      if (isPlayer && this.mode === 'tribute' && card) slot.classList.add('highlight');
+      if (isPlayer && this.mode === 'tribute' && card) { slot.classList.add('highlight'); slot.classList.add('tribute-slot'); }
       if (!isPlayer && this.mode === 'attack-target' && card) slot.classList.add('attack-target');
       // direct attack: glow all empty opponent slots when opponent has no monsters
       if (!isPlayer && this.mode === 'attack-target' && !card && !oppHasMonsters) slot.classList.add('attack-target');
@@ -1504,7 +1843,7 @@ const G = {
       slot.onclick = null;
 
       if (this.mode === 'summon-target' && isPlayer && !card) {
-        slot.onclick = () => { this._summonMonster(this.selectedHandIdx, i); this._clearMode(); };
+        slot.onclick = () => this._summonMonster(this.selectedHandIdx, i);
       } else if (this.mode === 'set-target' && isPlayer && !card) {
         slot.onclick = () => { this._setMonster(this.selectedHandIdx, i); this._clearMode(); };
       } else if (this.mode === 'tribute' && isPlayer && card) {

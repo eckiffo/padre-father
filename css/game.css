@@ -1155,6 +1155,18 @@ body {
 
 /* ── TRIBUTE SELECT ─────────────────────────── */
 
+.field-slot.highlight.tribute-slot {
+  border-color: var(--red) !important;
+  box-shadow: 0 0 12px rgba(255,68,68,0.5) !important;
+  animation: pulse-tribute 0.8s infinite !important;
+}
+
+.field-slot.tribute-selected {
+  border-color: #ff8800 !important;
+  box-shadow: 0 0 16px rgba(255,136,0,0.7) !important;
+  opacity: 0.6;
+}
+
 .tribute-glow {
   border-color: var(--red) !important;
   box-shadow: 0 0 12px rgba(255,68,68,0.5) !important;
