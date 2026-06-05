@@ -441,36 +441,14 @@ body {
 
 .field-card img {
   width: 100%;
-  flex: 1;
-  min-height: 0;
+  height: 100%;
   object-fit: cover;
   display: block;
 }
 
-.field-card .fc-name {
-  font-size: clamp(7px, 0.8vw, 9px);
-  color: #fff;
-  padding: 2px 4px;
-  background: linear-gradient(rgba(0,0,0,0), rgba(0,0,0,0.92));
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  font-family: var(--font-heading);
-  flex-shrink: 0;
-  letter-spacing: 0.5px;
-}
-
-.field-card .fc-stats {
-  font-size: clamp(7px, 0.75vw, 9px);
-  padding: 2px 4px;
-  background: rgba(0,0,0,0.92);
-  color: var(--gold);
-  display: flex;
-  justify-content: space-between;
-  flex-shrink: 0;
-  font-family: var(--font-heading);
-  letter-spacing: 0.5px;
-}
+/* name/stats hidden — printed on the full card image */
+.field-card .fc-name,
+.field-card .fc-stats { display: none; }
 
 .field-card .fc-pos {
   position: absolute;
@@ -585,50 +563,16 @@ body {
 
 .hand-card img {
   width: 100%;
-  height: 58%;
+  height: 100%;
   object-fit: cover;
   display: block;
 }
 
-.hand-card .hc-name {
-  font-size: clamp(7px, 0.75vw, 9px);
-  padding: 2px 4px;
-  background: rgba(0,0,0,0.95);
-  color: #fff;
-  font-family: var(--font-heading);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  border-bottom: 1px solid #1a1a1a;
-  letter-spacing: 0.3px;
-}
-
-.hand-card .hc-type {
-  font-size: clamp(6px, 0.65vw, 7px);
-  padding: 1px 4px;
-  color: #666;
-  background: rgba(0,0,0,0.8);
-}
-
-.hand-card .hc-stats {
-  font-size: clamp(7px, 0.7vw, 9px);
-  padding: 2px 4px;
-  color: var(--gold);
-  background: rgba(0,0,0,0.95);
-  display: flex;
-  justify-content: space-between;
-  font-family: var(--font-heading);
-}
-
-.hand-card .hc-effect {
-  font-size: 6px;
-  padding: 2px 4px;
-  color: #444;
-  background: rgba(0,0,0,0.9);
-  line-height: 1.3;
-  overflow: hidden;
-  max-height: 20px;
-}
+/* name/type/stats/effect hidden — all printed on full card image */
+.hand-card .hc-name,
+.hand-card .hc-type,
+.hand-card .hc-stats,
+.hand-card .hc-effect { display: none; }
 
 /* rarity borders */
 .rarity-common { border-color: #333; }
