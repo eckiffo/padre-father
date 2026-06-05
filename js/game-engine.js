@@ -1462,7 +1462,7 @@ const G = {
         e.stopPropagation();
         if (this.mode === 'tribute') { this._selectTribute(idx); return; }
         if (this.state.phase === 'battle' && card.type === 'monster' && !card.faceDown) {
-          this._startAttack(idx);
+          this._showBattleMenu(card, idx, who);
         } else if (this.state.phase === 'main1' || this.state.phase === 'main2') {
           this._showFieldCardMenu(card, idx, who);
         }
@@ -1476,6 +1476,68 @@ const G = {
     if (this.state.player.attackedThisTurn.has(idx) && who === 'player') el.classList.add('attacked');
 
     return el;
+  },
+
+  _showBattleMenu(card, idx, who) {
+    const s = this.state;
+    const menu = document.getElementById('action-menu');
+    menu.innerHTML = '';
+
+    if (s.player.attackedThisTurn.has(idx)) {
+      this._toast('Already attacked this turn');
+      return;
+    }
+    if (card._lockAttacks) {
+      this._toast('This monster cannot attack');
+      return;
+    }
+    if (s.player._lockTurns > 0) {
+      this._toast('Diamond Hands Lock — cannot attack');
+      return;
+    }
+
+    const oppHasMonsters = s.opponent.field.monsters.some(Boolean);
+
+    // Attack a monster
+    if (oppHasMonsters) {
+      const btn = document.createElement('button');
+      btn.className = 'action-btn';
+      btn.textContent = '⚔ Attack';
+      btn.addEventListener('click', () => {
+        this._hideActionMenu();
+        this._startAttack(idx);
+      });
+      menu.appendChild(btn);
+    }
+
+    // Direct attack
+    if (!oppHasMonsters) {
+      const btn = document.createElement('button');
+      btn.className = 'action-btn';
+      btn.textContent = '💥 Attack Directly';
+      btn.addEventListener('click', () => {
+        this._hideActionMenu();
+        this._resolveAttack('player', idx, 'opponent', 'direct');
+      });
+      menu.appendChild(btn);
+    }
+
+    const cancel = document.createElement('button');
+    cancel.className = 'action-btn danger';
+    cancel.textContent = 'Cancel';
+    cancel.addEventListener('click', () => this._hideActionMenu());
+    menu.appendChild(cancel);
+
+    menu.classList.add('visible');
+    const rect = document.getElementById(`${who}-m-${idx}`).getBoundingClientRect();
+    menu.style.bottom = 'auto';
+    menu.style.top = (rect.top - menu.offsetHeight - 8) + 'px';
+    menu.style.left = rect.left + 'px';
+    menu.style.transform = 'none';
+    // reposition after render so offsetHeight is correct
+    requestAnimationFrame(() => {
+      menu.style.top = (rect.top - menu.offsetHeight - 8) + 'px';
+    });
   },
 
   _showFieldCardMenu(card, idx, who) {
