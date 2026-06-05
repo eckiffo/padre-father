@@ -834,45 +834,53 @@ const G = {
     const s = this.state;
     const ai = s.opponent;
 
-    // Build action queue upfront (snapshot the hand so indices stay valid)
+    // Sequential callback-based queue so response windows don't get bypassed
     const actions = [];
 
-    // 1. Play normal spells (limit 2 to avoid stalling)
+    // 1. Play normal spells (max 2), each with a player response window
     let spellsPlayed = 0;
     for (const card of [...ai.hand]) {
       if (spellsPlayed >= 2) break;
       if (card.type === 'blessing' && card.subtype === 'normal') {
-        actions.push(() => {
-          const idx = ai.hand.indexOf(card);
-          if (idx === -1) return;
-          ai.hand.splice(idx, 1);
-          ai.graveyard.push(card);
-          this._log(`Opponent activated ${card.name}`, 'summon');
-          this._applySpellEffect(card, 'opponent');
-          this._renderOppHand();
+        const c = card;
+        actions.push(next => {
+          this._triggerResponseWindow('spell', c, negated => {
+            if (!negated) {
+              const idx = ai.hand.indexOf(c);
+              if (idx !== -1) {
+                ai.hand.splice(idx, 1);
+                ai.graveyard.push(c);
+                this._log(`Opponent activated ${c.name}`, 'summon');
+                this._applySpellEffect(c, 'opponent');
+                this._renderOppHand();
+              }
+            } else {
+              // spell was countered — remove from hand anyway (negated and sent to grave)
+              const idx = ai.hand.indexOf(c);
+              if (idx !== -1) { ai.hand.splice(idx, 1); ai.graveyard.push(c); this._renderOppHand(); }
+            }
+            setTimeout(next, 300);
+          });
         });
         spellsPlayed++;
       }
     }
 
-    // 2. Summon best monster
+    // 2. Summon best monster, with response window for summon traps
     if (!ai.normalSummonUsed) {
       const summonable = ai.hand.filter(c => c.type === 'monster');
       if (summonable.length > 0) {
         const best = summonable.sort((a,b) => (b.atk||0)-(a.atk||0))[0];
-        actions.push(() => {
+        actions.push(next => {
           const slot = ai.field.monsters.findIndex(m => !m);
-          if (ai.normalSummonUsed || slot === -1) return;
+          if (ai.normalSummonUsed || slot === -1) { next(); return; }
           const idx = ai.hand.indexOf(best);
-          if (idx === -1) return;
+          if (idx === -1) { next(); return; }
           if (best.stars >= 5) {
             const needed = best.stars <= 6 ? 1 : 2;
-            const tributes = ai.field.monsters.map((c,ti)=>c?ti:null).filter(ti=>ti!==null);
-            if (tributes.length < needed) return; // can't tribute
-            for (let t = 0; t < needed; t++) {
-              ai.graveyard.push(ai.field.monsters[tributes[t]]);
-              ai.field.monsters[tributes[t]] = null;
-            }
+            const tributes = ai.field.monsters.map((c,ti) => c ? ti : null).filter(ti => ti !== null);
+            if (tributes.length < needed) { next(); return; }
+            for (let t = 0; t < needed; t++) { ai.graveyard.push(ai.field.monsters[tributes[t]]); ai.field.monsters[tributes[t]] = null; }
             best.position = 'attack'; best.faceDown = false;
             ai.field.monsters[slot] = best;
             ai.hand.splice(idx, 1);
@@ -889,72 +897,273 @@ const G = {
           }
           this._renderField();
           this._renderOppHand();
+          // response window for summon traps
+          this._triggerResponseWindow('summon', best, () => setTimeout(next, 300));
         });
       }
     }
 
-    // 3. Set one trap
+    // 3. Set one trap face-down
     const trap = ai.hand.find(c => c.type === 'confession');
     if (trap) {
-      actions.push(() => {
+      actions.push(next => {
         const slot = ai.field.spells.findIndex(sp => !sp);
         const idx = ai.hand.indexOf(trap);
-        if (idx === -1 || slot === -1) return;
-        ai.hand.splice(idx, 1);
-        trap.faceDown = true;
-        ai.field.spells[slot] = trap;
-        this._log(`Opponent set a card face-down`, 'summon');
-        this._renderField();
-        this._renderOppHand();
+        if (idx !== -1 && slot !== -1) {
+          ai.hand.splice(idx, 1);
+          trap.faceDown = true;
+          ai.field.spells[slot] = trap;
+          this._log(`Opponent set a card face-down`, 'summon');
+          this._renderField();
+          this._renderOppHand();
+        }
+        next();
       });
     }
 
-    // Execute actions with 500ms gaps, then advance to battle
-    let d = 500;
-    actions.forEach(fn => { setTimeout(fn, d); d += 500; });
-    setTimeout(() => this._setPhase('battle'), d + 300);
+    // Run queue sequentially then advance to battle
+    const runNext = (i) => {
+      if (i >= actions.length) { setTimeout(() => this._setPhase('battle'), 300); return; }
+      setTimeout(() => actions[i](() => runNext(i + 1)), 400);
+    };
+    setTimeout(() => runNext(0), 400);
   },
 
   _aiBattlePhase() {
     const s = this.state;
     const ai = s.opponent;
     const player = s.player;
-    let d = 400;
 
     if (ai._lockTurns > 0) {
-      ai._lockTurns--;
       this._log(`Opponent is locked (Diamond Hands Lock)`, 'summon');
       setTimeout(() => this._setPhase('main2'), 500);
       return;
     }
 
-    const attackers = ai.field.monsters.map((c,i)=>c&&c.position==='attack'?i:null).filter(i=>i!==null);
+    const attackerIdxs = ai.field.monsters
+      .map((c,i) => c && c.position === 'attack' ? i : null)
+      .filter(i => i !== null);
 
-    attackers.forEach(attackerIdx => {
+    const processNext = (i) => {
+      if (i >= attackerIdxs.length) { setTimeout(() => this._setPhase('main2'), 400); return; }
+
+      const attackerIdx = attackerIdxs[i];
+      const attacker = ai.field.monsters[attackerIdx];
+      if (!attacker || ai.attackedThisTurn.has(attackerIdx) || attacker._lockAttacks) {
+        processNext(i + 1); return;
+      }
+
+      const targets = player.field.monsters.map((c,ti) => c ? ti : null).filter(ti => ti !== null);
+      const targetIdx = targets.length === 0 ? 'direct' : targets.reduce((best, ti) => {
+        const tc = player.field.monsters[ti];
+        const bc = player.field.monsters[best];
+        return (tc.position === 'defense' ? tc.def : tc.atk) < (bc.position === 'defense' ? bc.def : bc.atk) ? ti : best;
+      });
+
+      this._log(`${attacker.name} declares attack!`, 'phase');
+
       setTimeout(() => {
-        const attacker = ai.field.monsters[attackerIdx];
-        if (!attacker || ai.attackedThisTurn.has(attackerIdx)) return;
+        this._triggerResponseWindow('attack', attacker, negated => {
+          // re-check attacker still alive after trap resolution
+          const stillAlive = ai.field.monsters[attackerIdx];
+          if (stillAlive && !negated) {
+            this._resolveAttack('opponent', attackerIdx, 'player', targetIdx);
+          }
+          setTimeout(() => processNext(i + 1), 500);
+        });
+      }, 400);
+    };
 
-        const targets = player.field.monsters.map((c,i)=>c?i:null).filter(i=>i!==null);
+    setTimeout(() => processNext(0), 400);
+  },
 
-        if (targets.length === 0) {
-          // direct attack
-          this._resolveAttack('opponent', attackerIdx, 'player', 'direct');
-        } else {
-          // attack weakest defense or lowest atk
-          const targetIdx = targets.reduce((best, ti) => {
-            const tc = player.field.monsters[ti];
-            const bc = player.field.monsters[best];
-            if (tc.position === 'defense') return tc.def < (bc.def||bc.atk) ? ti : best;
-            return tc.atk < bc.atk ? ti : best;
-          });
-          this._resolveAttack('opponent', attackerIdx, 'player', targetIdx);
-        }
-      }, d);
-      d += 600;
+  // ── RESPONSE WINDOW ───────────────────────────
+
+  _triggerResponseWindow(trigger, triggerCard, onDone) {
+    const activatable = [];
+    this.state.player.field.spells.forEach((card, i) => {
+      if (card && card.faceDown && card.type === 'confession' && this._trapCanActivate(card, trigger, triggerCard)) {
+        activatable.push({ card, slotIdx: i });
+      }
     });
 
-    setTimeout(() => this._setPhase('main2'), d + 400);
+    if (activatable.length === 0) { onDone(false); return; }
+
+    let resolved = false;
+    let timeLeft = 5;
+
+    const resolve = (activated, slotIdx) => {
+      if (resolved) return;
+      resolved = true;
+      clearInterval(countdownTimer);
+      this._hideResponseWindow();
+
+      if (activated) {
+        const card = this.state.player.field.spells[slotIdx];
+        if (!card) { onDone(false); return; }
+        this.state.player.field.spells[slotIdx] = null;
+        this.state.player.graveyard.push(card);
+        card.faceDown = false;
+        this._log(`⚡ Activated ${card.name} in response!`, 'phase');
+        const negated = this._activateTrapResponse(card, trigger, triggerCard);
+        this._renderField();
+        this._renderTopbar();
+        this._checkWin();
+        onDone(negated);
+      } else {
+        onDone(false);
+      }
+    };
+
+    // Build UI
+    const rw = document.getElementById('response-window');
+    rw.querySelector('.rw-title').textContent =
+      trigger === 'attack' ? `${triggerCard.name} ATTACKS!` :
+      trigger === 'summon' ? `${triggerCard.name} SUMMONED!` :
+      `OPPONENT ACTIVATES SPELL!`;
+
+    const cardsEl = document.getElementById('rw-cards');
+    cardsEl.innerHTML = '';
+    activatable.forEach(({ card, slotIdx }) => {
+      const btn = document.createElement('button');
+      btn.className = 'rw-card-btn';
+      btn.innerHTML = `<span class="rw-card-name">${card.name}</span><span class="rw-card-fx">${card.effect || ''}</span>`;
+      btn.addEventListener('click', () => resolve(true, slotIdx));
+      cardsEl.appendChild(btn);
+    });
+
+    document.getElementById('rw-pass').onclick = () => resolve(false);
+
+    // Timer bar animation
+    const barFill = document.getElementById('rw-bar-fill');
+    barFill.style.transition = 'none';
+    barFill.style.width = '100%';
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      barFill.style.transition = `width ${timeLeft}s linear`;
+      barFill.style.width = '0%';
+    }));
+
+    const timerEl = rw.querySelector('.rw-timer');
+    timerEl.textContent = `${timeLeft}s`;
+    timerEl.className = 'rw-timer';
+
+    rw.classList.add('visible');
+
+    const countdownTimer = setInterval(() => {
+      timeLeft--;
+      timerEl.textContent = `${timeLeft}s`;
+      if (timeLeft <= 3) timerEl.className = 'rw-timer urgent';
+      if (timeLeft <= 0) resolve(false);
+    }, 1000);
+  },
+
+  _hideResponseWindow() {
+    document.getElementById('response-window').classList.remove('visible');
+  },
+
+  _trapCanActivate(card, trigger, triggerCard) {
+    switch(trigger) {
+      case 'attack': return ['rugback','stop_loss','locked_liquidity','red_candle','stop_the_pump','liquidation','take_you_with_me','jeet_shield'].includes(card.id);
+      case 'summon': return ['sniper_hole','fomo_trap','dev_exit'].includes(card.id);
+      case 'spell':  return ['dip_trap','tx_rejected'].includes(card.id);
+      default: return false;
+    }
+  },
+
+  _activateTrapResponse(card, trigger, triggerCard) {
+    const s = this.state;
+    const opp = s.opponent;
+    let negated = false;
+
+    switch(card.id) {
+      case 'rugback': // Mirror Force — destroy all attack-position opponent monsters
+        opp.field.monsters.forEach((c,i) => {
+          if (c && c.position === 'attack') {
+            opp.graveyard.push(c); opp.field.monsters[i] = null;
+            this._log(`Rugback destroyed ${c.name}!`, 'destroy');
+            this._onDestroyEffect(c, 'opponent');
+          }
+        });
+        negated = true;
+        break;
+
+      case 'stop_loss': // Negate Attack
+        this._log(`Stop Loss! ${triggerCard.name}'s attack negated!`, 'summon');
+        negated = true;
+        break;
+
+      case 'stop_the_pump': { // destroy the attacking monster
+        const idx = opp.field.monsters.indexOf(triggerCard);
+        if (idx > -1) {
+          opp.graveyard.push(triggerCard); opp.field.monsters[idx] = null;
+          this._log(`Stop the Pump! ${triggerCard.name} destroyed!`, 'destroy');
+          this._onDestroyEffect(triggerCard, 'opponent');
+        }
+        negated = true;
+        break;
+      }
+
+      case 'locked_liquidity':
+        triggerCard._lockAttacks = true;
+        this._log(`Locked Liquidity! ${triggerCard.name} is frozen!`, 'summon');
+        negated = true;
+        break;
+
+      case 'red_candle': {
+        const roll = Math.ceil(Math.random() * 6);
+        opp.faith = Math.max(0, opp.faith - roll * 100);
+        this._log(`Red Candle! Rolled ${roll} — opponent loses ${roll * 100} Faith`, 'damage');
+        this._flashDamage('opponent');
+        break; // doesn't negate
+      }
+
+      case 'liquidation':
+        if (triggerCard.atk >= 2000) {
+          const idx = opp.field.monsters.indexOf(triggerCard);
+          if (idx > -1) { opp.graveyard.push(triggerCard); opp.field.monsters[idx] = null; this._log(`Liquidation! ${triggerCard.name} destroyed!`, 'destroy'); this._onDestroyEffect(triggerCard, 'opponent'); }
+          negated = true;
+        } else {
+          this._log(`Liquidation fizzled — ${triggerCard.name} ATK too low`, 'muted');
+        }
+        break;
+
+      case 'take_you_with_me': {
+        const target = opp.field.monsters.find(Boolean);
+        if (target) {
+          const idx = opp.field.monsters.indexOf(target);
+          opp.graveyard.push(target); opp.field.monsters[idx] = null;
+          this._log(`Take You With Me! ${target.name} dragged to The Trenches!`, 'destroy');
+        }
+        break;
+      }
+
+      case 'jeet_shield':
+        if (triggerCard.subtype === 'token') {
+          negated = true; this._log(`Jeet Shield! Token attack blocked!`, 'summon');
+        }
+        break;
+
+      case 'sniper_hole':
+        if (triggerCard.atk >= 1000 && triggerCard.atk <= 1500) {
+          const idx = opp.field.monsters.indexOf(triggerCard);
+          if (idx > -1) { opp.graveyard.push(triggerCard); opp.field.monsters[idx] = null; this._log(`Sniper Hole! ${triggerCard.name} eliminated!`, 'destroy'); }
+        } else {
+          this._log(`Sniper Hole missed — out of range`, 'muted');
+        }
+        break;
+
+      case 'fomo_trap':
+        if (triggerCard) { triggerCard.position = 'defense'; this._log(`FOMO Trap! ${triggerCard.name} forced into defense!`, 'summon'); }
+        break;
+
+      case 'dip_trap':
+      case 'tx_rejected':
+        this._log(`${card.name}! Opponent's spell negated!`, 'summon');
+        negated = true;
+        break;
+    }
+
+    return negated;
   },
 
   // ── WIN CHECK ─────────────────────────────────
