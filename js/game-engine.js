@@ -217,6 +217,69 @@ const G = {
     });
 
     if (me.field.fieldSpell && me.field.fieldSpell.id === 'viral_world') cost += 500 * me.field.monsters.filter(Boolean).length;
+
+    // Nightmare Wheel: 500 LP damage per standby to controller of bound monster
+    me.field.spells.forEach(c => {
+      if (c && !c.faceDown && c.id === 'nightmare_wheel' && c._equipTarget) {
+        const owner = me.field.monsters.includes(c._equipTarget) ? me : opp;
+        owner.faith = Math.max(0, owner.faith - 500);
+        this._log(`Nightmare Wheel inflicts 500 damage to ${owner.who}!`, 'damage');
+      }
+    });
+    opp.field.spells.forEach(c => {
+      if (c && !c.faceDown && c.id === 'nightmare_wheel' && c._equipTarget) {
+        const owner = opp.field.monsters.includes(c._equipTarget) ? opp : me;
+        owner.faith = Math.max(0, owner.faith - 500);
+        this._log(`Nightmare Wheel inflicts 500 damage to ${owner.who}!`, 'damage');
+      }
+    });
+
+    // Level Limit - Area B: switch all Level 4+ monsters to defense at start of turn
+    [...me.field.spells, ...opp.field.spells].forEach(c => {
+      if (c && !c.faceDown && c.id === 'level_limit___area_b') {
+        const target = c === me.field.spells.find(x => x === c) ? me : opp;
+        // applies to BOTH sides
+        [s.player, s.opponent].forEach(side => {
+          side.field.monsters.forEach(m => {
+            if (m && !m.faceDown && (m.stars || 0) >= 4 && m.position === 'attack') {
+              m.position = 'defense';
+            }
+          });
+        });
+      }
+    });
+
+    // Resonance Device: restore ATK at end of turn it was played
+    [...me.field.monsters, ...opp.field.monsters].forEach(c => {
+      if (c && c._resonanceEnd !== undefined && c._resonanceEnd < s.turnNum) {
+        c.atk = c._preResonance || Math.floor(c.atk / 2);
+        c._atk = c.atk;
+        delete c._resonanceEnd; delete c._preResonance;
+        this._log(`${c.name} ATK restored after Resonance Device`, 'phase');
+      }
+    });
+    // Destiny Board: place next Spirit Message each standby
+    const SPIRIT_ORDER = ['spirit_message_i','spirit_message_n','spirit_message_a','spirit_message_l'];
+    [me, opp].forEach(side => {
+      const spells = side.field.spells;
+      const hasBoard = spells.some(c => c && c.id === 'destiny_board');
+      if (!hasBoard) return;
+      const placed = SPIRIT_ORDER.filter(id => spells.some(c => c && c.id === id));
+      const nextId = SPIRIT_ORDER.find(id => !placed.includes(id));
+      if (!nextId) return; // all placed
+      const slot = spells.findIndex(s => !s);
+      if (slot === -1) return;
+      // Take from hand or deck
+      let msgCard = side.hand.find(c => c.id === nextId);
+      if (msgCard) { side.hand.splice(side.hand.indexOf(msgCard), 1); }
+      else { const di = side.deck.findIndex(c => c.id === nextId); if (di !== -1) [msgCard] = side.deck.splice(di, 1); }
+      if (msgCard) {
+        spells[slot] = msgCard;
+        msgCard.faceDown = false;
+        this._log(`Destiny Board: ${msgCard.name} placed on the field!`, 'chain', msgCard);
+      }
+    });
+
     if (cost > 0) {
       me.faith = Math.max(0, me.faith - cost);
       this._log(`${me.who} pays ${cost} LP maintenance`, 'damage');
@@ -224,6 +287,7 @@ const G = {
       if (me.faith <= 0) { this._endGame(s.turn === 'player' ? 'opponent' : 'player', 'maintenance cost'); return; }
     }
     this._renderTopbar();
+    this._checkWin();
     setTimeout(() => this._setPhase('main1'), 300);
   },
 
@@ -904,8 +968,201 @@ const G = {
         this._log('Viral World activated! VIRAL monsters can attack directly','summon');
         break;
 
+      // ── REAL YGO SPELLS ──────────────────────────
+
+      case 'shield_sword':
+      case 'shield___sword': {
+        [...me.field.monsters, ...opp.field.monsters].forEach(c => {
+          if (!c || c.faceDown) return;
+          const tmp = c.atk; c.atk = c.def; c.def = tmp;
+          c._atk = c.atk; c._def = c.def;
+        });
+        this._log('Shield & Sword — all ATK/DEF swapped!', 'summon');
+        this._renderField();
+        break;
+      }
+
+      case 'polymerization': {
+        // Find fusion combos in hand + field
+        const FUSIONS = [
+          { result: 'blue_eyes_ultimate_dragon', parts: ['blue_eyes_white_dragon','blue_eyes_white_dragon','blue_eyes_white_dragon'], from: 'field' },
+          { result: 'dark_paladin', parts: ['dark_magician','buster_blader'], from: 'hand' },
+          { result: 'thousand_dragon', parts: ['time_wizard','baby_dragon'], from: 'hand' },
+          { result: 'flame_swordsman', parts: ['flame_manipulator','masaki_the_legendary_swordsman'], from: 'hand' },
+        ];
+        let fused = false;
+        for (const recipe of FUSIONS) {
+          const pool = recipe.from === 'field'
+            ? me.field.monsters.filter(Boolean)
+            : [...me.hand, ...me.field.monsters.filter(Boolean)];
+          const found = [];
+          for (const part of recipe.parts) {
+            const idx = pool.findIndex((c,i) => c.id === part && !found.includes(i));
+            if (idx === -1) { found.length = 0; break; }
+            found.push(idx);
+          }
+          if (found.length !== recipe.parts.length) continue;
+          // remove materials
+          recipe.parts.forEach(part => {
+            const fi = me.field.monsters.findIndex(c => c && c.id === part);
+            if (fi > -1) { me.graveyard.push(me.field.monsters[fi]); me.field.monsters[fi] = null; return; }
+            const hi = me.hand.findIndex(c => c.id === part);
+            if (hi > -1) { me.graveyard.push(me.hand.splice(hi, 1)[0]); }
+          });
+          // place fusion
+          const fusionCard = PADRE_CARDS[recipe.result];
+          if (!fusionCard) { this._log('Fusion card missing from database', 'muted'); break; }
+          const slot = me.field.monsters.findIndex(m => !m);
+          if (slot === -1) { this._log('No field space for fusion', 'muted'); break; }
+          const fc = { ...fusionCard, uid: Math.random().toString(36).slice(2), position: 'attack', faceDown: false };
+          me.field.monsters[slot] = fc;
+          this._log(`Polymerization! Fusion Summoned ${fusionCard.name}!`, 'summon', fc);
+          this._onSummonEffect(fc, side);
+          fused = true;
+          this._renderField(); this._renderHand();
+          break;
+        }
+        if (!fused) this._log('No valid Fusion materials in hand/field', 'muted');
+        break;
+      }
+
+      case 'toon_world': {
+        me._toonWorldActive = true;
+        this._log('Toon World activated! Toon monsters may attack directly!', 'summon');
+        break;
+      }
+
+      case 'comic_hand': {
+        const toonTarget = opp.field.monsters.find(c => c && !c.faceDown && (c.name||'').toLowerCase().includes('toon'));
+        if (!toonTarget) { this._log('No Toon monster to take', 'muted'); break; }
+        const ti = opp.field.monsters.indexOf(toonTarget);
+        opp.field.monsters[ti] = null;
+        const slot = me.field.monsters.findIndex(m => !m);
+        if (slot > -1) { me.field.monsters[slot] = toonTarget; this._log(`Comic Hand: took control of ${toonTarget.name}!`, 'summon'); }
+        this._renderField();
+        break;
+      }
+
+      case 'toon_rollback': {
+        me.field.monsters.filter(c => c && (c.name||'').toLowerCase().includes('toon')).forEach(c => {
+          const i = me.field.monsters.indexOf(c);
+          me.attackedThisTurn.delete(i);
+        });
+        this._log('Toon Rollback — Toon monsters can attack again!', 'summon');
+        break;
+      }
+
+      case 'ectoplasmer': {
+        const tribute = me.field.monsters.find(Boolean);
+        if (!tribute) { this._log('No monster to tribute', 'muted'); break; }
+        const dmg = Math.floor((tribute.atk || 0) / 2);
+        const ti2 = me.field.monsters.indexOf(tribute);
+        me.graveyard.push(tribute); me.field.monsters[ti2] = null;
+        opp.faith = Math.max(0, opp.faith - dmg);
+        this._log(`Ectoplasmer: tributed ${tribute.name}, opponent takes ${dmg} damage!`, 'damage');
+        this._renderField();
+        break;
+      }
+
+      case 'shallow_grave': {
+        const myDead = me.graveyard.filter(c => c.type === 'monster');
+        const oppDead = opp.graveyard.filter(c => c.type === 'monster');
+        if (myDead.length > 0) {
+          const pick = myDead[myDead.length - 1];
+          const slot = me.field.monsters.findIndex(m => !m);
+          if (slot > -1) { me.graveyard.splice(me.graveyard.indexOf(pick), 1); pick.faceDown = true; pick.position = 'defense'; me.field.monsters[slot] = pick; }
+        }
+        if (oppDead.length > 0) {
+          const pick = oppDead[oppDead.length - 1];
+          const slot = opp.field.monsters.findIndex(m => !m);
+          if (slot > -1) { opp.graveyard.splice(opp.graveyard.indexOf(pick), 1); pick.faceDown = true; pick.position = 'defense'; opp.field.monsters[slot] = pick; }
+        }
+        this._log('Shallow Grave — both players revive 1 monster face-down!', 'summon');
+        this._renderField();
+        break;
+      }
+
+      case 'enemy_controller': {
+        if (side === 'player') {
+          const target = opp.field.monsters.find(c => c && !c.faceDown);
+          if (!target) { this._log('No targets', 'muted'); break; }
+          const oi = opp.field.monsters.indexOf(target);
+          target.position = target.position === 'attack' ? 'defense' : 'attack';
+          this._log(`Enemy Controller: ${target.name} switched to ${target.position} position!`, 'summon');
+        } else {
+          const target = me.field.monsters.find(c => c && !c.faceDown);
+          if (!target) break;
+          target.position = target.position === 'attack' ? 'defense' : 'attack';
+        }
+        this._renderField();
+        break;
+      }
+
+      case 'resonance_device': {
+        const target = me.field.monsters.find(Boolean);
+        if (!target) break;
+        target._preResonance = target.atk;
+        target.atk = (target.atk || 0) * 2;
+        target._atk = target.atk;
+        this._log(`Resonance Device: ${target.name} ATK doubled to ${target.atk} until end of turn!`, 'summon');
+        // restore at end phase — flag it
+        target._resonanceEnd = s.turnNum;
+        this._renderField();
+        break;
+      }
+
+      case 'jurassic_world': {
+        me._jurassicWorld = true;
+        [...me.field.monsters].forEach(c => {
+          if (c && (c.type === 'monster') && (c.name||'').match(/rex|dragon|saur|don|zau|trak|uraby|hydro|raptor|dino|tyranno|kaba|saber/i)) {
+            c.atk = (c.atk||0) + 300; c.def = (c.def||0) + 300; c._atk = c.atk; c._def = c.def;
+          }
+        });
+        this._log('Jurassic World! All Dinosaur-types get +300 ATK/DEF!', 'summon');
+        this._renderField();
+        break;
+      }
+
+      case 'insect_barrier': {
+        me._insectBarrier = true;
+        this._log('Insect Barrier — Insects cannot be attacked this turn!', 'summon');
+        break;
+      }
+
+      case 'dna_surgery': {
+        const chosen = 'insect'; // AI/simplification — could be picker
+        s._dnaSurgeryType = chosen;
+        this._log(`DNA Surgery: all monsters become ${chosen}-type!`, 'summon');
+        break;
+      }
+
+      case 'curse_of_aging': {
+        const target3 = opp.field.monsters.find(c => c && !c.faceDown);
+        if (!target3) break;
+        target3.atk = Math.max(0, (target3.atk || 0) - 500);
+        target3._atk = target3.atk;
+        this._log(`Curse of Aging: ${target3.name} loses 500 ATK!`, 'destroy');
+        this._renderField();
+        break;
+      }
+
+      case 'dark_door': {
+        me._darkDoor = true;
+        this._log('Dark Door — only 1 monster may attack per turn!', 'summon');
+        break;
+      }
+
+      case 'butterfly_dagger_elma': {
+        // Equip to a spellcaster, +400 ATK; returns to hand when destroyed
+        const target4 = me.field.monsters.find(c => c && !c.faceDown);
+        if (!target4) break;
+        target4.atk = (target4.atk||0) + 400; target4._atk = target4.atk;
+        this._log(`Butterfly Dagger equipped to ${target4.name} (+400 ATK)`, 'summon');
+        this._renderField();
+        break;
+      }
+
       default:
-        // silently handle unimplemented spells
         break;
     }
     this._renderTopbar();
@@ -1004,6 +1261,53 @@ const G = {
         card._goblin=true;
         break;
       }
+      case 'amazoness_archer': {
+        if (side === 'player') {
+          this._log('Amazoness Archer: During your Battle Phase, you may pay 1200 LP to attack your opponent directly!','summon');
+          card._archerActive = true;
+        }
+        break;
+      }
+      case 'amazoness_chain_master': {
+        this._log('Amazoness Chain Master: When she battles an opponent\'s monster, you may pay 1500 LP to take a card from their hand!','summon');
+        card._chainMasterActive = true;
+        break;
+      }
+      case 'copycat': {
+        // Copy the ATK/DEF of an opponent monster on field
+        const target = opp.field.monsters.find(m => m && !m.faceDown);
+        if (target) {
+          card.atk = target.atk; card.def = target.def;
+          card._atk = card.atk; card._def = card.def;
+          this._log(`Copycat copies ${target.name}! ATK/DEF: ${card.atk}/${card.def}`, 'summon', card);
+          this._renderField();
+        } else {
+          this._log('Copycat: no opponent monster to copy', 'muted');
+        }
+        break;
+      }
+      case 'roulette_barrel': {
+        // 2 coin flips: heads = destroy, tails = nothing
+        this._log('Roulette Barrel: flipping coins to destroy opponent monsters!', 'summon');
+        opp.field.monsters.forEach((m, i) => {
+          if (!m || m.faceDown) return;
+          const heads = Math.random() < 0.5;
+          if (heads) {
+            opp.graveyard.push(m); opp.field.monsters[i] = null;
+            this._log(`Roulette Barrel: HEADS — ${m.name} destroyed!`, 'destroy', m);
+            this._onDestroyEffect(m, side === 'player' ? 'opponent' : 'player');
+          } else {
+            this._log(`Roulette Barrel: TAILS — ${m.name} survives`, 'muted');
+          }
+        });
+        this._renderField();
+        break;
+      }
+      case 'panther_warrior': {
+        this._log('Panther Warrior: must tribute a monster to attack!', 'summon');
+        card._pantherWarrior = true;
+        break;
+      }
     }
   },
 
@@ -1098,6 +1402,47 @@ const G = {
     if (me.attackedThisTurn.has(slotIdx)) { this._toast('Already attacked this turn'); return; }
     if (me._lockTurns > 0) { this._toast('Diamond Hands Lock — cannot attack'); return; }
 
+    // Continuous trap/spell restrictions
+    if (card._lockAttacks) { this._toast(`${card.name} is bound and cannot attack!`); return; }
+    if (card._nightmareWheelBound) { this._toast(`${card.name} is bound by Nightmare Wheel!`); return; }
+    const oppSpells = s.opponent.field.spells.filter(Boolean);
+    const gravityBind = oppSpells.find(c => !c.faceDown && (c.id === 'gravity_bind'));
+    if (gravityBind && (card.stars || 0) >= 4) { this._toast('Gravity Bind — Level 4+ monsters cannot attack!'); return; }
+    const levelLimit = oppSpells.find(c => !c.faceDown && c.id === 'level_limit___area_b');
+    if (levelLimit && (card.stars || 0) >= 4) { this._toast('Level Limit - Area B — Level 4+ monsters cannot attack!'); return; }
+    const darkDoor = oppSpells.find(c => !c.faceDown && c.id === 'dark_door');
+    if (darkDoor && s.player.attackedThisTurn.size >= 1) { this._toast('Dark Door — only 1 monster may attack per turn!'); return; }
+    // Insect Barrier: insects on opponent field can't be attacked
+    // (checked in target selection, not here)
+
+    // Panther Warrior: must tribute another monster to declare attack
+    if (card._pantherWarrior) {
+      const otherMonsters = me.field.monsters.filter((m, idx) => m && idx !== slotIdx);
+      if (otherMonsters.length === 0) { this._toast('Panther Warrior needs a tribute to attack!'); return; }
+      const tribute = otherMonsters[0];
+      const ti = me.field.monsters.indexOf(tribute);
+      me.field.monsters[ti] = null;
+      me.graveyard.push(tribute);
+      this._log(`Panther Warrior tributes ${tribute.name} to attack!`, 'phase');
+      this._onDestroyEffect(tribute, 'player');
+      this._renderField();
+    }
+
+    // Toon monster rules
+    const isToon = (card.name||'').toLowerCase().includes('toon') || card.id === 'manga_ryu_ran' || card.id === 'blue_eyes_toon_dragon';
+    if (isToon) {
+      if (!me._toonWorldActive) { this._toast('Toon monsters need Toon World to attack!'); return; }
+      if (card._setTurnNum === s.turnNum) { this._toast('Toon monsters cannot attack the turn they are summoned!'); return; }
+      // Toon monsters cost 500 LP to attack (paid at start of attack)
+      if (card._toonAttackCostPaid !== s.turnNum) {
+        if (me.faith < 500) { this._toast('Not enough LP for Toon attack cost! (500 LP)'); return; }
+        me.faith -= 500;
+        card._toonAttackCostPaid = s.turnNum;
+        this._renderTopbar();
+        this._log(`${card.name} pays 500 LP to attack!`, 'damage');
+      }
+    }
+
     this.attackSource = slotIdx;
     this.mode = 'attack-target';
     this._log(`Select attack target for ${card.name}`, 'phase');
@@ -1119,7 +1464,17 @@ const G = {
 
     const doResolve = () => {
     if (defenderIdx === 'direct') {
-      const dmg = attacker.atk;
+      let dmg = attacker.atk;
+      // Kuriboh hand-trap: player can discard to negate direct damage
+      const kuribohIdx = isPlayer ? -1 : s.player.hand.findIndex(c => c.id === 'kuriboh');
+      if (!isPlayer && kuribohIdx > -1 && s.player.hand.length > 0) {
+        s.player.hand.splice(kuribohIdx, 1);
+        s.player.graveyard.push({ id: 'kuriboh', name: 'Kuriboh' });
+        this._log(`Kuriboh discarded — direct attack negated!`, 'chain');
+        this._renderHand();
+        this._renderTopbar();
+        return;
+      }
       dSide.faith = Math.max(0, dSide.faith - dmg);
       this._log(`${attacker.name} attacks directly! ${defenderSide} takes ${dmg} damage`, 'damage');
       this._flashDamage(defenderSide);
@@ -1135,6 +1490,27 @@ const G = {
         this._onFlipEffect(defender, defenderSide);
       }
 
+      // Wall of Illusion: return attacker to owner's hand
+      if (defender.id === 'wall_of_illusion' && !defender.faceDown) {
+        const slot = aSide.field.monsters.indexOf(attacker);
+        if (slot > -1) {
+          aSide.field.monsters[slot] = null;
+          aSide.hand.push(attacker);
+          this._log(`Wall of Illusion! ${attacker.name} returned to hand!`, 'chain');
+          if (attackerSide === 'player') this._renderHand(); else this._renderOppHand();
+          this._renderField();
+          return;
+        }
+      }
+
+      // Mirror Wall: halve attacking monster ATK during this battle
+      const mirrorWall = dSide.field.spells.find(c => c && !c.faceDown && c.id === 'mirror_wall');
+      const origAtk = attacker.atk;
+      if (mirrorWall) {
+        attacker.atk = Math.floor(attacker.atk / 2);
+        this._log(`Mirror Wall! ${attacker.name} ATK halved to ${attacker.atk} for this battle!`, 'chain');
+      }
+
       if (defender.position === 'attack') {
         const diff = attacker.atk - defender.atk;
         if (diff > 0) {
@@ -1148,6 +1524,24 @@ const G = {
           this._log(`${attacker.name} (${attacker.atk}) destroyed ${defender.name} (${defender.atk})! -${diff} LP`, 'damage', attacker);
           this._flashDamage(defenderSide);
           this._animDamage(defenderSide, diff);
+          // Robbin' Goblin: discard random card from loser's hand after battle damage
+          const robbinGoblin = aSide.field.spells.find(c => c && !c.faceDown && c.id === 'robbin__goblin');
+          if (robbinGoblin && dSide.hand.length > 0) {
+            const ri = Math.floor(Math.random() * dSide.hand.length);
+            const discarded = dSide.hand.splice(ri, 1)[0];
+            dSide.graveyard.push(discarded);
+            this._log(`Robbin' Goblin! ${dSide.who} discards ${discarded.name}!`, 'destroy', discarded);
+            if (defenderSide === 'player') this._renderHand(); else this._renderOppHand();
+          }
+          // Amazoness Chain Master: pay 1500 LP to steal a card from opponent's hand
+          if (attacker.id === 'amazoness_chain_master' && attacker._chainMasterActive && aSide.faith >= 1500 && dSide.hand.length > 0) {
+            aSide.faith -= 1500;
+            const stolen = dSide.hand.splice(Math.floor(Math.random() * dSide.hand.length), 1)[0];
+            aSide.hand.push(stolen);
+            this._log(`Amazoness Chain Master: paid 1500 LP to steal ${stolen.name} from opponent's hand!`, 'chain', stolen);
+            if (attackerSide === 'player') this._renderHand(); else this._renderOppHand();
+            this._renderTopbar();
+          }
         } else if (diff < 0) {
           this._animDestroy(attackerSlot, () => {
             aSide.field.monsters[attackerIdx] = null;
@@ -1165,6 +1559,15 @@ const G = {
           this._log(`Both ${attacker.name} and ${defender.name} destroyed!`, 'destroy', attacker);
         }
       } else {
+        // Big Shield Gardna: if attacked in ATK position, switch to DEF and negate
+        if (defender.id === 'big_shield_gardna' && defender.position === 'attack') {
+          defender.position = 'defense';
+          dSide.positionChangedThisTurn.add(defenderIdx);
+          this._log(`Big Shield Gardna switches to Defense! (DEF: ${defender.def})`, 'chain');
+          this._renderField();
+          if (mirrorWall) attacker.atk = origAtk;
+          return;
+        }
         const diff = attacker.atk - defender.def;
         if (diff > 0) {
           this._animDestroy(defenderSlot, () => {
@@ -1183,6 +1586,8 @@ const G = {
           this._log(`${attacker.name} vs ${defender.name} — no damage`, 'summon', attacker);
         }
       }
+      // Restore ATK modified by Mirror Wall after battle
+      if (mirrorWall) attacker.atk = origAtk;
     } // end doResolve
 
     // Goblin Attack Force: forced into Defense Position after attacking
@@ -1266,9 +1671,51 @@ const G = {
         break;
       }
       case 'lord_of_d_': {
-        // Dragon protection ends when Lord of D. leaves the field
         me._dragonLordActive = false;
         this._log("Lord of D. destroyed — Dragon protection lifted!", 'destroy');
+        break;
+      }
+      case 'hydrogeddon': {
+        // Special summon another Hydrogeddon from deck
+        const nextHydro = me.deck.findIndex(c => c.id === 'hydrogeddon');
+        if (nextHydro !== -1) {
+          const slot = me.field.monsters.findIndex(s => !s);
+          if (slot !== -1) {
+            const [h] = me.deck.splice(nextHydro, 1);
+            h.position = 'attack'; h.faceDown = false;
+            me.field.monsters[slot] = h;
+            this._log(`Hydrogeddon effect — another Hydrogeddon Special Summoned from deck!`, 'summon', h);
+            this._renderField();
+            this._onSummonEffect(h, side);
+          }
+        }
+        break;
+      }
+      case 'birdface': {
+        // Search a Harpie Lady from deck to hand
+        const harpieIdx = me.deck.findIndex(c => c.id === 'harpie_lady' || c.id === 'harpie_lady_sisters');
+        if (harpieIdx !== -1) {
+          const [h] = me.deck.splice(harpieIdx, 1);
+          me.hand.push(h);
+          this._log(`Birdface effect — added ${h.name} to hand!`, 'spell', h);
+          if (side === 'player') this._renderHand();
+          else this._renderOppHand();
+        }
+        break;
+      }
+      case 'flying_kamakiri__1': {
+        // Special summon a WIND monster from deck
+        const windIdx = me.deck.findIndex(c => c.attribute === 'WIND' && c.type === 'monster');
+        if (windIdx !== -1) {
+          const slot = me.field.monsters.findIndex(s => !s);
+          if (slot !== -1) {
+            const [w] = me.deck.splice(windIdx, 1);
+            w.position = 'attack'; w.faceDown = false;
+            me.field.monsters[slot] = w;
+            this._log(`Flying Kamakiri #1 — Special Summoned ${w.name} from deck!`, 'summon', w);
+            this._renderField();
+          }
+        }
         break;
       }
     }
@@ -1727,6 +2174,43 @@ const G = {
         this._log('Judgment of Anubis! Spell negated — destroyed!', 'destroy');
         negated = true;
         break;
+
+      case 'nightmare_wheel': {
+        // Equip to attacking monster: prevent it from attacking, deal 500 LP per standby
+        if (triggerCard) {
+          const slot = s.player.field.spells.findIndex(sp => !sp);
+          if (slot !== -1) {
+            // Remove trap from wherever it is
+            const trapIdx = s.player.field.spells.indexOf(card);
+            if (trapIdx !== -1) s.player.field.spells[trapIdx] = card; // stays as equip
+            card._equipTarget = triggerCard;
+            triggerCard._nightmareWheelBound = true;
+            this._log(`Nightmare Wheel! ${triggerCard.name} is bound — cannot attack, loses 500 LP per turn!`, 'chain');
+            negated = true;
+          }
+        }
+        break;
+      }
+
+      case 'robbin_goblin': {
+        // After damage, opponent discards random card — handled in _resolveAttack, just log here
+        this._log('Robbin\' Goblin activated!', 'chain');
+        s.player._robbinGoblinActive = true;
+        break;
+      }
+
+      case 'ultimate_offering': {
+        // Allow additional Normal Summon this turn for 500 LP
+        if (s.player.faith >= 500) {
+          s.player.faith -= 500;
+          s.player.normalSummonUsed = false;
+          this._renderTopbar();
+          this._log('Ultimate Offering! Pay 500 LP — additional Normal Summon granted!', 'chain');
+        } else {
+          this._log('Ultimate Offering: Not enough LP!', 'muted');
+        }
+        break;
+      }
     }
 
     return negated;
@@ -1843,6 +2327,17 @@ const G = {
     const s = this.state;
     if (s.player.faith <= 0) { this._endGame('opponent', 'faith'); return; }
     if (s.opponent.faith <= 0) { this._endGame('player', 'faith'); return; }
+    // Destiny Board alternate win: all 5 Spirit Messages on field
+    const SPIRIT_MSGS = ['spirit_message_i','spirit_message_n','spirit_message_a','spirit_message_l'];
+    for (const side of ['player','opponent']) {
+      const spells = s[side].field.spells.filter(Boolean).map(c=>c.id);
+      const hasBoard = spells.includes('destiny_board');
+      const hasAll = hasBoard && SPIRIT_MSGS.every(id => spells.includes(id));
+      if (hasAll) {
+        this._endGame(side === 'player' ? 'player' : 'opponent', 'Destiny Board');
+        return;
+      }
+    }
   },
 
   _endGame(winner, reason) {
@@ -2132,9 +2627,29 @@ const G = {
       if (isPlayer && this.mode === 'summon-target' && !card) slot.classList.add('highlight');
       if (isPlayer && this.mode === 'set-target' && !card) slot.classList.add('highlight');
       if (isPlayer && this.mode === 'tribute' && card) { slot.classList.add('highlight'); slot.classList.add('tribute-slot'); }
-      if (!isPlayer && this.mode === 'attack-target' && card) slot.classList.add('attack-target');
-      // direct attack: glow all empty opponent slots when opponent has no monsters
-      if (!isPlayer && this.mode === 'attack-target' && !card && !oppHasMonsters) slot.classList.add('attack-target');
+      // Toon attacker: can only attack opponent Toons; if none, attacks directly
+      const toonAttacker = this.mode === 'attack-target' && this.attackSource !== undefined &&
+        s.player.field.monsters[this.attackSource] &&
+        ((s.player.field.monsters[this.attackSource].name||'').toLowerCase().includes('toon') ||
+          s.player.field.monsters[this.attackSource].id === 'blue_eyes_toon_dragon' ||
+          s.player.field.monsters[this.attackSource].id === 'manga_ryu_ran');
+      const oppHasToons = s.opponent.field.monsters.some(m => m && !m.faceDown &&
+        ((m.name||'').toLowerCase().includes('toon') || m.id === 'blue_eyes_toon_dragon' || m.id === 'manga_ryu_ran'));
+      if (!isPlayer && this.mode === 'attack-target') {
+        if (toonAttacker) {
+          if (oppHasToons) {
+            // Toon can only attack opponent Toons
+            if (card && ((card.name||'').toLowerCase().includes('toon') || card.id === 'blue_eyes_toon_dragon' || card.id === 'manga_ryu_ran'))
+              slot.classList.add('attack-target');
+          } else {
+            // no opponent Toons — can attack directly (empty slots)
+            if (!card && !oppHasMonsters) slot.classList.add('attack-target');
+          }
+        } else {
+          if (card) slot.classList.add('attack-target');
+          if (!card && !oppHasMonsters) slot.classList.add('attack-target');
+        }
+      }
 
       slot.onclick = null;
 
@@ -2145,9 +2660,13 @@ const G = {
       } else if (this.mode === 'tribute' && isPlayer && card) {
         slot.onclick = () => this._selectTribute(i);
       } else if (this.mode === 'attack-target' && !isPlayer && card) {
-        slot.onclick = () => { this._resolveAttack('player', this.attackSource, 'opponent', i); };
+        if (!toonAttacker || (toonAttacker && oppHasToons && ((card.name||'').toLowerCase().includes('toon') || card.id === 'blue_eyes_toon_dragon' || card.id === 'manga_ryu_ran'))) {
+          slot.onclick = () => { this._resolveAttack('player', this.attackSource, 'opponent', i); };
+        }
       } else if (this.mode === 'attack-target' && !isPlayer && !card && !oppHasMonsters) {
-        slot.onclick = () => { this._resolveAttack('player', this.attackSource, 'opponent', 'direct'); };
+        if (!toonAttacker || (toonAttacker && !oppHasToons)) {
+          slot.onclick = () => { this._resolveAttack('player', this.attackSource, 'opponent', 'direct'); };
+        }
       }
 
       if (!card) {
