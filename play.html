@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-  <title>PADRE — The Card Game</title>
+  <title>Card Duel — Duelist Kingdom</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700;900&family=Cinzel:wght@400;600;700;900&family=IM+Fell+English:ital@0;1&display=swap" rel="stylesheet">
@@ -15,8 +15,8 @@
      SCREEN: CHARACTER SELECT
 ═══════════════════════════════════════════ -->
 <div id="screen-select" class="screen active">
-  <h1>PADRE</h1>
-  <div class="subtitle">— THE CARD GAME —</div>
+  <h1>CARD DUEL</h1>
+  <div class="subtitle">— DUELIST KINGDOM —</div>
 
   <div class="deck-grid" id="deck-grid">
     <!-- rendered by JS -->
@@ -41,7 +41,7 @@
     <!-- Opponent info -->
     <div class="player-info">
       <div id="opp-faith-wrap" class="faith-bar">
-        <div class="faith-label">OPPONENT FAITH</div>
+        <div class="faith-label">OPPONENT LP</div>
         <div class="faith-value" id="opp-faith">8000</div>
       </div>
       <div>
@@ -65,7 +65,7 @@
     <!-- Player info -->
     <div class="player-info" style="flex-direction:row-reverse; text-align:right">
       <div id="player-faith-wrap" class="faith-bar" style="align-items:flex-end">
-        <div class="faith-label">YOUR FAITH</div>
+        <div class="faith-label">YOUR LP</div>
         <div class="faith-value" id="player-faith">8000</div>
       </div>
       <div>
@@ -116,7 +116,7 @@
     <!-- DIVIDER -->
     <div id="field-divider">
       <div class="divider-line"></div>
-      <span>⚔ TRENCHES ⚔</span>
+      <span>⚔ FIELD ⚔</span>
       <div class="divider-line"></div>
     </div>
 
@@ -230,7 +230,7 @@
 <div id="overlay">
   <div id="modal-game-over" class="modal">
     <h2 class="win">VICTORY</h2>
-    <p>The Father blesses your victory.</p>
+    <p>You win the duel!</p>
     <div class="modal-btns">
       <button class="btn-modal" id="btn-play-again">NEW DUEL</button>
       <button class="btn-modal primary" id="btn-rematch">REMATCH</button>

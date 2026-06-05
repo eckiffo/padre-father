@@ -212,14 +212,14 @@ const G = {
       // Snatch Steal: original owner gains 1000 LP each Standby Phase
       if (card._snatchStealed) {
         opp.faith = Math.min(8000, opp.faith + 1000);
-        this._log(`Snatch Steal: ${opp.who} gains 1000 Faith`, 'heal');
+        this._log(`Snatch Steal: ${opp.who} gains 1000 LP`, 'heal');
       }
     });
 
     if (me.field.fieldSpell && me.field.fieldSpell.id === 'viral_world') cost += 500 * me.field.monsters.filter(Boolean).length;
     if (cost > 0) {
       me.faith = Math.max(0, me.faith - cost);
-      this._log(`${me.who} pays ${cost} Faith maintenance`, 'damage');
+      this._log(`${me.who} pays ${cost} LP maintenance`, 'damage');
       this._renderTopbar();
       if (me.faith <= 0) { this._endGame(s.turn === 'player' ? 'opponent' : 'player', 'maintenance cost'); return; }
     }
@@ -694,7 +694,7 @@ const G = {
         if(slot2>-1){
           stolen2._snatchStealed = side === 'player' ? 'opponent' : 'player'; // track original owner for LP gain
           me.field.monsters[slot2]=stolen2;
-          this._log(`${stolen2.name} stolen by Snatch Steal! (Opponent gains 1000 Faith each Standby)`, 'summon');
+          this._log(`${stolen2.name} stolen by Snatch Steal! (Opponent gains 1000 LP each Standby)`, 'summon');
         }
         this._renderField();
         break;
@@ -1071,7 +1071,7 @@ const G = {
         break;
       }
       case 'magician_of_faith': {
-        const spell=me.graveyard.filter(c=>c.type==='blessing'||c.type==='spell').pop();
+        const spell=me.graveyard.filter(c=>c.type==='spell').pop();
         if(spell){ const gi=me.graveyard.lastIndexOf(spell); me.graveyard.splice(gi,1); me.hand.push(spell); this._log(`Magician of Faith: returned ${spell.name} to hand!`,'summon'); if(side==='player')this._renderHand(); }
         break;
       }
@@ -1145,7 +1145,7 @@ const G = {
             this._renderField();
           });
           dSide.faith = Math.max(0, dSide.faith - diff);
-          this._log(`${attacker.name} (${attacker.atk}) destroyed ${defender.name} (${defender.atk})! -${diff} Faith`, 'damage', attacker);
+          this._log(`${attacker.name} (${attacker.atk}) destroyed ${defender.name} (${defender.atk})! -${diff} LP`, 'damage', attacker);
           this._flashDamage(defenderSide);
           this._animDamage(defenderSide, diff);
         } else if (diff < 0) {
@@ -1156,7 +1156,7 @@ const G = {
             this._renderField();
           });
           aSide.faith = Math.max(0, aSide.faith - Math.abs(diff));
-          this._log(`${attacker.name} was destroyed by ${defender.name}! -${Math.abs(diff)} Faith`, 'damage', defender);
+          this._log(`${attacker.name} was destroyed by ${defender.name}! -${Math.abs(diff)} LP`, 'damage', defender);
           this._flashDamage(attackerSide);
           this._animDamage(attackerSide, Math.abs(diff));
         } else {
@@ -1176,7 +1176,7 @@ const G = {
           this._log(`${attacker.name} destroyed ${defender.name} in defense`, 'destroy', attacker);
         } else if (diff < 0) {
           aSide.faith = Math.max(0, aSide.faith - Math.abs(diff));
-          this._log(`${attacker.name} hits ${defender.name}'s defense. -${Math.abs(diff)} Faith`, 'damage', attacker);
+          this._log(`${attacker.name} hits ${defender.name}'s defense. -${Math.abs(diff)} LP`, 'damage', attacker);
           this._flashDamage(attackerSide);
           this._animDamage(attackerSide, Math.abs(diff));
         } else {
@@ -1228,7 +1228,7 @@ const G = {
     switch(card.id) {
       case 'ghost_wallet':
         opp.faith=Math.max(0,opp.faith-300);
-        this._log(`Ghost Wallet: ${opp.who} loses 300 Faith`,'damage');
+        this._log(`Ghost Wallet: ${opp.who} loses 300 LP`,'damage');
         this._flashDamage(opp.who);
         this._renderTopbar();
         break;
@@ -1249,7 +1249,7 @@ const G = {
       }
       case 'jeet':
         opp.faith+=200;
-        this._log(`Jeet: ${opp.who} gains 200 Faith (profited off your jeet)`,'heal');
+        this._log(`Jeet: ${opp.who} gains 200 LP (profited off your jeet)`,'heal');
         this._renderTopbar();
         break;
       case 'smart_wallet':
@@ -1287,7 +1287,7 @@ const G = {
     let spellsPlayed = 0;
     for (const card of [...ai.hand]) {
       if (spellsPlayed >= 2) break;
-      if ((card.type === 'blessing' || card.type === 'spell') && card.subtype === 'normal') {
+      if (card.type === 'spell' && card.subtype === 'normal') {
         const c = card;
         actions.push(next => {
           this._triggerResponseWindow('spell', c, negated => {
@@ -1381,7 +1381,7 @@ const G = {
     }
 
     // 3. Set one trap face-down
-    const trap = ai.hand.find(c => c.type === 'confession' || c.type === 'trap');
+    const trap = ai.hand.find(c => c.type === 'trap');
     if (trap) {
       actions.push(next => {
         const slot = ai.field.spells.findIndex(sp => !sp);
@@ -1463,7 +1463,7 @@ const G = {
     this.state.player.field.spells.forEach((card, i) => {
       // can't activate a trap the same turn it was set (official Konami rule)
       const setThisTurn = card && card._setTurnNum === this.state.turnNum;
-      if (card && card.faceDown && !setThisTurn && (card.type === 'confession' || card.type === 'trap') && this._trapCanActivate(card, trigger, triggerCard)) {
+      if (card && card.faceDown && !setThisTurn && card.type === 'trap' && this._trapCanActivate(card, trigger, triggerCard)) {
         activatable.push({ card, slotIdx: i });
       }
     });
@@ -1603,7 +1603,7 @@ const G = {
       case 'red_candle': {
         const roll = Math.ceil(Math.random() * 6);
         opp.faith = Math.max(0, opp.faith - roll * 100);
-        this._log(`Red Candle! Rolled ${roll} — opponent loses ${roll * 100} Faith`, 'damage');
+        this._log(`Red Candle! Rolled ${roll} — opponent loses ${roll * 100} LP`, 'damage');
         this._flashDamage('opponent');
         break; // doesn't negate
       }
@@ -1852,8 +1852,8 @@ const G = {
     modal.querySelector('h2').textContent = isPlayer ? 'VICTORY' : 'DEFEATED';
     modal.querySelector('h2').className = isPlayer ? 'win' : 'lose';
     modal.querySelector('p').textContent = isPlayer
-      ? `The Father blesses your victory. ${reason === 'deck out' ? 'Opponent ran out of cards.' : 'Opponent\'s Faith reached zero.'}`
-      : `The trenches claim another soul. ${reason === 'deck out' ? 'Your deck ran out.' : 'Your Faith reached zero.'}`;
+      ? `Victory! ${reason === 'deck out' ? 'Opponent ran out of cards.' : 'Opponent\'s LP reached zero.'}`
+      : `Defeat. ${reason === 'deck out' ? 'Your deck ran out.' : 'Your LP reached zero.'}`;
     document.getElementById('overlay').classList.add('visible');
   },
 
@@ -1997,8 +1997,8 @@ const G = {
   _showCardActionMenu(card, idx) {
     const menu = document.getElementById('action-menu');
     menu.innerHTML = '';
-    const isSpell = card.type === 'blessing' || card.type === 'spell';
-    const isTrap  = card.type === 'confession' || card.type === 'trap';
+    const isSpell = card.type === 'spell';
+    const isTrap  = card.type === 'trap';
 
     if (card.type === 'monster') {
       const isTribute = card.stars >= 5;
@@ -2354,7 +2354,7 @@ const G = {
     }
 
     // Face-up trap/spell on field — can activate its effect
-    const isSpellTrap = card.type === 'blessing' || card.type === 'spell' || card.type === 'confession' || card.type === 'trap';
+    const isSpellTrap = card.type === 'spell' || card.type === 'trap';
     if (isSpellTrap && !card.faceDown && (card.subtype === 'continuous' || card.subtype === 'equip' || card.subtype === 'field')) {
       const fx = document.createElement('button');
       fx.className = 'action-btn danger';
@@ -2412,7 +2412,7 @@ const G = {
             }
           });
           me.faith = Math.max(0, me.faith - dmg);
-          this._log(`Lost ${dmg} Faith from Time Wizard backfire!`, 'damage');
+          this._log(`Lost ${dmg} LP from Time Wizard backfire!`, 'damage');
           this._flashDamage('player'); this._animDamage('player', dmg);
         }
         this._renderField(); this._renderTopbar(); this._checkWin();
@@ -2472,8 +2472,8 @@ const G = {
     if (p.classList.contains('pinned')) return; // don't overwrite pinned card
 
     const isMonster = card.type === 'monster';
-    const isSpell   = card.type === 'spell'   || card.type === 'blessing';
-    const isTrap    = card.type === 'trap'     || card.type === 'confession';
+    const isSpell   = card.type === 'spell';
+    const isTrap    = card.type === 'trap';
 
     p.className = 'visible' + (isMonster ? ' type-monster' : isSpell ? ' type-spell' : isTrap ? ' type-trap' : '');
 
