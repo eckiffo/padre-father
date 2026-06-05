@@ -350,6 +350,7 @@ const G = {
     this.pendingTributes = [];
     this._renderField();
     this._renderHand();
+    this._triggerResponseWindow('summon', card, () => {});
   },
 
   // ── SUMMON (Player) ───────────────────────────
@@ -376,6 +377,7 @@ const G = {
     const slotEl = document.getElementById(`player-m-${slotIdx}`);
     if (slotEl) this._animSummon(slotEl, card.attribute === 'DARK' ? 'red' : card.attribute === 'LIGHT' ? '' : 'blue');
     this._onSummonEffect(card, 'player');
+    this._triggerResponseWindow('summon', card, () => {});
   },
 
   _setMonster(handIdx, slotIdx) {
@@ -389,6 +391,7 @@ const G = {
     card.faceDown = true;
     card._atk = card.atk;
     card._def = card.def;
+    card._setTurnNum = s.turnNum; // cannot flip summon the same turn it was set
     me.field.monsters[slotIdx] = card;
     me.normalSummonUsed = true;
     this.selectedHandIdx = null;
@@ -1026,6 +1029,7 @@ const G = {
       if (card._setTurnNum === s.turnNum) { this._toast('Cannot Flip Summon a card set this turn'); card.faceDown = true; return; }
       // face-down → face-up attack, triggers FLIP effect, does NOT use normal summon
       card.position = 'attack';
+      me.positionChangedThisTurn.add(slotIdx); // cannot switch position again this turn
       this._log(`Flip Summon! ${card.name}!`, 'summon');
       this._onFlipEffect(card, 'player');
     }
@@ -1386,6 +1390,7 @@ const G = {
         if (idx !== -1 && slot !== -1) {
           ai.hand.splice(idx, 1);
           trap.faceDown = true;
+          trap._setTurnNum = s.turnNum; // cannot activate same turn it was set
           ai.field.spells[slot] = trap;
           this._log(`Opponent set a card face-down`, 'summon');
           this._renderField();
@@ -2055,6 +2060,20 @@ const G = {
         }
       });
       menu.appendChild(btn);
+      // Continuous/equip/field spells can also be set face-down as a bluff or to play next turn
+      if (card.subtype !== 'normal' && card.subtype !== 'quick') {
+        const btnSet = document.createElement('button');
+        btnSet.className = 'action-btn';
+        btnSet.textContent = 'Set face-down';
+        btnSet.addEventListener('click', () => {
+          this._hideActionMenu();
+          this.mode = 'trap-target'; // reuse trap-target mode — same zone
+          this._spellSetMode = true;
+          this._renderField();
+          this._log('Select a spell/trap zone to set', 'phase');
+        });
+        menu.appendChild(btnSet);
+      }
     } else if (isTrap) {
       const btn = document.createElement('button');
       btn.className = 'action-btn';
@@ -2158,6 +2177,7 @@ const G = {
         slot.classList.add('highlight');
         slot.onclick = () => {
           if (this.mode === 'spell-target') this._playSpell(this.selectedHandIdx, i);
+          else if (this._spellSetMode) { this._spellSetMode = false; this._setTrap(this.selectedHandIdx, i); }
           else this._setTrap(this.selectedHandIdx, i);
           this._clearMode();
         };
@@ -2668,6 +2688,7 @@ const G = {
   _clearMode() {
     this.mode = null;
     this.attackSource = null;
+    this._spellSetMode = false;
     this._renderField();
   },
 
