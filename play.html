@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>PADRE — The Card Game</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700;900&family=Cinzel:wght@400;600;700;900&family=IM+Fell+English:ital@0;1&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/game.css">
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════
+     SCREEN: CHARACTER SELECT
+═══════════════════════════════════════════ -->
+<div id="screen-select" class="screen active">
+  <h1>PADRE</h1>
+  <div class="subtitle">— THE CARD GAME —</div>
+
+  <div class="deck-grid" id="deck-grid">
+    <!-- rendered by JS -->
+  </div>
+
+  <div class="select-info">
+    <div>
+      <div class="info-name" id="sel-name">Select a Duelist</div>
+      <div class="info-desc" id="sel-desc">Choose your deck to begin the duel</div>
+    </div>
+    <button class="btn-start" id="btn-start" disabled>DUEL</button>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     SCREEN: GAME
+═══════════════════════════════════════════ -->
+<div id="screen-game" class="screen">
+
+  <!-- TOP BAR -->
+  <div id="topbar">
+    <!-- Opponent info -->
+    <div class="player-info">
+      <div id="opp-faith-wrap" class="faith-bar">
+        <div class="faith-label">OPPONENT FAITH</div>
+        <div class="faith-value" id="opp-faith">8000</div>
+      </div>
+      <div>
+        <div class="player-name" id="opp-name">OPPONENT</div>
+        <div class="deck-count" id="opp-deck-count">Deck: 35</div>
+      </div>
+    </div>
+
+    <!-- Turn + Phase controls -->
+    <div id="turn-indicator">
+      <div id="turn-player">YOUR TURN</div>
+      <div id="phase-display">DRAW</div>
+      <div id="phase-btns">
+        <button class="phase-btn" id="btn-battle" data-phase="battle" disabled>BATTLE</button>
+        <button class="phase-btn" id="btn-main2" data-phase="main2" disabled>M2</button>
+        <button class="phase-btn" id="btn-end" data-phase="end" disabled>END</button>
+      </div>
+    </div>
+
+    <!-- Player info -->
+    <div class="player-info" style="flex-direction:row-reverse; text-align:right">
+      <div id="player-faith-wrap" class="faith-bar" style="align-items:flex-end">
+        <div class="faith-label">YOUR FAITH</div>
+        <div class="faith-value" id="player-faith">8000</div>
+      </div>
+      <div>
+        <div class="player-name" id="player-name">YOU</div>
+        <div class="deck-count" id="player-deck-count">Deck: 35</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- OPPONENT HAND (face-down) -->
+  <div id="opp-hand-area"></div>
+
+  <!-- BATTLEFIELD -->
+  <div id="battlefield">
+
+    <!-- OPPONENT SIDE -->
+    <div class="field-side" id="side-opponent">
+      <!-- Opponent spell/trap row -->
+      <div class="field-row">
+        <div class="row-label">S/T</div>
+        <div class="zones">
+          <div class="field-slot" id="opponent-s-4"></div>
+          <div class="field-slot" id="opponent-s-3"></div>
+          <div class="field-slot" id="opponent-s-2"></div>
+          <div class="field-slot" id="opponent-s-1"></div>
+          <div class="field-slot" id="opponent-s-0"></div>
+        </div>
+        <!-- Field spell zone -->
+        <div class="field-zone" id="opponent-field-zone" title="Field Spell Zone"></div>
+      </div>
+      <!-- Opponent monster row -->
+      <div class="field-row">
+        <div class="row-label">MON</div>
+        <div class="zones">
+          <div class="field-slot" id="opponent-m-4"></div>
+          <div class="field-slot" id="opponent-m-3"></div>
+          <div class="field-slot" id="opponent-m-2"></div>
+          <div class="field-slot" id="opponent-m-1"></div>
+          <div class="field-slot" id="opponent-m-0"></div>
+        </div>
+        <!-- Direct attack zone -->
+        <div class="field-zone" id="opponent-direct" title="Direct Attack (when opponent field is empty)"></div>
+      </div>
+    </div>
+
+    <!-- DIVIDER -->
+    <div id="field-divider">
+      <div class="divider-line"></div>
+      <span>⚔ TRENCHES ⚔</span>
+      <div class="divider-line"></div>
+    </div>
+
+    <!-- PLAYER SIDE -->
+    <div class="field-side" id="side-player">
+      <!-- Player monster row -->
+      <div class="field-row">
+        <div class="row-label">MON</div>
+        <div class="zones">
+          <div class="field-slot player-monster-slot" id="player-m-0"></div>
+          <div class="field-slot player-monster-slot" id="player-m-1"></div>
+          <div class="field-slot player-monster-slot" id="player-m-2"></div>
+          <div class="field-slot player-monster-slot" id="player-m-3"></div>
+          <div class="field-slot player-monster-slot" id="player-m-4"></div>
+        </div>
+        <div class="field-zone" id="player-field-zone" title="Field Spell Zone"></div>
+      </div>
+      <!-- Player spell/trap row -->
+      <div class="field-row">
+        <div class="row-label">S/T</div>
+        <div class="zones">
+          <div class="field-slot" id="player-s-0"></div>
+          <div class="field-slot" id="player-s-1"></div>
+          <div class="field-slot" id="player-s-2"></div>
+          <div class="field-slot" id="player-s-3"></div>
+          <div class="field-slot" id="player-s-4"></div>
+        </div>
+        <div class="field-zone" id="player-direct"></div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- PLAYER HAND -->
+  <div id="hand-area"></div>
+
+</div><!-- end #screen-game -->
+
+<!-- ═══════════════════════════════════════════
+     UI OVERLAYS
+═══════════════════════════════════════════ -->
+
+<!-- Context menu -->
+<div id="action-menu"></div>
+
+<!-- Card preview -->
+<div id="card-preview">
+  <img src="" alt="">
+  <div class="preview-name"></div>
+  <div class="preview-type"></div>
+  <div class="preview-stats"></div>
+  <div class="preview-effect"></div>
+</div>
+
+<!-- Game log -->
+<div id="game-log"></div>
+
+<!-- Phase announce -->
+<div id="phase-announce"></div>
+
+<!-- Turn overlay -->
+<div id="turn-overlay">
+  <div class="turn-name"></div>
+  <div class="turn-sub"></div>
+</div>
+
+<!-- Toast -->
+<div id="toast"></div>
+
+<!-- Win/Lose modal -->
+<div id="overlay">
+  <div id="modal-game-over" class="modal">
+    <h2 class="win">VICTORY</h2>
+    <p>The Father blesses your victory.</p>
+    <div class="modal-btns">
+      <button class="btn-modal" id="btn-play-again">NEW DUEL</button>
+      <button class="btn-modal primary" id="btn-rematch">REMATCH</button>
+    </div>
+  </div>
+</div>
+
+<!-- SCRIPTS -->
+<script src="js/cards-data.js"></script>
+<script src="js/game-engine.js"></script>
+
+</body>
+</html>
