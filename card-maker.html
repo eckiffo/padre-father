@@ -7,303 +7,249 @@
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700;900&family=Cinzel+Decorative:wght@700&family=IM+Fell+English:ital@0;1&display=swap" rel="stylesheet">
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { background: #0a0a0a; color: #eee; font-family: 'Cinzel', serif; display: flex; gap: 24px; padding: 24px; min-height: 100vh; }
+    body { background: #0a0a0a; color: #eee; font-family: 'Cinzel', serif; display: flex; gap: 24px; padding: 24px; min-height: 100vh; flex-wrap: wrap; }
 
-    /* CONTROLS */
-    #controls {
-      width: 320px;
-      flex-shrink: 0;
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-    }
-
-    #controls h2 { color: #FFD700; font-size: 18px; letter-spacing: 2px; margin-bottom: 4px; }
+    #controls { width: 300px; flex-shrink: 0; display: flex; flex-direction: column; gap: 10px; }
+    #controls h2 { color: #FFD700; font-size: 16px; letter-spacing: 2px; }
 
     .field { display: flex; flex-direction: column; gap: 4px; }
-    .field label { font-size: 11px; color: #888; letter-spacing: 1px; }
+    .field label { font-size: 10px; color: #777; letter-spacing: 1px; text-transform: uppercase; }
     .field input, .field select, .field textarea {
-      background: #111; border: 1px solid #333; color: #eee;
-      padding: 7px 10px; border-radius: 4px; font-family: 'Cinzel', serif;
-      font-size: 12px; width: 100%;
+      background: #111; border: 1px solid #2a2a2a; color: #eee;
+      padding: 6px 9px; border-radius: 3px; font-family: 'Cinzel', serif; font-size: 11px; width: 100%;
     }
-    .field textarea { resize: vertical; min-height: 80px; font-size: 11px; line-height: 1.5; }
+    .field textarea { resize: vertical; min-height: 72px; line-height: 1.5; }
     .field input:focus, .field select:focus, .field textarea:focus { outline: none; border-color: #FFD700; }
-
     .row { display: flex; gap: 8px; }
     .row .field { flex: 1; }
+    .divider { height: 1px; background: #1a1a1a; }
 
-    .btn {
-      padding: 10px 16px; font-family: 'Cinzel', serif; font-size: 12px;
-      letter-spacing: 2px; border: 1px solid #444; background: #1a1a1a;
-      color: #eee; cursor: pointer; border-radius: 4px; transition: all 0.15s;
-    }
-    .btn:hover { border-color: #FFD700; color: #FFD700; }
-    .btn.primary { background: #FFD700; color: #000; border-color: #FFD700; font-weight: 700; }
-    .btn.primary:hover { background: #fff; }
-
-    .divider { height: 1px; background: #222; margin: 4px 0; }
-
-    /* image drop */
     #img-drop {
-      border: 2px dashed #333; border-radius: 6px; padding: 20px;
-      text-align: center; cursor: pointer; transition: all 0.2s;
-      font-size: 12px; color: #555;
+      border: 2px dashed #2a2a2a; border-radius: 4px; padding: 14px;
+      text-align: center; cursor: pointer; font-size: 11px; color: #444; transition: all 0.2s;
     }
-    #img-drop:hover, #img-drop.drag-over { border-color: #FFD700; color: #FFD700; }
-    #img-drop img { max-width: 100%; max-height: 120px; object-fit: contain; display: block; margin: 0 auto 8px; }
+    #img-drop:hover, #img-drop.over { border-color: #FFD700; color: #FFD700; }
+    #img-preview { max-width: 100%; max-height: 100px; display: none; margin: 0 auto 6px; }
 
-    /* quick load */
-    #quick-load { display: flex; flex-wrap: wrap; gap: 6px; }
-    .quick-btn {
-      padding: 4px 8px; font-size: 10px; background: #111; border: 1px solid #2a2a2a;
-      color: #777; cursor: pointer; border-radius: 3px; transition: all 0.1s;
-      font-family: 'Cinzel', serif; letter-spacing: 0.5px;
+    #quick-load { display: flex; flex-wrap: wrap; gap: 4px; max-height: 160px; overflow-y: auto; }
+    #quick-load::-webkit-scrollbar { width: 3px; }
+    #quick-load::-webkit-scrollbar-thumb { background: #333; }
+    .qb {
+      padding: 3px 7px; font-size: 9px; background: #111; border: 1px solid #222;
+      color: #666; cursor: pointer; border-radius: 2px; transition: all 0.1s; font-family: 'Cinzel', serif;
     }
-    .quick-btn:hover { border-color: #FFD700; color: #FFD700; }
+    .qb:hover { border-color: #FFD700; color: #FFD700; }
 
-    /* CANVAS AREA */
-    #preview-area {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 16px;
-    }
+    .btn { padding: 9px 14px; font-family: 'Cinzel', serif; font-size: 11px; letter-spacing: 1px; border: 1px solid #333; background: #111; color: #eee; cursor: pointer; border-radius: 3px; transition: all 0.15s; width: 100%; }
+    .btn:hover { border-color: #FFD700; color: #FFD700; }
+    .btn.gold { background: #FFD700; color: #000; border-color: #FFD700; font-weight: 700; }
+    .btn.gold:hover { background: #fff; }
 
-    #preview-area h2 { color: #FFD700; font-size: 16px; letter-spacing: 2px; }
+    #preview-area { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 14px; min-width: 300px; }
+    #preview-area h2 { color: #FFD700; font-size: 14px; letter-spacing: 2px; }
+    #card-canvas { border: 1px solid #222; image-rendering: pixelated; }
+    #status { font-size: 10px; color: #555; letter-spacing: 1px; text-align: center; min-height: 16px; }
 
-    #card-canvas {
-      border: 1px solid #333;
-      box-shadow: 0 0 40px rgba(255,215,0,0.1);
-    }
-
-    #download-btn {
-      padding: 12px 32px; font-family: 'Cinzel', serif; font-size: 13px;
-      letter-spacing: 3px; background: #FFD700; color: #000; border: none;
-      cursor: pointer; border-radius: 4px; font-weight: 700; transition: all 0.2s;
-    }
-    #download-btn:hover { background: #fff; transform: scale(1.02); }
-
-    .hint { font-size: 10px; color: #444; letter-spacing: 1px; text-align: center; }
+    .rarity-legend { display: flex; flex-direction: column; gap: 3px; }
+    .rl { display: flex; align-items: center; gap: 6px; font-size: 10px; color: #555; }
+    .rl-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
   </style>
 </head>
 <body>
 
-<!-- CONTROLS -->
 <div id="controls">
   <h2>⚔ CARD MAKER</h2>
 
-  <!-- Quick load -->
   <div class="field">
-    <label>QUICK LOAD CARD</label>
+    <label>Quick Load Card</label>
     <div id="quick-load"></div>
   </div>
 
   <div class="divider"></div>
 
-  <!-- Art upload -->
   <div class="field">
-    <label>CARD ART (drag & drop or click)</label>
+    <label>Card Art (drop or click)</label>
     <div id="img-drop">
-      <div id="img-placeholder">Drop image here or click to upload</div>
-      <input type="file" id="img-input" accept="image/*" style="display:none">
+      <img id="img-preview">
+      <div id="img-hint">Drop artwork here or click to upload</div>
+      <input type="file" id="img-file" accept="image/*" style="display:none">
     </div>
   </div>
 
   <div class="divider"></div>
 
-  <!-- Card fields -->
-  <div class="field">
-    <label>CARD NAME</label>
-    <input type="text" id="f-name" value="Sigma Dev">
-  </div>
+  <div class="field"><label>Card Name</label><input id="f-name" value="Sigma Dev"></div>
 
   <div class="row">
     <div class="field">
-      <label>TYPE</label>
+      <label>Type</label>
       <select id="f-type">
         <option value="monster">Monster</option>
-        <option value="blessing">Blessing (Spell)</option>
-        <option value="confession">Confession (Trap)</option>
+        <option value="blessing">Blessing</option>
+        <option value="confession">Confession</option>
       </select>
     </div>
     <div class="field">
-      <label>ATTRIBUTE</label>
-      <select id="f-attribute">
-        <option>DARK</option>
-        <option>LIGHT</option>
-        <option>CHAIN</option>
-        <option>PAPER</option>
-        <option>DEGEN</option>
-        <option>VIRAL</option>
-        <option>MACHINE</option>
+      <label>Attribute</label>
+      <select id="f-attr">
+        <option>DARK</option><option>LIGHT</option><option>CHAIN</option>
+        <option>PAPER</option><option>DEGEN</option><option>VIRAL</option><option>MACHINE</option>
       </select>
     </div>
   </div>
 
-  <div class="row" id="monster-fields">
+  <div class="row" id="r-monster">
     <div class="field">
-      <label>STARS</label>
-      <input type="number" id="f-stars" value="8" min="1" max="12">
+      <label>Stars</label>
+      <input id="f-stars" type="number" value="8" min="1" max="12">
     </div>
     <div class="field">
-      <label>SUBTYPE</label>
-      <select id="f-subtype">
-        <option value="Normal">Normal</option>
-        <option value="Effect" selected>Effect</option>
-        <option value="Ritual/Effect">Ritual/Effect</option>
-        <option value="Flip/Effect">Flip/Effect</option>
-        <option value="Token">Token</option>
+      <label>Subtype</label>
+      <select id="f-sub">
+        <option>Normal</option><option selected>Effect</option>
+        <option>Ritual/Effect</option><option>Flip/Effect</option><option>Token</option>
       </select>
     </div>
   </div>
 
-  <div class="row" id="atk-def-fields">
-    <div class="field">
-      <label>ATK</label>
-      <input type="number" id="f-atk" value="3000">
-    </div>
-    <div class="field">
-      <label>DEF</label>
-      <input type="number" id="f-def" value="2500">
-    </div>
+  <div class="row" id="r-stats">
+    <div class="field"><label>ATK</label><input id="f-atk" type="number" value="3000"></div>
+    <div class="field"><label>DEF</label><input id="f-def" type="number" value="2500"></div>
   </div>
 
   <div class="field">
-    <label>RARITY</label>
+    <label>Rarity</label>
     <select id="f-rarity">
-      <option value="common">Common</option>
-      <option value="rare">Rare</option>
-      <option value="ultra">Ultra Rare</option>
-      <option value="secret" selected>Secret Rare</option>
+      <option value="c">Common [C]</option>
+      <option value="r">Rare [R] — silver name</option>
+      <option value="sr">Super Rare [SR] — holo art</option>
+      <option value="ur">Ultra Rare [UR] — gold name + holo art</option>
+      <option value="utr">Ultimate Rare [UtR] — embossed</option>
+      <option value="scr" selected>Secret Rare [ScR] — rainbow + diagonal lines</option>
+      <option value="gr">Ghost Rare [GR] — mirror art</option>
     </select>
   </div>
 
-  <div class="field">
-    <label>EFFECT TEXT</label>
+  <div class="field"><label>Effect Text</label>
     <textarea id="f-effect">Requires 2 Tributes. Cannot be targeted by card effects. When this card destroys a monster in battle: your opponent loses 500 Faith.</textarea>
   </div>
 
   <div class="row">
-    <div class="field">
-      <label>CARD ID (filename)</label>
-      <input type="text" id="f-id" value="sigma_dev">
-    </div>
-    <div class="field">
-      <label>SET NO.</label>
-      <input type="text" id="f-set" value="PDRM-EN002">
-    </div>
+    <div class="field"><label>Card ID</label><input id="f-id" value="sigma_dev"></div>
+    <div class="field"><label>Set No.</label><input id="f-set" value="PDRM-EN002"></div>
   </div>
 
-  <button class="btn primary" onclick="G.render()">RENDER CARD</button>
-  <button class="btn" onclick="G.renderAll()">RENDER ALL 60 CARDS</button>
+  <button class="btn gold" onclick="CM.render()">RENDER CARD</button>
+  <button class="btn" onclick="CM.download()">⬇ DOWNLOAD PNG</button>
+
+  <div class="divider"></div>
+  <div style="font-size:10px;color:#444;letter-spacing:1px">RARITY GUIDE</div>
+  <div class="rarity-legend">
+    <div class="rl"><div class="rl-dot" style="background:#888"></div>Common — plain</div>
+    <div class="rl"><div class="rl-dot" style="background:#aaaacc"></div>Rare — silver name text</div>
+    <div class="rl"><div class="rl-dot" style="background:#88aaff"></div>Super Rare — holographic art</div>
+    <div class="rl"><div class="rl-dot" style="background:#FFD700"></div>Ultra Rare — gold name + holo art</div>
+    <div class="rl"><div class="rl-dot" style="background:#FFD700;border:1px solid #fff"></div>Ultimate Rare — gold embossed + circles</div>
+    <div class="rl"><div class="rl-dot" style="background:linear-gradient(90deg,#f0f,#0ff,#ff0);background:#ccccff"></div>Secret Rare — rainbow name + diagonal lines</div>
+    <div class="rl"><div class="rl-dot" style="background:#FFD700;opacity:0.5"></div>Ghost Rare — mirror/transparent art</div>
+  </div>
 </div>
 
-<!-- PREVIEW -->
 <div id="preview-area">
   <h2>CARD PREVIEW</h2>
   <canvas id="card-canvas" width="421" height="614"></canvas>
-  <button id="download-btn" onclick="G.download()">⬇ DOWNLOAD CARD</button>
-  <div class="hint">Right-click canvas → Save image as... OR use download button</div>
-  <div class="hint" id="render-status"></div>
+  <div id="status"></div>
 </div>
 
 <script src="js/cards-data.js"></script>
 <script>
-const G = {
+const CM = {
   art: null,
-  currentCard: null,
 
-  // ── COLOURS PER RARITY ───────────────
-  rarityColors: {
-    common:  { border: '#8a8a8a', inner: '#c8c8c8', shimmer: false },
-    rare:    { border: '#4488ff', inner: '#88aaff', shimmer: false },
-    ultra:   { border: '#FFD700', inner: '#ffe566', shimmer: false },
-    secret:  { border: '#ff88ff', inner: '#ffccff', shimmer: true  },
+  // ── RARITY SYSTEM ─────────────────────────────────────────────────────────
+  R: {
+    c:   { nameFill: '#1a1a1a',  nameStroke: null,     outerBorder: ['#999','#777','#999'],  innerBorder: ['#ccc','#aaa','#ccc'],  artFx: 'none'     },
+    r:   { nameFill: '#d0d0f0',  nameStroke: '#888aaa', outerBorder: ['#9999cc','#7777aa','#9999cc'], innerBorder: ['#bbbbd0','#9999bb','#bbbbd0'], artFx: 'none' },
+    sr:  { nameFill: '#1a1a1a',  nameStroke: null,     outerBorder: ['#9999cc','#7777aa','#9999cc'], innerBorder: ['#bbbbd0','#9999bb','#bbbbd0'],  artFx: 'holo'     },
+    ur:  { nameFill: '#FFD700',  nameStroke: '#8B6914', outerBorder: ['#FFD700','#b8960c','#FFD700'], innerBorder: ['#ffe566','#FFD700','#ffe566'],  artFx: 'holo'     },
+    utr: { nameFill: '#FFD700',  nameStroke: '#8B6914', outerBorder: ['#FFD700','#b8960c','#FFD700'], innerBorder: ['#ffe566','#FFD700','#ffe566'],  artFx: 'embossed' },
+    scr: { nameFill: '#e0e0ff',  nameStroke: '#8888cc', outerBorder: ['#ddddff','#aaaadd','#ddddff'], innerBorder: ['#eeeeff','#ccccff','#eeeeff'],  artFx: 'diagonal' },
+    gr:  { nameFill: '#FFD700',  nameStroke: '#8B6914', outerBorder: ['#FFD700','#b8960c','#FFD700'], innerBorder: ['#ffe566','#FFD700','#ffe566'],  artFx: 'ghost'    },
   },
 
-  attrColors: {
-    DARK:    '#8800cc',
-    LIGHT:   '#ccaa00',
-    CHAIN:   '#cc4400',
-    PAPER:   '#0066cc',
-    DEGEN:   '#445500',
-    VIRAL:   '#006644',
-    MACHINE: '#444466',
+  // card body colours by type+subtype
+  cardBg(type, sub) {
+    if (type === 'blessing') return ['#1a3a1a','#2a5a2a','#1a3a1a'];
+    if (type === 'confession') return ['#1a1a3a','#2a2a5a','#1a1a3a'];
+    // monster
+    const eff = ['effect','ritual/effect','flip/effect'];
+    if (eff.includes((sub||'').toLowerCase())) return ['#5a2e08','#8B4513','#6b3810'];
+    return ['#c8a840','#b89010','#d4b048']; // normal = yellow
   },
 
-  attrSymbols: {
-    DARK:'闇', LIGHT:'光', CHAIN:'炎', PAPER:'水', DEGEN:'地', VIRAL:'風', MACHINE:'機'
-  },
+  attrColor: { DARK:'#5500aa', LIGHT:'#aa9900', CHAIN:'#cc3300', PAPER:'#0055aa', DEGEN:'#335500', VIRAL:'#005544', MACHINE:'#334466' },
+  attrGlyph: { DARK:'闇', LIGHT:'光', CHAIN:'炎', PAPER:'水', DEGEN:'地', VIRAL:'風', MACHINE:'機' },
 
-  // ── INIT ─────────────────────────────
+  // ── INIT ──────────────────────────────────────────────────────────────────
   init() {
     this.buildQuickLoad();
-    this.bindDropZone();
-    this.bindTypeToggle();
-    document.querySelectorAll('#controls input, #controls select, #controls textarea')
-      .forEach(el => el.addEventListener('input', () => this.render()));
+    this.bindDrop();
+    document.getElementById('f-type').addEventListener('change', () => { this.toggleFields(); this.render(); });
+    document.querySelectorAll('#controls input,#controls select,#controls textarea').forEach(el => el.addEventListener('input', () => this.render()));
+    this.toggleFields();
     this.render();
   },
 
   buildQuickLoad() {
     const area = document.getElementById('quick-load');
     Object.values(PADRE_CARDS).forEach(card => {
-      const btn = document.createElement('button');
-      btn.className = 'quick-btn';
-      btn.textContent = card.name;
-      btn.addEventListener('click', () => this.loadCard(card));
-      area.appendChild(btn);
+      const b = document.createElement('button');
+      b.className = 'qb'; b.textContent = card.name;
+      b.addEventListener('click', () => this.loadCard(card));
+      area.appendChild(b);
     });
   },
 
   loadCard(card) {
     document.getElementById('f-name').value = card.name;
     document.getElementById('f-type').value = card.type;
-    document.getElementById('f-attribute').value = card.attribute || 'DARK';
+    document.getElementById('f-attr').value = card.attribute || 'DARK';
     document.getElementById('f-stars').value = card.stars || 4;
-    document.getElementById('f-subtype').value = card.subtype ? (card.subtype.charAt(0).toUpperCase() + card.subtype.slice(1)) : 'Effect';
+    const subMap = { normal:'Normal', effect:'Effect', ritual_effect:'Ritual/Effect', flip_effect:'Flip/Effect', token:'Token', ritual:'Ritual/Effect' };
+    document.getElementById('f-sub').value = subMap[card.subtype] || 'Effect';
     document.getElementById('f-atk').value = card.atk ?? 0;
     document.getElementById('f-def').value = card.def ?? 0;
-    document.getElementById('f-rarity').value = card.rarity || 'common';
+    const rarMap = { common:'c', rare:'r', ultra:'ur', secret:'scr' };
+    document.getElementById('f-rarity').value = rarMap[card.rarity] || 'c';
     document.getElementById('f-effect').value = card.effect || '';
     document.getElementById('f-id').value = card.id;
-    document.getElementById('f-set').value = 'PDRM-EN' + String(Object.keys(PADRE_CARDS).indexOf(card.id) + 1).padStart(3, '0');
-
-    // try to load existing art
-    const img = new Image();
-    img.onload = () => { this.art = img; this.render(); };
-    img.onerror = () => { this.art = null; this.render(); };
-    img.src = card.image || '';
-
-    this.toggleMonsterFields();
+    const idx = Object.keys(PADRE_CARDS).indexOf(card.id);
+    document.getElementById('f-set').value = 'PDRM-EN' + String(idx+1).padStart(3,'0');
+    // try load art
+    if (card.image) {
+      const img = new Image();
+      img.onload = () => { this.art = img; this.setArtPreview(card.image); this.render(); };
+      img.onerror = () => {};
+      img.src = card.image;
+    }
+    this.toggleFields();
     this.render();
   },
 
-  bindTypeToggle() {
-    document.getElementById('f-type').addEventListener('change', () => this.toggleMonsterFields());
-    this.toggleMonsterFields();
+  toggleFields() {
+    const mon = document.getElementById('f-type').value === 'monster';
+    document.getElementById('r-monster').style.display = mon ? 'flex' : 'none';
+    document.getElementById('r-stats').style.display = mon ? 'flex' : 'none';
   },
 
-  toggleMonsterFields() {
-    const isMonster = document.getElementById('f-type').value === 'monster';
-    document.getElementById('monster-fields').style.display = isMonster ? 'flex' : 'none';
-    document.getElementById('atk-def-fields').style.display = isMonster ? 'flex' : 'none';
-  },
-
-  bindDropZone() {
+  bindDrop() {
     const drop = document.getElementById('img-drop');
-    const input = document.getElementById('img-input');
-    drop.addEventListener('click', () => input.click());
-    drop.addEventListener('dragover', e => { e.preventDefault(); drop.classList.add('drag-over'); });
-    drop.addEventListener('dragleave', () => drop.classList.remove('drag-over'));
-    drop.addEventListener('drop', e => {
-      e.preventDefault(); drop.classList.remove('drag-over');
-      const file = e.dataTransfer.files[0];
-      if (file) this.loadFile(file);
-    });
-    input.addEventListener('change', e => { if (e.target.files[0]) this.loadFile(e.target.files[0]); });
+    const inp = document.getElementById('img-file');
+    drop.addEventListener('click', () => inp.click());
+    drop.addEventListener('dragover', e => { e.preventDefault(); drop.classList.add('over'); });
+    drop.addEventListener('dragleave', () => drop.classList.remove('over'));
+    drop.addEventListener('drop', e => { e.preventDefault(); drop.classList.remove('over'); if (e.dataTransfer.files[0]) this.loadFile(e.dataTransfer.files[0]); });
+    inp.addEventListener('change', e => { if (e.target.files[0]) this.loadFile(e.target.files[0]); });
   },
 
   loadFile(file) {
@@ -312,329 +258,323 @@ const G = {
       const img = new Image();
       img.onload = () => { this.art = img; this.render(); };
       img.src = e.target.result;
-      // preview in drop zone
-      const placeholder = document.getElementById('img-placeholder');
-      placeholder.innerHTML = `<img src="${e.target.result}">Loaded: ${file.name}`;
+      this.setArtPreview(e.target.result);
     };
     reader.readAsDataURL(file);
   },
 
-  // ── MAIN RENDER ──────────────────────
+  setArtPreview(src) {
+    const prev = document.getElementById('img-preview');
+    prev.src = src; prev.style.display = 'block';
+    document.getElementById('img-hint').textContent = 'Art loaded ✓';
+  },
+
+  // ── RENDER ────────────────────────────────────────────────────────────────
   render() {
-    const canvas = document.getElementById('card-canvas');
-    const ctx = canvas.getContext('2d');
-    const W = canvas.width, H = canvas.height;
-
-    const name     = document.getElementById('f-name').value || 'Card Name';
-    const type     = document.getElementById('f-type').value;
-    const attr     = document.getElementById('f-attribute').value;
-    const stars    = parseInt(document.getElementById('f-stars').value) || 4;
-    const subtype  = document.getElementById('f-subtype').value;
-    const atk      = document.getElementById('f-atk').value;
-    const def      = document.getElementById('f-def').value;
-    const rarity   = document.getElementById('f-rarity').value;
-    const effect   = document.getElementById('f-effect').value;
-    const setNo    = document.getElementById('f-set').value;
-    const rc       = this.rarityColors[rarity] || this.rarityColors.common;
-
+    const cv = document.getElementById('card-canvas');
+    const ctx = cv.getContext('2d');
+    const W = cv.width, H = cv.height;
     ctx.clearRect(0, 0, W, H);
 
-    // ── OUTER BORDER ────────────────────
-    this.roundRect(ctx, 0, 0, W, H, 18);
+    const name   = document.getElementById('f-name').value || 'Card Name';
+    const type   = document.getElementById('f-type').value;
+    const attr   = document.getElementById('f-attr').value;
+    const stars  = parseInt(document.getElementById('f-stars').value) || 4;
+    const sub    = document.getElementById('f-sub').value;
+    const atk    = document.getElementById('f-atk').value;
+    const def    = document.getElementById('f-def').value;
+    const rar    = document.getElementById('f-rarity').value;
+    const effect = document.getElementById('f-effect').value;
+    const setNo  = document.getElementById('f-set').value;
+    const r      = this.R[rar] || this.R.c;
+    const bg     = this.cardBg(type, sub);
+
+    // ── OUTER FRAME ──────────────────────────────────────────────────────────
     const outerGrad = ctx.createLinearGradient(0, 0, W, H);
-    outerGrad.addColorStop(0, this.lighten(rc.border, 40));
-    outerGrad.addColorStop(0.5, rc.border);
-    outerGrad.addColorStop(1, this.lighten(rc.border, 40));
-    ctx.fillStyle = outerGrad;
-    ctx.fill();
+    outerGrad.addColorStop(0, r.outerBorder[0]);
+    outerGrad.addColorStop(0.5, r.outerBorder[1]);
+    outerGrad.addColorStop(1, r.outerBorder[2]);
+    this.rr(ctx, 0, 0, W, H, 18);
+    ctx.fillStyle = outerGrad; ctx.fill();
 
-    // shimmer for secret rare
-    if (rc.shimmer) {
-      const t = Date.now() / 1000;
-      const shimmerGrad = ctx.createLinearGradient(
-        W * Math.sin(t) * 0.5 + W/2, 0,
-        W * Math.cos(t) * 0.5 + W/2, H
-      );
-      shimmerGrad.addColorStop(0, 'rgba(255,0,255,0.15)');
-      shimmerGrad.addColorStop(0.3, 'rgba(0,255,255,0.15)');
-      shimmerGrad.addColorStop(0.6, 'rgba(255,255,0,0.1)');
-      shimmerGrad.addColorStop(1, 'rgba(255,0,255,0.15)');
-      this.roundRect(ctx, 0, 0, W, H, 18);
-      ctx.fillStyle = shimmerGrad;
-      ctx.fill();
-    }
+    // outer frame inner highlight
+    this.rr(ctx, 2, 2, W-4, H-4, 16);
+    ctx.strokeStyle = r.innerBorder[0]; ctx.lineWidth = 1.5; ctx.stroke();
 
-    // ── INNER CARD BODY ──────────────────
-    const mx = 10, my = 10;
-    const innerW = W - mx*2, innerH = H - my*2;
-    this.roundRect(ctx, mx, my, innerW, innerH, 12);
+    // ── CARD BODY ────────────────────────────────────────────────────────────
+    const px = 12, py = 12;
+    const bw = W - px*2, bh = H - py*2;
+    this.rr(ctx, px, py, bw, bh, 10);
+    const bgGrad = ctx.createLinearGradient(px, py, px, py+bh);
+    bgGrad.addColorStop(0, bg[0]); bgGrad.addColorStop(0.5, bg[1]); bgGrad.addColorStop(1, bg[2]);
+    ctx.fillStyle = bgGrad; ctx.fill();
 
-    // background color per type
-    const bgColors = {
-      monster: type === 'monster' && (subtype === 'Effect' || subtype === 'Flip/Effect' || subtype === 'Ritual/Effect')
-        ? ['#5a3010', '#8B4513', '#6b3a18']
-        : ['#c8a84a', '#b8941a', '#d4b050'],
-      blessing: ['#2a4a2a', '#1a3a1a', '#3a6a3a'],
-      confession: ['#2a2a4a', '#1a1a3a', '#3a3a6a'],
-    };
-    const bgc = bgColors[type] || bgColors.monster;
-    const bodyGrad = ctx.createLinearGradient(mx, my, mx, my + innerH);
-    bodyGrad.addColorStop(0, bgc[0]);
-    bodyGrad.addColorStop(0.5, bgc[1]);
-    bodyGrad.addColorStop(1, bgc[2]);
-    this.roundRect(ctx, mx, my, innerW, innerH, 12);
-    ctx.fillStyle = bodyGrad;
-    ctx.fill();
+    // ── NAME BANNER ──────────────────────────────────────────────────────────
+    const nbY = py + 8, nbH = 32, nbX = px + 8, nbW = bw - 52;
+    this.rr(ctx, nbX, nbY, nbW, nbH, 5);
+    ctx.fillStyle = 'rgba(0,0,0,0.45)'; ctx.fill();
 
-    // ── NAME BAR ────────────────────────
-    const nameBarH = 34;
-    const nameBarY = my + 8;
-    this.roundRect(ctx, mx+6, nameBarY, innerW - 12, nameBarH, 6);
-    ctx.fillStyle = 'rgba(0,0,0,0.5)';
-    ctx.fill();
+    // inner border line on name banner
+    this.rr(ctx, nbX+1, nbY+1, nbW-2, nbH-2, 4);
+    ctx.strokeStyle = 'rgba(255,255,255,0.08)'; ctx.lineWidth = 1; ctx.stroke();
 
-    // Name text
-    ctx.fillStyle = '#FFD700';
-    ctx.font = `bold ${name.length > 16 ? 16 : 19}px 'Cinzel'`;
+    // name text
+    const fontSize = name.length > 18 ? 14 : name.length > 14 ? 16 : 18;
+    ctx.font = `900 ${fontSize}px Cinzel`;
     ctx.textAlign = 'left';
-    ctx.fillText(name, mx + 14, nameBarY + 23);
 
-    // ── ATTRIBUTE BADGE ──────────────────
-    const attrColor = this.attrColors[attr] || '#333';
-    const attrX = W - mx - 6 - 30, attrY = nameBarY + 2;
-    ctx.beginPath();
-    ctx.arc(attrX + 14, attrY + 14, 16, 0, Math.PI * 2);
-    const attrGrad = ctx.createRadialGradient(attrX+14, attrY+14, 2, attrX+14, attrY+14, 16);
-    attrGrad.addColorStop(0, this.lighten(attrColor, 60));
-    attrGrad.addColorStop(1, attrColor);
-    ctx.fillStyle = attrGrad;
-    ctx.fill();
-    ctx.strokeStyle = rc.border;
-    ctx.lineWidth = 1.5;
-    ctx.stroke();
-    // attribute symbol
-    ctx.fillStyle = '#fff';
-    ctx.font = 'bold 13px serif';
-    ctx.textAlign = 'center';
-    ctx.fillText(this.attrSymbols[attr] || '?', attrX + 14, attrY + 19);
-
-    // ── STARS ────────────────────────────
-    if (type === 'monster') {
-      const starY = nameBarY + nameBarH + 6;
-      const starSize = 18;
-      const totalStarW = Math.min(stars, 12) * (starSize + 2);
-      let starX = (W - totalStarW) / 2;
-      for (let i = 0; i < Math.min(stars, 12); i++) {
-        this.drawStar(ctx, starX + starSize/2, starY + starSize/2, starSize/2, '#FF6600', '#FFD700');
-        starX += starSize + 2;
-      }
+    if (rar === 'scr') {
+      // rainbow gradient name
+      const rg = ctx.createLinearGradient(nbX+4, nbY, nbX+4+nbW, nbY);
+      rg.addColorStop(0, '#ff88ff'); rg.addColorStop(0.25, '#88ffff');
+      rg.addColorStop(0.5, '#ffff88'); rg.addColorStop(0.75, '#88ffff'); rg.addColorStop(1, '#ff88ff');
+      ctx.fillStyle = rg;
+    } else {
+      ctx.fillStyle = r.nameFill;
     }
 
-    // ── ART BOX ──────────────────────────
-    const artY = my + nameBarH + (type==='monster' ? 36 : 20) + 10;
-    const artW = innerW - 20;
-    const artH = Math.round(artW * 0.72);
-    const artX = mx + 10;
+    if (r.nameStroke) {
+      ctx.strokeStyle = r.nameStroke; ctx.lineWidth = 3;
+      ctx.strokeText(name, nbX + 8, nbY + 22);
+    }
+    ctx.fillText(name, nbX + 8, nbY + 22);
 
-    // art border
-    this.roundRect(ctx, artX - 3, artY - 3, artW + 6, artH + 6, 4);
-    const artBorderGrad = ctx.createLinearGradient(artX, artY, artX + artW, artY + artH);
-    artBorderGrad.addColorStop(0, rc.inner);
-    artBorderGrad.addColorStop(1, rc.border);
-    ctx.fillStyle = artBorderGrad;
-    ctx.fill();
+    // ── ATTRIBUTE CIRCLE ─────────────────────────────────────────────────────
+    const acX = px + bw - 36, acY = nbY + 2, acR = 15;
+    ctx.beginPath(); ctx.arc(acX, acY + acR, acR, 0, Math.PI*2);
+    const acGrad = ctx.createRadialGradient(acX, acY+acR, 2, acX, acY+acR, acR);
+    const ac = this.attrColor[attr] || '#333';
+    acGrad.addColorStop(0, this.lighten(ac, 70)); acGrad.addColorStop(1, ac);
+    ctx.fillStyle = acGrad; ctx.fill();
+    ctx.strokeStyle = r.outerBorder[0]; ctx.lineWidth = 1.5; ctx.stroke();
+    ctx.fillStyle = '#fff'; ctx.font = 'bold 12px serif'; ctx.textAlign = 'center';
+    ctx.fillText(this.attrGlyph[attr] || '?', acX, acY + acR + 5);
 
-    // art background
-    this.roundRect(ctx, artX, artY, artW, artH, 3);
-    ctx.fillStyle = '#1a1a2a';
-    ctx.fill();
-    ctx.save();
-    ctx.clip();
-    if (this.art) {
-      // cover fit
-      const imgAspect = this.art.width / this.art.height;
-      const boxAspect = artW / artH;
-      let dw, dh, dx, dy;
-      if (imgAspect > boxAspect) {
-        dh = artH; dw = artH * imgAspect;
-        dx = artX - (dw - artW) / 2; dy = artY;
-      } else {
-        dw = artW; dh = artW / imgAspect;
-        dx = artX; dy = artY - (dh - artH) / 2;
+    // ── STARS ────────────────────────────────────────────────────────────────
+    let artTopY = nbY + nbH + 6;
+    if (type === 'monster') {
+      const sc = Math.min(stars, 12);
+      const sw = 20, sgap = 2;
+      const totalW = sc * (sw + sgap) - sgap;
+      let sx = (W - totalW) / 2;
+      const sy = artTopY + 2;
+      for (let i = 0; i < sc; i++) {
+        this.drawStar(ctx, sx + sw/2, sy + sw/2, sw/2 - 1, '#cc4400', '#FFaa00');
+        sx += sw + sgap;
       }
+      artTopY += sw + 6;
+    }
+
+    // ── ART BOX ──────────────────────────────────────────────────────────────
+    const ax = px + 10, aw = bw - 20;
+    const ah = Math.round(aw * 0.73);
+    const ay = artTopY;
+
+    // art frame border (inner glow)
+    const afGrad = ctx.createLinearGradient(ax, ay, ax+aw, ay+ah);
+    afGrad.addColorStop(0, r.innerBorder[0]);
+    afGrad.addColorStop(0.5, r.innerBorder[1]);
+    afGrad.addColorStop(1, r.innerBorder[2]);
+    this.rr(ctx, ax-4, ay-4, aw+8, ah+8, 4);
+    ctx.fillStyle = afGrad; ctx.fill();
+
+    // inner art frame shadow
+    this.rr(ctx, ax-2, ay-2, aw+4, ah+4, 3);
+    ctx.fillStyle = '#000'; ctx.fill();
+
+    // clip for art
+    this.rr(ctx, ax, ay, aw, ah, 2);
+    ctx.save(); ctx.clip();
+
+    if (this.art) {
+      const ia = this.art.width / this.art.height;
+      const ba = aw / ah;
+      let dw, dh, dx, dy;
+      if (ia > ba) { dh = ah; dw = ah * ia; dx = ax - (dw-aw)/2; dy = ay; }
+      else { dw = aw; dh = aw / ia; dx = ax; dy = ay - (dh-ah)/2; }
       ctx.drawImage(this.art, dx, dy, dw, dh);
     } else {
-      // placeholder
-      ctx.fillStyle = '#111';
-      ctx.fillRect(artX, artY, artW, artH);
-      ctx.fillStyle = '#333';
-      ctx.font = '14px Cinzel';
-      ctx.textAlign = 'center';
-      ctx.fillText('[ ART GOES HERE ]', artX + artW/2, artY + artH/2);
+      ctx.fillStyle = '#111'; ctx.fillRect(ax, ay, aw, ah);
+      ctx.fillStyle = '#2a2a2a'; ctx.font = '13px Cinzel'; ctx.textAlign = 'center';
+      ctx.fillText('[ ART ]', ax + aw/2, ay + ah/2);
     }
+
+    // ── ART EFFECTS (rarity) ──────────────────────────────────────────────────
+    if (r.artFx === 'holo') {
+      // rainbow shimmer overlay
+      const hg = ctx.createLinearGradient(ax, ay, ax+aw, ay+ah);
+      hg.addColorStop(0,   'rgba(255,0,255,0.12)');
+      hg.addColorStop(0.2, 'rgba(0,255,255,0.10)');
+      hg.addColorStop(0.4, 'rgba(255,255,0,0.10)');
+      hg.addColorStop(0.6, 'rgba(0,255,128,0.10)');
+      hg.addColorStop(0.8, 'rgba(128,0,255,0.10)');
+      hg.addColorStop(1,   'rgba(255,0,255,0.12)');
+      ctx.fillStyle = hg; ctx.fillRect(ax, ay, aw, ah);
+    } else if (r.artFx === 'diagonal') {
+      // parallel diagonal lines (Secret Rare)
+      ctx.strokeStyle = 'rgba(200,200,255,0.18)'; ctx.lineWidth = 1.5;
+      for (let i = -ah; i < aw + ah; i += 12) {
+        ctx.beginPath(); ctx.moveTo(ax + i, ay); ctx.lineTo(ax + i + ah, ay + ah); ctx.stroke();
+      }
+      // rainbow overlay
+      const dg = ctx.createLinearGradient(ax, ay, ax+aw, ay+ah);
+      dg.addColorStop(0,   'rgba(255,150,255,0.15)');
+      dg.addColorStop(0.33,'rgba(150,255,255,0.12)');
+      dg.addColorStop(0.66,'rgba(255,255,150,0.12)');
+      dg.addColorStop(1,   'rgba(255,150,255,0.15)');
+      ctx.fillStyle = dg; ctx.fillRect(ax, ay, aw, ah);
+    } else if (r.artFx === 'embossed') {
+      // parallel circles (Ultimate Rare)
+      ctx.strokeStyle = 'rgba(255,215,0,0.15)'; ctx.lineWidth = 1;
+      for (let cr = 10; cr < aw * 1.5; cr += 18) {
+        ctx.beginPath(); ctx.arc(ax + aw*0.3, ay + ah*0.5, cr, 0, Math.PI*2); ctx.stroke();
+      }
+      // gold sheen
+      const eg = ctx.createLinearGradient(ax, ay, ax+aw, ay+ah);
+      eg.addColorStop(0, 'rgba(255,215,0,0.08)'); eg.addColorStop(0.5, 'rgba(255,215,0,0.15)'); eg.addColorStop(1, 'rgba(255,215,0,0.08)');
+      ctx.fillStyle = eg; ctx.fillRect(ax, ay, aw, ah);
+    } else if (r.artFx === 'ghost') {
+      // Ghost Rare: semi-transparent white wash, art barely visible
+      ctx.fillStyle = 'rgba(255,255,255,0.55)'; ctx.fillRect(ax, ay, aw, ah);
+      // mirror sheen
+      const gg = ctx.createLinearGradient(ax, ay, ax+aw, ay+ah);
+      gg.addColorStop(0,   'rgba(255,215,0,0.2)');
+      gg.addColorStop(0.4, 'rgba(255,255,255,0.3)');
+      gg.addColorStop(0.6, 'rgba(255,215,0,0.15)');
+      gg.addColorStop(1,   'rgba(200,200,255,0.2)');
+      ctx.fillStyle = gg; ctx.fillRect(ax, ay, aw, ah);
+    }
+
     ctx.restore();
 
-    // ── TYPE LINE ────────────────────────
-    const typeY = artY + artH + 8;
-    const typeBarH = 22;
-    this.roundRect(ctx, artX, typeY, artW, typeBarH, 3);
-    ctx.fillStyle = 'rgba(0,0,0,0.7)';
-    ctx.fill();
+    // ── TYPE LINE ────────────────────────────────────────────────────────────
+    const tlY = ay + ah + 5;
+    this.rr(ctx, ax, tlY, aw, 21, 2);
+    ctx.fillStyle = 'rgba(0,0,0,0.75)'; ctx.fill();
+    ctx.strokeStyle = 'rgba(255,255,255,0.06)'; ctx.lineWidth = 0.5; ctx.stroke();
 
-    ctx.fillStyle = '#eee';
-    ctx.font = '11px Cinzel';
-    ctx.textAlign = 'left';
+    ctx.fillStyle = '#ddd'; ctx.font = '10px Cinzel'; ctx.textAlign = 'left';
     if (type === 'monster') {
-      ctx.fillText(`[Degen/${subtype}]`, artX + 6, typeY + 15);
+      ctx.fillText(`[Degen / ${sub}]`, ax + 5, tlY + 14);
     } else if (type === 'blessing') {
-      const bsub = { normal:'Normal Blessing', continuous:'Continuous Blessing', field:'Market Blessing', ritual:'Ritual Blessing' };
-      ctx.fillText(`[${bsub[subtype?.toLowerCase()] || 'Blessing Card'}]`, artX + 6, typeY + 15);
+      const bmap = {normal:'Normal Blessing',continuous:'Continuous Blessing',field:'Market Blessing',ritual:'Ritual Blessing'};
+      ctx.fillText(`[${bmap[sub?.toLowerCase()]||'Blessing Card'}]`, ax + 5, tlY + 14);
     } else {
-      const csub = { normal:'Normal Confession', continuous:'Continuous Confession' };
-      ctx.fillText(`[${csub[subtype?.toLowerCase()] || 'Confession Card'}]`, artX + 6, typeY + 15);
+      const cmap = {normal:'Normal Confession',continuous:'Continuous Confession'};
+      ctx.fillText(`[${cmap[sub?.toLowerCase()]||'Confession Card'}]`, ax + 5, tlY + 14);
     }
 
-    // ── EFFECT BOX ───────────────────────
-    const effY = typeY + typeBarH + 4;
-    const atkBarH = type === 'monster' ? 22 : 0;
-    const effH = H - my - effY - atkBarH - 26;
-    this.roundRect(ctx, artX, effY, artW, effH, 3);
-    ctx.fillStyle = 'rgba(255,255,255,0.06)';
-    ctx.fill();
-    ctx.strokeStyle = 'rgba(255,255,255,0.1)';
-    ctx.lineWidth = 0.5;
-    ctx.stroke();
+    // ── EFFECT BOX ───────────────────────────────────────────────────────────
+    const ebY = tlY + 24;
+    const atkH = type === 'monster' ? 22 : 0;
+    const ebH = H - py - ebY - atkH - 22;
+    this.rr(ctx, ax, ebY, aw, ebH, 2);
+    ctx.fillStyle = 'rgba(255,255,220,0.07)'; ctx.fill();
+    ctx.strokeStyle = 'rgba(255,255,255,0.08)'; ctx.lineWidth = 0.5; ctx.stroke();
 
     // effect text
-    ctx.fillStyle = '#ddd';
-    ctx.font = '10px IM Fell English, serif';
-    ctx.textAlign = 'left';
-    this.wrapText(ctx, effect, artX + 5, effY + 13, artW - 10, 13);
+    ctx.fillStyle = '#ddd'; ctx.font = '10px "IM Fell English", serif'; ctx.textAlign = 'left';
+    this.wrapText(ctx, effect, ax+5, ebY+13, aw-10, 13, ebH-8);
 
-    // ── ATK/DEF BAR ──────────────────────
+    // ── ATK / DEF ────────────────────────────────────────────────────────────
     if (type === 'monster') {
-      const atkY = effY + effH + 4;
-      this.roundRect(ctx, artX, atkY, artW, atkBarH, 3);
-      ctx.fillStyle = 'rgba(0,0,0,0.8)';
-      ctx.fill();
+      const adY = ebY + ebH + 3;
+      this.rr(ctx, ax, adY, aw, atkH, 2);
+      ctx.fillStyle = 'rgba(0,0,0,0.85)'; ctx.fill();
+      ctx.strokeStyle = 'rgba(255,215,0,0.3)'; ctx.lineWidth = 0.5; ctx.stroke();
 
-      ctx.fillStyle = '#FFD700';
-      ctx.font = 'bold 13px Cinzel';
-      ctx.textAlign = 'right';
-      ctx.fillText(`ATK/${atk}  DEF/${def}`, artX + artW - 6, atkY + 15);
+      ctx.font = 'bold 13px Cinzel'; ctx.textAlign = 'right';
+      if (rar === 'ur' || rar === 'utr' || rar === 'gr') {
+        // gold ATK/DEF
+        const ag = ctx.createLinearGradient(ax, adY, ax+aw, adY+atkH);
+        ag.addColorStop(0, '#FFD700'); ag.addColorStop(0.5,'#fff8a0'); ag.addColorStop(1,'#FFD700');
+        ctx.fillStyle = ag;
+      } else {
+        ctx.fillStyle = '#eee';
+      }
+      ctx.fillText(`ATK/${atk}   DEF/${def}`, ax + aw - 6, adY + 15);
     }
 
-    // ── BOTTOM INFO ──────────────────────
-    const bottomY = H - my - 16;
-    ctx.fillStyle = '#555';
-    ctx.font = '9px Cinzel';
-    ctx.textAlign = 'left';
-    ctx.fillText('PADRE CARD GAME', mx + 12, bottomY);
+    // ── BOTTOM BAR ───────────────────────────────────────────────────────────
+    const btY = H - py - 14;
+    ctx.fillStyle = '#444'; ctx.font = '8px Cinzel'; ctx.textAlign = 'left';
+    ctx.fillText('PADRE DUEL MONSTERS', px + 10, btY);
     ctx.textAlign = 'right';
-    ctx.fillText(setNo, W - mx - 12, bottomY);
-    ctx.textAlign = 'center';
-    ctx.fillText('PADRE DUEL MONSTERS CARD', W/2, bottomY);
+    ctx.fillText(setNo, W - px - 10, btY);
 
-    // rarity indicator
-    if (rarity !== 'common') {
-      ctx.fillStyle = rc.border;
-      ctx.font = 'bold 8px Cinzel';
+    // rarity badge
+    if (rar !== 'c') {
+      const rarLabels = { r:'RARE', sr:'SUPER RARE', ur:'ULTRA RARE', utr:'ULTIMATE RARE', scr:'SECRET RARE', gr:'GHOST RARE' };
       ctx.textAlign = 'center';
-      const labels = { rare:'RARE', ultra:'ULTRA RARE', secret:'SECRET RARE' };
-      ctx.fillText(labels[rarity] || '', W/2, bottomY - 10);
+      if (rar === 'scr') {
+        const rg2 = ctx.createLinearGradient(W/2-40, btY-12, W/2+40, btY-12);
+        rg2.addColorStop(0,'#ff88ff'); rg2.addColorStop(0.5,'#88ffff'); rg2.addColorStop(1,'#ff88ff');
+        ctx.fillStyle = rg2;
+      } else {
+        ctx.fillStyle = r.outerBorder[0];
+      }
+      ctx.font = 'bold 8px Cinzel';
+      ctx.fillText(rarLabels[rar]||'', W/2, btY - 10);
     }
   },
 
-  // ── RENDER ALL ───────────────────────
-  async renderAll() {
-    const status = document.getElementById('render-status');
-    const cards = Object.values(PADRE_CARDS);
-    status.textContent = `Rendering ${cards.length} cards...`;
-
-    for (let i = 0; i < cards.length; i++) {
-      const card = cards[i];
-      this.loadCard(card);
-      this.render();
-      await new Promise(r => setTimeout(r, 50));
-      this.download(`${card.id}.png`);
-      await new Promise(r => setTimeout(r, 100));
-      status.textContent = `Rendered ${i+1}/${cards.length}: ${card.name}`;
-    }
-
-    status.textContent = `✅ All ${cards.length} cards rendered!`;
-  },
-
-  // ── DOWNLOAD ─────────────────────────
+  // ── DOWNLOAD ──────────────────────────────────────────────────────────────
   download(filename) {
-    const canvas = document.getElementById('card-canvas');
+    const cv = document.getElementById('card-canvas');
     const name = filename || (document.getElementById('f-id').value || 'card') + '.png';
     const a = document.createElement('a');
-    a.href = canvas.toDataURL('image/png');
+    a.href = cv.toDataURL('image/png');
     a.download = name;
     a.click();
   },
 
-  // ── HELPERS ──────────────────────────
-  roundRect(ctx, x, y, w, h, r) {
+  // ── HELPERS ───────────────────────────────────────────────────────────────
+  rr(ctx, x, y, w, h, r) {
     ctx.beginPath();
-    ctx.moveTo(x + r, y);
-    ctx.lineTo(x + w - r, y);
-    ctx.quadraticCurveTo(x + w, y, x + w, y + r);
-    ctx.lineTo(x + w, y + h - r);
-    ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
-    ctx.lineTo(x + r, y + h);
-    ctx.quadraticCurveTo(x, y + h, x, y + h - r);
-    ctx.lineTo(x, y + r);
-    ctx.quadraticCurveTo(x, y, x + r, y);
+    ctx.moveTo(x+r, y);
+    ctx.lineTo(x+w-r, y); ctx.quadraticCurveTo(x+w, y, x+w, y+r);
+    ctx.lineTo(x+w, y+h-r); ctx.quadraticCurveTo(x+w, y+h, x+w-r, y+h);
+    ctx.lineTo(x+r, y+h); ctx.quadraticCurveTo(x, y+h, x, y+h-r);
+    ctx.lineTo(x, y+r); ctx.quadraticCurveTo(x, y, x+r, y);
     ctx.closePath();
   },
 
-  drawStar(ctx, cx, cy, r, color1, color2) {
+  drawStar(ctx, cx, cy, r, c1, c2) {
     ctx.beginPath();
     for (let i = 0; i < 10; i++) {
-      const angle = (i * Math.PI) / 5 - Math.PI / 2;
-      const radius = i % 2 === 0 ? r : r * 0.45;
-      ctx.lineTo(cx + Math.cos(angle) * radius, cy + Math.sin(angle) * radius);
+      const a = (i * Math.PI) / 5 - Math.PI/2;
+      const rad = i%2===0 ? r : r*0.42;
+      ctx[i===0?'moveTo':'lineTo'](cx + Math.cos(a)*rad, cy + Math.sin(a)*rad);
     }
     ctx.closePath();
-    const g = ctx.createRadialGradient(cx, cy, 1, cx, cy, r);
-    g.addColorStop(0, color2);
-    g.addColorStop(1, color1);
-    ctx.fillStyle = g;
-    ctx.fill();
-    ctx.strokeStyle = '#000';
-    ctx.lineWidth = 0.5;
-    ctx.stroke();
+    const g = ctx.createRadialGradient(cx-r*0.2, cy-r*0.2, r*0.1, cx, cy, r);
+    g.addColorStop(0, c2); g.addColorStop(1, c1);
+    ctx.fillStyle = g; ctx.fill();
+    ctx.strokeStyle = 'rgba(0,0,0,0.6)'; ctx.lineWidth = 0.5; ctx.stroke();
   },
 
-  wrapText(ctx, text, x, y, maxW, lineH) {
+  wrapText(ctx, text, x, y, maxW, lineH, maxH) {
     const words = text.split(' ');
-    let line = '';
-    let cy = y;
-    for (const word of words) {
-      const test = line + word + ' ';
-      if (ctx.measureText(test).width > maxW && line !== '') {
+    let line = '', cy = y;
+    for (const w of words) {
+      const test = line + w + ' ';
+      if (ctx.measureText(test).width > maxW && line) {
+        if (cy + lineH > y + maxH) { ctx.fillText('…', x, cy); return; }
         ctx.fillText(line.trim(), x, cy);
-        line = word + ' ';
-        cy += lineH;
-        if (cy > y + 200) { ctx.fillText('...', x, cy); break; }
-      } else {
-        line = test;
-      }
+        line = w + ' '; cy += lineH;
+      } else { line = test; }
     }
     if (line) ctx.fillText(line.trim(), x, cy);
   },
 
-  lighten(hex, amount) {
+  lighten(hex, n) {
     const num = parseInt(hex.replace('#',''), 16);
-    const r = Math.min(255, (num >> 16) + amount);
-    const g = Math.min(255, ((num >> 8) & 0xff) + amount);
-    const b = Math.min(255, (num & 0xff) + amount);
+    const r = Math.min(255,(num>>16)+n), g = Math.min(255,((num>>8)&0xff)+n), b = Math.min(255,(num&0xff)+n);
     return `rgb(${r},${g},${b})`;
   },
 };
 
-document.addEventListener('DOMContentLoaded', () => G.init());
+document.addEventListener('DOMContentLoaded', () => CM.init());
 </script>
 </body>
 </html>
