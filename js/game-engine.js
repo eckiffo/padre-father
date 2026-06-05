@@ -86,6 +86,7 @@ const G = {
     };
 
     this._showScreen('game');
+    this._showPreviewPanel();
     this._renderTopbar();
     this._renderOppHand();
     this._renderField();
@@ -2484,24 +2485,9 @@ const G = {
         <div class="preview-type">${attrBadges}<span style="color:#777">${typeLabel}</span></div>
         <div class="preview-effect">${card.effect || '<em style="color:#555">No effect text</em>'}</div>
         ${statsHtml}
-        <div class="preview-pin-hint">Right-click to pin ∙ right-click again to close</div>
+        <div class="preview-pin-hint">Right-click to pin</div>
       </div>
     `;
-
-    // Smart positioning — keep inside viewport
-    const W = window.innerWidth, H = window.innerHeight;
-    const PW = 220, PH = 420;
-    const right = 14;
-    const bottom = 150;
-    p.style.right  = right + 'px';
-    p.style.bottom = bottom + 'px';
-    p.style.left   = 'auto';
-    p.style.top    = 'auto';
-    // if it would go off the top, anchor to top instead
-    if (H - bottom - PH < 0) {
-      p.style.bottom = 'auto';
-      p.style.top = '8px';
-    }
   },
 
   _pinPreview(card) {
@@ -2516,9 +2502,22 @@ const G = {
     }
   },
 
+  _showPreviewPanel() {
+    const p = document.getElementById('card-preview');
+    p.className = 'visible';
+    p.innerHTML = `
+      <div class="preview-img-wrap preview-placeholder">
+        <div class="preview-placeholder-inner">⚔<br><span>Hover a card<br>to inspect</span></div>
+      </div>
+      <div class="preview-body">
+        <div class="preview-name" style="color:#444">—</div>
+      </div>
+    `;
+  },
+
   _hidePreview() {
     const p = document.getElementById('card-preview');
-    if (!p.classList.contains('pinned')) p.classList.remove('visible');
+    if (!p.classList.contains('pinned')) this._showPreviewPanel();
   },
 
   // ── GRAVEYARD VIEWER ─────────────────────────
