@@ -396,6 +396,77 @@ const G = {
     this._renderHand();
   },
 
+  // ── EQUIP SPELLS ──────────────────────────────
+
+  // Definition of every equip spell: { atk, def, condition(monster) }
+  EQUIP_SPELLS: {
+    cyber_shield:       { atk: 500, def: 500, cond: c => (c.id||'').includes('harpie') || (c.name||'').toLowerCase().includes('harpie') },
+    ct_shield:          { atk: 500, def: 500, cond: c => (c.id||'').includes('ct') || (c.name||'').toLowerCase().includes('viral') },
+    electro_whip:       { atk: 300, def: 0,   cond: c => (c.id||'').includes('harpie') || (c.name||'').toLowerCase().includes('harpie') },
+    rose_whip:          { atk: 300, def: 300,  cond: () => true },
+    book_of_secret_arts:{ atk: 300, def: 300,  cond: c => (c.subtype||'') === 'spellcaster' || (c.type||'') === 'monster' },
+    mage_power:         { atk: 0,   def: 0,    cond: () => true, dynamic: (me) => me.field.spells.filter(Boolean).length * 500 },
+    megamorph:          { atk: 0,   def: 0,    cond: () => true, dynamic: (me, opp) => me.faith < opp.faith ? (me.field.monsters.find(Boolean)?.atk || 0) : -Math.floor((me.field.monsters.find(Boolean)?.atk || 0) / 2) },
+    kunai_with_chain:   { atk: 300, def: 0,    cond: () => true },
+    jeet_shield:        { atk: 0,   def: 500,  cond: () => true },
+  },
+
+  _activateEquip(handIdx, slotIdx, side) {
+    const s = this.state;
+    const me = side === 'player' ? s.player : s.opponent;
+    const opp = side === 'player' ? s.opponent : s.player;
+    const card = me.hand[handIdx];
+    if (!card) return;
+
+    const def = this.EQUIP_SPELLS[card.id];
+    const eligible = me.field.monsters.filter(c => c && !c.faceDown && def.cond(c));
+    if (!eligible.length) { this._toast(`No valid target for ${card.name}`); return; }
+
+    const doEquip = (target) => {
+      if (me.field.spells[slotIdx] !== null) { this._toast('Zone occupied'); return; }
+      me.hand.splice(handIdx, 1);
+      card._equipTarget = target;
+      card._equipSide = side;
+      me.field.spells[slotIdx] = card;
+      this.selectedHandIdx = null;
+
+      // apply bonus
+      target._baseAtk = target._baseAtk || target.atk;
+      target._baseDef = target._baseDef || target.def;
+      const atkBonus = def.dynamic ? def.dynamic(me, opp) : def.atk;
+      const defBonus = def.dynamic ? 0 : def.def;
+      target.atk = (target._baseAtk || target.atk) + atkBonus;
+      target.def = (target._baseDef || target.def) + defBonus;
+      target._atk = target.atk;
+      target._def = target.def;
+      card._atkBonus = atkBonus;
+      card._defBonus = defBonus;
+
+      this._log(`${card.name} equipped to ${target.name}! (+${atkBonus} ATK / +${defBonus} DEF)`, 'summon');
+      this._renderField();
+      this._renderHand();
+    };
+
+    if (side === 'player' && eligible.length > 1) {
+      this._showCardPicker(`EQUIP: ${card.name}`, 'Choose a monster to equip', eligible, 1, chosen => doEquip(chosen[0]));
+    } else {
+      doEquip(eligible[0]);
+    }
+  },
+
+  _removeEquip(equipCard, side) {
+    // Called when equip spell is destroyed or equipped monster leaves field
+    const s = this.state;
+    const me = side === 'player' ? s.player : s.opponent;
+    const target = equipCard._equipTarget;
+    if (!target) return;
+    target.atk = Math.max(0, target.atk - (equipCard._atkBonus || 0));
+    target.def = Math.max(0, target.def - (equipCard._defBonus || 0));
+    target._atk = target.atk;
+    target._def = target.def;
+    delete equipCard._equipTarget;
+  },
+
   // ── PLAY SPELL/TRAP ───────────────────────────
 
   _playSpell(handIdx, slotIdx) {
@@ -403,6 +474,12 @@ const G = {
     const me = s.player;
     const card = me.hand[handIdx];
     if (!card) return;
+
+    // equip spells get routed to the equip system
+    if (card.subtype === 'equip' && this.EQUIP_SPELLS[card.id]) {
+      this._activateEquip(handIdx, slotIdx, 'player');
+      return;
+    }
 
     if (card.subtype === 'continuous' || card.subtype === 'field') {
       if (card.subtype === 'field') {
@@ -471,15 +548,26 @@ const G = {
 
       case 'graceful_charity': {
         for(let i=0;i<3;i++) { if(me.deck.length>0) me.hand.push(me.deck.splice(0,1)[0]); }
-        // discard 2 weakest (or random for AI / no-ui)
-        for(let i=0;i<2;i++) {
-          if(me.hand.length>0) {
+        this._log(`Drew 3 cards`, 'summon');
+        if(side==='player') this._renderHand(); else this._renderOppHand();
+        if (side === 'player') {
+          // player picks 2 to discard
+          this._showCardPicker('GRACEFUL CHARITY', 'Choose 2 cards to discard', [...me.hand], 2, chosen => {
+            chosen.forEach(c => {
+              const i = me.hand.indexOf(c);
+              if (i > -1) { me.graveyard.push(me.hand.splice(i, 1)[0]); }
+            });
+            this._log(`Discarded ${chosen.map(c=>c.name).join(' & ')}`, 'destroy');
+            this._renderHand();
+          });
+        } else {
+          // AI discards 2 weakest
+          for(let i=0;i<2;i++) {
             const wi = me.hand.reduce((bi,c,ci) => ((c.atk||0)<(me.hand[bi].atk||0) ? ci : bi), 0);
             me.graveyard.push(me.hand.splice(wi,1)[0]);
           }
+          this._log(`Opponent discarded 2 cards`, 'destroy');
         }
-        this._log(`${side} drew 3, discarded 2`, 'summon');
-        if(side==='player') this._renderHand(); else this._renderOppHand();
         break;
       }
 
@@ -499,32 +587,66 @@ const G = {
       case 'premature_burial': {
         const allGrave = [...me.graveyard, ...opp.graveyard].filter(c=>c.type==='monster');
         if(allGrave.length===0){this._log('No monsters in graveyard','muted');break;}
-        const best = allGrave.sort((a,b)=>(b.atk||0)-(a.atk||0))[0];
         const slot = me.field.monsters.findIndex(m=>!m);
         if(slot===-1){this._log('No space on field','muted');break;}
-        if(card.id==='premature_burial') { me.faith=Math.max(0,me.faith-800); this._log('Paid 800 LP for Premature Burial','damage'); }
-        const gi=me.graveyard.indexOf(best);
-        if(gi>-1) me.graveyard.splice(gi,1);
-        else { const ogi=opp.graveyard.indexOf(best); if(ogi>-1) opp.graveyard.splice(ogi,1); }
-        best.position='attack'; best.faceDown=false; best._atk=best.atk; best._def=best.def;
-        me.field.monsters[slot]=best;
-        this._log(`${best.name} Special Summoned from the Graveyard!`,'summon');
-        this._renderField();
+        if(card.id==='premature_burial') { me.faith=Math.max(0,me.faith-800); this._log('Paid 800 LP for Premature Burial','damage'); this._renderTopbar(); }
+        if (side === 'player') {
+          this._showCardPicker(
+            card.id === 'monster_reborn' || card.id === 'second_chance' ? 'MONSTER REBORN' : card.name.toUpperCase(),
+            'Choose a monster to revive',
+            allGrave, 1,
+            chosen => {
+              const target = chosen[0];
+              const gi = me.graveyard.indexOf(target);
+              if(gi>-1) me.graveyard.splice(gi,1);
+              else { const ogi=opp.graveyard.indexOf(target); if(ogi>-1) opp.graveyard.splice(ogi,1); }
+              const openSlot = me.field.monsters.findIndex(m=>!m);
+              if(openSlot===-1){me.graveyard.push(target);this._log('No space!','muted');return;}
+              target.position='attack'; target.faceDown=false; target._atk=target.atk; target._def=target.def;
+              me.field.monsters[openSlot]=target;
+              this._log(`${target.name} Special Summoned!`,'summon');
+              this._renderField();
+            }
+          );
+        } else {
+          const best = allGrave.sort((a,b)=>(b.atk||0)-(a.atk||0))[0];
+          const gi=me.graveyard.indexOf(best);
+          if(gi>-1) me.graveyard.splice(gi,1);
+          else { const ogi=opp.graveyard.indexOf(best); if(ogi>-1) opp.graveyard.splice(ogi,1); }
+          best.position='attack'; best.faceDown=false; best._atk=best.atk; best._def=best.def;
+          me.field.monsters[slot]=best;
+          this._log(`${best.name} Special Summoned from Graveyard!`,'summon');
+          this._renderField();
+        }
         break;
       }
 
       case 'call_of_the_haunted': {
         const grave = me.graveyard.filter(c=>c.type==='monster');
         if(!grave.length){this._log('No monsters in graveyard','muted');break;}
-        const target = grave.sort((a,b)=>(b.atk||0)-(a.atk||0))[0];
-        const slot = me.field.monsters.findIndex(m=>!m);
-        if(slot===-1){this._log('No space on field','muted');break;}
-        const gi = me.graveyard.indexOf(target);
-        if(gi>-1) me.graveyard.splice(gi,1);
-        target.position='attack'; target.faceDown=false; target._atk=target.atk; target._def=target.def;
-        me.field.monsters[slot]=target;
-        this._log(`${target.name} Special Summoned by Call of the Haunted!`,'summon');
-        this._renderField();
+        const slot2 = me.field.monsters.findIndex(m=>!m);
+        if(slot2===-1){this._log('No space on field','muted');break;}
+        if (side === 'player') {
+          this._showCardPicker('CALL OF THE HAUNTED', 'Choose a monster to revive', grave, 1, chosen => {
+            const target = chosen[0];
+            const gi = me.graveyard.indexOf(target);
+            if(gi>-1) me.graveyard.splice(gi,1);
+            const openSlot = me.field.monsters.findIndex(m=>!m);
+            if(openSlot===-1){me.graveyard.push(target);return;}
+            target.position='attack'; target.faceDown=false; target._atk=target.atk; target._def=target.def;
+            me.field.monsters[openSlot]=target;
+            this._log(`${target.name} Special Summoned by Call of the Haunted!`,'summon');
+            this._renderField();
+          });
+        } else {
+          const target = grave.sort((a,b)=>(b.atk||0)-(a.atk||0))[0];
+          const gi = me.graveyard.indexOf(target);
+          if(gi>-1) me.graveyard.splice(gi,1);
+          target.position='attack'; target.faceDown=false; target._atk=target.atk; target._def=target.def;
+          me.field.monsters[slot2]=target;
+          this._log(`${target.name} Special Summoned by Call of the Haunted!`,'summon');
+          this._renderField();
+        }
         break;
       }
 
@@ -579,27 +701,45 @@ const G = {
       case 'heavy_storm':
         [...s.player.field.spells,...s.opponent.field.spells].forEach((c,i)=>{
           if(!c) return;
-          if(i<5){s.player.graveyard.push(c); s.player.field.spells[i]=null;}
-          else{s.opponent.graveyard.push(c); s.opponent.field.spells[i-5]=null;}
+          const owner = i<5 ? s.player : s.opponent;
+          const oi = i<5 ? i : i-5;
+          if(c.subtype === 'equip') this._removeEquip(c, owner.who);
+          owner.graveyard.push(c); owner.field.spells[oi]=null;
         });
         this._log('Heavy Storm — all spells and traps destroyed!','destroy');
         this._renderField();
         break;
 
       case 'mystical_space_typhoon': {
-        const oppST = opp.field.spells.map((c,i)=>c?i:null).filter(i=>i!==null);
-        if(!oppST.length){this._log('No opponent S/T to destroy','muted');break;}
-        const ti = oppST[0];
-        this._log(`Mystical Space Typhoon destroyed ${opp.field.spells[ti].name}!`,'destroy');
-        opp.graveyard.push(opp.field.spells[ti]);
-        opp.field.spells[ti]=null;
-        this._renderField();
+        const allST = [
+          ...opp.field.spells.map((c,i) => c ? {card:c, owner:'opp', idx:i} : null).filter(Boolean),
+          ...me.field.spells.map((c,i) => c && c !== card ? {card:c, owner:'me', idx:i} : null).filter(Boolean),
+        ];
+        if(!allST.length){this._log('No spell/trap targets','muted');break;}
+        if (side === 'player') {
+          this._showCardPicker('MYSTICAL SPACE TYPHOON', 'Choose a Spell/Trap to destroy', allST.map(e=>e.card), 1, chosen => {
+            const entry = allST.find(e=>e.card===chosen[0]);
+            if(!entry) return;
+            const owner = entry.owner === 'opp' ? opp : me;
+            owner.graveyard.push(entry.card);
+            owner.field.spells[entry.idx] = null;
+            this._log(`Mystical Space Typhoon destroyed ${entry.card.name}!`,'destroy');
+            this._renderField();
+          });
+        } else {
+          const target = allST.find(e=>e.owner==='opp') || allST[0];
+          const owner = target.owner === 'opp' ? opp : me;
+          owner.graveyard.push(target.card);
+          owner.field.spells[target.idx] = null;
+          this._log(`Mystical Space Typhoon destroyed ${target.card.name}!`,'destroy');
+          this._renderField();
+        }
         break;
       }
 
       case 'ct_wipes_the_board':
       case 'harpie_s_feather_duster':
-        opp.field.spells.forEach((c,i)=>{if(c){opp.graveyard.push(c);opp.field.spells[i]=null;}});
+        opp.field.spells.forEach((c,i)=>{if(c){if(c.subtype==='equip')this._removeEquip(c,opp.who);opp.graveyard.push(c);opp.field.spells[i]=null;}});
         this._log("Harpie's Feather Duster — all opponent S/T destroyed!",'destroy');
         this._renderField();
         break;
@@ -1067,6 +1207,20 @@ const G = {
     const s = this.state;
     const me = side==='player' ? s.player : s.opponent;
     const opp = side==='player' ? s.opponent : s.player;
+    // If a monster leaves the field, destroy any equip spells targeting it
+    if (card.type === 'monster') {
+      ['player','opponent'].forEach(who => {
+        const owner = s[who];
+        owner.field.spells.forEach((eq, i) => {
+          if (eq && eq._equipTarget === card) {
+            this._removeEquip(eq, who);
+            owner.graveyard.push(eq);
+            owner.field.spells[i] = null;
+            this._log(`${eq.name} sent to GY (equipped monster destroyed)`, 'destroy');
+          }
+        });
+      });
+    }
     switch(card.id) {
       case 'ghost_wallet':
         opp.faith=Math.max(0,opp.faith-300);
@@ -1152,6 +1306,35 @@ const G = {
         });
         spellsPlayed++;
       }
+    }
+
+    // 1b. Activate equip spells on existing monsters
+    for (const card of [...ai.hand]) {
+      if (card.subtype !== 'equip' || !this.EQUIP_SPELLS[card.id]) continue;
+      const def = this.EQUIP_SPELLS[card.id];
+      const eligible = ai.field.monsters.filter(m => m && !m.faceDown && (!def.cond || def.cond(m)));
+      if (!eligible.length) continue;
+      const target = eligible.sort((a,b) => (b.atk||0)-(a.atk||0))[0];
+      const c = card;
+      const t = target;
+      actions.push(next => {
+        const hi = ai.hand.indexOf(c);
+        const slot = ai.field.spells.findIndex(sp => !sp);
+        if (hi === -1 || slot === -1) { next(); return; }
+        ai.hand.splice(hi, 1);
+        ai.field.spells[slot] = c;
+        c.faceDown = false;
+        const bonus = def.dynamic ? def.dynamic(ai, s.player) : 0;
+        c._equipTarget = t;
+        c._atkBonus = def.atk + bonus;
+        c._defBonus = def.def;
+        t.atk = (t.atk || 0) + c._atkBonus;
+        t.def = (t.def || 0) + c._defBonus;
+        this._log(`Opponent equipped ${c.name} to ${t.name}`, 'summon');
+        this._renderField(); this._renderOppHand();
+        next();
+      });
+      break; // one equip per turn is enough
     }
 
     // 2. Summon best monster, with response window for summon traps
@@ -1859,7 +2042,7 @@ const G = {
     } else if (isSpell) {
       const btn = document.createElement('button');
       btn.className = 'action-btn';
-      btn.textContent = 'Activate';
+      btn.textContent = card.subtype === 'equip' ? 'Equip to Monster' : 'Activate';
       btn.addEventListener('click', () => {
         this._hideActionMenu();
         if (card.subtype === 'normal' || card.subtype === 'quick') {
@@ -1867,7 +2050,7 @@ const G = {
         } else {
           this.mode = 'spell-target';
           this._renderField();
-          this._log('Select a spell/trap zone', 'phase');
+          this._log(card.subtype === 'equip' ? 'Select a spell/trap zone to place the equip' : 'Select a spell/trap zone', 'phase');
         }
       });
       menu.appendChild(btn);
@@ -1907,6 +2090,11 @@ const G = {
     const s = this.state;
     this._renderSide('opponent', s.opponent, false);
     this._renderSide('player', s.player, true);
+    // update graveyard counts
+    const pgc = document.getElementById('player-gy-count');
+    const ogc = document.getElementById('opp-gy-count');
+    if (pgc) pgc.textContent = s.player.graveyard.length;
+    if (ogc) ogc.textContent = s.opponent.graveyard.length;
   },
 
   _renderSide(who, side, isPlayer) {
@@ -2154,7 +2342,7 @@ const G = {
       fx.addEventListener('click', () => {
         this._hideActionMenu();
         const fi = me.field.spells.indexOf(card);
-        if (fi > -1) { me.field.spells[fi] = null; me.graveyard.push(card); this._log(`${card.name} removed from field`, 'destroy'); this._renderField(); }
+        if (fi > -1) { if (card.subtype === 'equip') this._removeEquip(card, 'player'); me.field.spells[fi] = null; me.graveyard.push(card); this._log(`${card.name} removed from field`, 'destroy'); this._renderField(); }
       });
       menu.appendChild(fx);
     }
@@ -2333,6 +2521,102 @@ const G = {
     if (!p.classList.contains('pinned')) p.classList.remove('visible');
   },
 
+  // ── GRAVEYARD VIEWER ─────────────────────────
+
+  _openGraveyard(side) {
+    const s = this.state;
+    const whose = side === 'player' ? s.player : s.opponent;
+    const viewer = document.getElementById('graveyard-viewer');
+    viewer.querySelector('.gv-title').textContent =
+      (side === 'player' ? 'YOUR' : 'OPPONENT') + ' GRAVEYARD — ' + whose.graveyard.length + ' CARDS';
+
+    const cardsEl = viewer.querySelector('.gv-cards');
+    cardsEl.innerHTML = '';
+    if (!whose.graveyard.length) {
+      cardsEl.innerHTML = '<div class="gv-empty">GRAVEYARD IS EMPTY</div>';
+    } else {
+      // show in reverse order (most recent on top)
+      [...whose.graveyard].reverse().forEach(card => {
+        const el = document.createElement('div');
+        el.className = 'gv-card';
+        el.innerHTML = `<img src="${card.image||'img/cards/card-back.jpg'}" onerror="this.src='img/cards/card-back.jpg'">
+          <div class="gv-card-name">${card.name}</div>`;
+        el.addEventListener('mouseenter', () => this._showPreview(card));
+        el.addEventListener('mouseleave', () => this._hidePreview());
+        cardsEl.appendChild(el);
+      });
+    }
+    viewer.classList.add('visible');
+  },
+
+  _closeGraveyard() {
+    document.getElementById('graveyard-viewer').classList.remove('visible');
+  },
+
+  // ── CARD PICKER ───────────────────────────────
+
+  // Generic "pick N cards from a list" modal.
+  // onPick(selectedCards) called with array of chosen card objects.
+  // onCancel() called if player clicks Cancel.
+  _showCardPicker(title, hint, cards, pickCount, onPick, onCancel) {
+    const picker = document.getElementById('card-picker');
+    const backdrop = document.getElementById('card-picker-backdrop');
+    picker.querySelector('.cp-title').textContent = title;
+    picker.querySelector('.cp-hint').textContent = hint;
+
+    const cardsEl = picker.querySelector('.cp-cards');
+    cardsEl.innerHTML = '';
+    const confirmBtn = picker.querySelector('.cp-confirm');
+    confirmBtn.disabled = true;
+
+    const selected = new Set();
+
+    const updateConfirm = () => {
+      confirmBtn.disabled = selected.size !== pickCount;
+    };
+
+    cards.forEach((card, i) => {
+      const el = document.createElement('div');
+      el.className = 'cp-card';
+      el.innerHTML = `<img src="${card.image||'img/cards/card-back.jpg'}" onerror="this.src='img/cards/card-back.jpg'">
+        <div class="cp-card-name">${card.name}</div>
+        <div class="cp-check">✓</div>`;
+
+      el.addEventListener('mouseenter', () => this._showPreview(card));
+      el.addEventListener('mouseleave', () => this._hidePreview());
+      el.addEventListener('click', () => {
+        if (selected.has(i)) {
+          selected.delete(i);
+          el.classList.remove('selected');
+        } else {
+          if (selected.size < pickCount) {
+            selected.add(i);
+            el.classList.add('selected');
+          }
+        }
+        updateConfirm();
+      });
+      cardsEl.appendChild(el);
+    });
+
+    confirmBtn.onclick = () => {
+      this._closePicker();
+      onPick([...selected].map(i => cards[i]));
+    };
+    picker.querySelector('.cp-cancel').onclick = () => {
+      this._closePicker();
+      if (onCancel) onCancel();
+    };
+
+    picker.classList.add('visible');
+    backdrop.classList.add('visible');
+  },
+
+  _closePicker() {
+    document.getElementById('card-picker').classList.remove('visible');
+    document.getElementById('card-picker-backdrop').classList.remove('visible');
+  },
+
   // ── UI HELPERS ────────────────────────────────
 
   _toast(msg) {
@@ -2426,6 +2710,17 @@ const G = {
       if (!e.target.closest('#action-menu') && !e.target.closest('.hand-card') && !e.target.closest('.field-card')) {
         this._hideActionMenu();
       }
+    });
+
+    // graveyard viewer buttons
+    document.getElementById('player-gy-btn').addEventListener('click', () => {
+      if (this.state) this._openGraveyard('player');
+    });
+    document.getElementById('opp-gy-btn').addEventListener('click', () => {
+      if (this.state) this._openGraveyard('opponent');
+    });
+    document.getElementById('graveyard-viewer').querySelector('.gv-close').addEventListener('click', () => {
+      this._closeGraveyard();
     });
 
     // reflow hand on window resize

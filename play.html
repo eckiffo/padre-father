@@ -95,6 +95,8 @@
         </div>
         <!-- Field spell zone -->
         <div class="field-zone" id="opponent-field-zone" title="Field Spell Zone"></div>
+        <!-- Graveyard -->
+        <div class="field-gy-zone" id="opp-gy-btn" title="Opponent Graveyard">⚰<span id="opp-gy-count">0</span></div>
       </div>
       <!-- Opponent monster row -->
       <div class="field-row">
@@ -143,6 +145,8 @@
           <div class="field-slot" id="player-s-4"></div>
         </div>
         <div class="field-zone" id="player-direct"></div>
+        <!-- Graveyard -->
+        <div class="field-gy-zone" id="player-gy-btn" title="Your Graveyard">⚰<span id="player-gy-count">0</span></div>
       </div>
     </div>
 
@@ -191,6 +195,29 @@
   <button class="rw-pass" id="rw-pass">PASS</button>
   <div class="rw-bar"><div class="rw-bar-fill" id="rw-bar-fill"></div></div>
 </div>
+
+<!-- Graveyard Viewer -->
+<div id="graveyard-viewer">
+  <div class="gv-header">
+    <span class="gv-title"></span>
+    <button class="gv-close">✕</button>
+  </div>
+  <div class="gv-cards"></div>
+</div>
+
+<!-- Card Picker (Monster Reborn, Graceful Charity, MST etc.) -->
+<div id="card-picker">
+  <div class="cp-header">
+    <span class="cp-title"></span>
+    <span class="cp-hint"></span>
+  </div>
+  <div class="cp-cards"></div>
+  <div class="cp-actions">
+    <button class="cp-confirm" disabled>Confirm</button>
+    <button class="cp-cancel">Cancel</button>
+  </div>
+</div>
+<div id="card-picker-backdrop"></div>
 
 <!-- Animation layer -->
 <div id="anim-layer"></div>
