@@ -79,7 +79,7 @@ window.PADRE_CARDS = {
     def: 1000,
     rarity: 'rare',
     deck: 'kol',
-    image: 'img/cards/1000x_caller.jpg',
+    image: 'img/cards/one_thousand_x_caller.jpg',
     effect: 'While this card is face-up: all your Degens gain 300 ATK. Destroy this card during your 3rd End Phase after it was summoned.'
   },
 
