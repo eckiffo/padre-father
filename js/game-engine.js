@@ -86,7 +86,6 @@ const G = {
     };
 
     this._showScreen('game');
-    this._showPreviewPanel();
     this._renderTopbar();
     this._renderOppHand();
     this._renderField();
@@ -341,7 +340,7 @@ const G = {
     card.faceDown = false;
     me.field.monsters[slot] = card;
     me.normalSummonUsed = true;
-    this._log(`Tribute Summoned ${card.name}! (${card.atk}/${card.def})`, 'summon');
+    this._log(`Tribute Summoned ${card.name}! (${card.atk}/${card.def})`, 'summon', card);
     this._onSummonEffect(card, 'player');
     const slotEl = document.getElementById(`player-m-${slot}`);
     if (slotEl) this._animSummon(slotEl, card.attribute === 'DARK' ? 'red' : card.attribute === 'LIGHT' ? '' : 'blue');
@@ -371,7 +370,7 @@ const G = {
     me.normalSummonUsed = true;
     this.selectedHandIdx = null;
     this.mode = null;
-    this._log(`You summoned ${card.name} (${card.atk}/${card.def})`, 'summon');
+    this._log(`You summoned ${card.name} (${card.atk}/${card.def})`, 'summon', card);
     this._renderField();
     this._renderHand();
     const slotEl = document.getElementById(`player-m-${slotIdx}`);
@@ -1146,7 +1145,7 @@ const G = {
             this._renderField();
           });
           dSide.faith = Math.max(0, dSide.faith - diff);
-          this._log(`${attacker.name} (${attacker.atk}) destroyed ${defender.name} (${defender.atk})! -${diff} Faith`, 'damage');
+          this._log(`${attacker.name} (${attacker.atk}) destroyed ${defender.name} (${defender.atk})! -${diff} Faith`, 'damage', attacker);
           this._flashDamage(defenderSide);
           this._animDamage(defenderSide, diff);
         } else if (diff < 0) {
@@ -1157,13 +1156,13 @@ const G = {
             this._renderField();
           });
           aSide.faith = Math.max(0, aSide.faith - Math.abs(diff));
-          this._log(`${attacker.name} was destroyed by ${defender.name}! -${Math.abs(diff)} Faith`, 'damage');
+          this._log(`${attacker.name} was destroyed by ${defender.name}! -${Math.abs(diff)} Faith`, 'damage', defender);
           this._flashDamage(attackerSide);
           this._animDamage(attackerSide, Math.abs(diff));
         } else {
           this._animDestroy(attackerSlot, () => { aSide.field.monsters[attackerIdx] = null; aSide.graveyard.push(attacker); this._onDestroyEffect(attacker, attackerSide); this._renderField(); });
           this._animDestroy(defenderSlot, () => { dSide.field.monsters[defenderIdx] = null; dSide.graveyard.push(defender); this._onDestroyEffect(defender, defenderSide); this._renderField(); });
-          this._log(`Both ${attacker.name} and ${defender.name} destroyed!`, 'destroy');
+          this._log(`Both ${attacker.name} and ${defender.name} destroyed!`, 'destroy', attacker);
         }
       } else {
         const diff = attacker.atk - defender.def;
@@ -1174,14 +1173,14 @@ const G = {
             this._onDestroyEffect(defender, defenderSide);
             this._renderField();
           });
-          this._log(`${attacker.name} destroyed ${defender.name} in defense`, 'destroy');
+          this._log(`${attacker.name} destroyed ${defender.name} in defense`, 'destroy', attacker);
         } else if (diff < 0) {
           aSide.faith = Math.max(0, aSide.faith - Math.abs(diff));
-          this._log(`${attacker.name} hits ${defender.name}'s defense. -${Math.abs(diff)} Faith`, 'damage');
+          this._log(`${attacker.name} hits ${defender.name}'s defense. -${Math.abs(diff)} Faith`, 'damage', attacker);
           this._flashDamage(attackerSide);
           this._animDamage(attackerSide, Math.abs(diff));
         } else {
-          this._log(`${attacker.name} vs ${defender.name} — no damage`, 'summon');
+          this._log(`${attacker.name} vs ${defender.name} — no damage`, 'summon', attacker);
         }
       }
     } // end doResolve
@@ -1297,7 +1296,7 @@ const G = {
               if (idx !== -1) {
                 ai.hand.splice(idx, 1);
                 ai.graveyard.push(c);
-                this._log(`Opponent activated ${c.name}`, 'summon');
+                this._log(`Opponent activated ${c.name}`, 'summon', c);
                 this._applySpellEffect(c, 'opponent');
                 this._renderOppHand();
               }
@@ -1361,14 +1360,14 @@ const G = {
             ai.field.monsters[slot] = best;
             ai.hand.splice(idx, 1);
             ai.normalSummonUsed = true;
-            this._log(`Opponent tribute summoned ${best.name}!`, 'summon');
+            this._log(`Opponent tribute summoned ${best.name}!`, 'summon', best);
             this._onSummonEffect(best, 'opponent');
           } else {
             best.position = 'attack'; best.faceDown = false;
             ai.field.monsters[slot] = best;
             ai.hand.splice(idx, 1);
             ai.normalSummonUsed = true;
-            this._log(`Opponent summoned ${best.name} (${best.atk}/${best.def})`, 'summon');
+            this._log(`Opponent summoned ${best.name} (${best.atk}/${best.def})`, 'summon', best);
             this._onSummonEffect(best, 'opponent');
           }
           this._renderField();
@@ -1486,7 +1485,7 @@ const G = {
         this.state.player.field.spells[slotIdx] = null;
         this.state.player.graveyard.push(card);
         card.faceDown = false;
-        this._log(`⚡ Activated ${card.name} in response!`, 'phase');
+        this._log(`⚡ Activated ${card.name} in response!`, 'chain', card);
         const negated = this._activateTrapResponse(card, trigger, triggerCard);
         this._renderField();
         this._renderTopbar();
@@ -1661,7 +1660,7 @@ const G = {
         s.opponent.field.monsters.forEach((c,i) => {
           if (c && c.position === 'attack') {
             s.opponent.graveyard.push(c); s.opponent.field.monsters[i] = null;
-            this._log(`Mirror Force destroyed ${c.name}!`, 'destroy');
+            this._log(`Mirror Force destroyed ${c.name}!`, 'destroy', c);
             this._onDestroyEffect(c, 'opponent');
           }
         });
@@ -1685,7 +1684,7 @@ const G = {
       case 'trap_hole':
         if ((triggerCard.atk||0) >= 1000) {
           const idx = s.opponent.field.monsters.indexOf(triggerCard);
-          if (idx > -1) { s.opponent.graveyard.push(triggerCard); s.opponent.field.monsters[idx] = null; this._log(`Trap Hole! ${triggerCard.name} destroyed!`, 'destroy'); }
+          if (idx > -1) { s.opponent.graveyard.push(triggerCard); s.opponent.field.monsters[idx] = null; this._log(`Trap Hole! ${triggerCard.name} destroyed!`, 'destroy', triggerCard); }
         } else { this._log('Trap Hole: ATK too low to trigger', 'muted'); }
         break;
 
@@ -1702,7 +1701,7 @@ const G = {
         if (ridx > -1) { s.opponent.graveyard.push(triggerCard); s.opponent.field.monsters[ridx] = null; }
         s.player.faith = Math.max(0, s.player.faith - rdmg);
         s.opponent.faith = Math.max(0, s.opponent.faith - rdmg);
-        this._log(`Ring of Destruction! ${triggerCard.name} destroyed — both take ${rdmg} damage!`, 'damage');
+        this._log(`Ring of Destruction! ${triggerCard.name} destroyed — both take ${rdmg} damage!`, 'damage', triggerCard);
         this._flashDamage('player'); this._flashDamage('opponent');
         negated = true;
         break;
@@ -2505,9 +2504,17 @@ const G = {
         <div class="preview-type">${attrBadges}<span style="color:#777">${typeLabel}</span></div>
         <div class="preview-effect">${card.effect || '<em style="color:#555">No effect text</em>'}</div>
         ${statsHtml}
-        <div class="preview-pin-hint">Right-click to pin</div>
+        <div class="preview-pin-hint">Right-click to pin ∙ right-click again to close</div>
       </div>
     `;
+
+    // Keep inside viewport
+    const H = window.innerHeight, PH = 420, bottom = 150;
+    p.style.right  = '14px';
+    p.style.bottom = bottom + 'px';
+    p.style.left   = 'auto';
+    p.style.top    = 'auto';
+    if (H - bottom - PH < 0) { p.style.bottom = 'auto'; p.style.top = '8px'; }
   },
 
   _pinPreview(card) {
@@ -2522,22 +2529,9 @@ const G = {
     }
   },
 
-  _showPreviewPanel() {
-    const p = document.getElementById('card-preview');
-    p.className = 'visible';
-    p.innerHTML = `
-      <div class="preview-img-wrap preview-placeholder">
-        <div class="preview-placeholder-inner">⚔<br><span>Hover a card<br>to inspect</span></div>
-      </div>
-      <div class="preview-body">
-        <div class="preview-name" style="color:#444">—</div>
-      </div>
-    `;
-  },
-
   _hidePreview() {
     const p = document.getElementById('card-preview');
-    if (!p.classList.contains('pinned')) this._showPreviewPanel();
+    if (!p.classList.contains('pinned')) p.classList.remove('visible');
   },
 
   // ── GRAVEYARD VIEWER ─────────────────────────
@@ -2646,13 +2640,23 @@ const G = {
     this._toastTimer = setTimeout(() => el.classList.remove('visible'), 2200);
   },
 
-  _log(msg, type='') {
+  _log(msg, type='', card=null) {
     const log = document.getElementById('game-log');
     const el = document.createElement('div');
     el.className = 'log-entry ' + type;
-    el.textContent = msg;
+    if (card && card.image) {
+      const img = document.createElement('img');
+      img.className = 'log-thumb';
+      img.src = card.image;
+      img.onerror = () => img.remove();
+      el.appendChild(img);
+    }
+    const text = document.createElement('span');
+    text.className = 'log-text';
+    text.textContent = msg;
+    el.appendChild(text);
     log.prepend(el);
-    while (log.children.length > 40) log.removeChild(log.lastChild);
+    while (log.children.length > 60) log.removeChild(log.lastChild);
   },
 
   _phaseAnnounce(text) {
