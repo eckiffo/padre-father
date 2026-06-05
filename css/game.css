@@ -622,56 +622,130 @@ body {
 
 #card-preview {
   position: fixed;
-  bottom: 145px;
-  right: 12px;
-  width: 160px;
-  background: #111;
-  border: 1px solid #333;
-  border-radius: 6px;
+  bottom: 150px;
+  right: 14px;
+  width: 220px;
+  background: #0c0c0c;
+  border: 2px solid #444;
+  border-radius: 10px;
   overflow: hidden;
-  z-index: 50;
+  z-index: 200;
   display: none;
-  box-shadow: 0 8px 24px rgba(0,0,0,0.8);
+  box-shadow: 0 16px 48px rgba(0,0,0,0.95), 0 0 0 1px rgba(255,215,0,0.08);
+  pointer-events: none;
+  transition: opacity 0.12s;
 }
 
 #card-preview.visible { display: block; }
+#card-preview.pinned  { pointer-events: all; border-color: var(--gold) !important; }
+
+/* Type-based border color */
+#card-preview.type-monster { border-color: #b8860b; }
+#card-preview.type-spell   { border-color: #1a6e4a; }
+#card-preview.type-trap    { border-color: #6a1a6e; }
+
+/* Full card image — no cropping */
+#card-preview .preview-img-wrap {
+  width: 100%;
+  background: #000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  border-bottom: 1px solid #222;
+}
 
 #card-preview img {
   width: 100%;
-  height: 120px;
-  object-fit: cover;
+  height: auto;
+  display: block;
+}
+
+/* Info panel below image */
+#card-preview .preview-body {
+  padding: 8px 10px 10px;
+  background: #0f0f0f;
 }
 
 #card-preview .preview-name {
   font-family: var(--font-heading);
-  font-size: 11px;
-  color: var(--gold);
-  padding: 6px 8px 2px;
-  border-bottom: 1px solid #222;
+  font-size: 13px;
+  font-weight: 700;
+  color: #fff;
+  line-height: 1.2;
+  margin-bottom: 4px;
+  text-shadow: 0 1px 4px rgba(0,0,0,0.8);
 }
 
 #card-preview .preview-type {
-  font-size: 9px;
-  color: var(--muted);
-  padding: 2px 8px;
+  font-size: 10px;
+  color: #aaa;
+  margin-bottom: 6px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-wrap: wrap;
 }
 
-#card-preview .preview-stats {
+#card-preview .preview-type .attr-badge {
+  background: rgba(255,255,255,0.08);
+  border-radius: 3px;
+  padding: 1px 5px;
+  font-size: 9px;
+  font-family: var(--font-heading);
+  letter-spacing: 0.05em;
+}
+
+#card-preview .preview-stars {
+  color: #FFD700;
   font-size: 11px;
-  color: var(--text);
-  padding: 4px 8px;
-  display: flex;
-  justify-content: space-between;
+  margin-bottom: 5px;
+  letter-spacing: 1px;
 }
 
 #card-preview .preview-effect {
-  font-size: 9px;
-  color: #aaa;
-  padding: 4px 8px 8px;
-  line-height: 1.5;
-  max-height: 80px;
+  font-size: 11px;
+  color: #ccc;
+  line-height: 1.55;
+  max-height: 110px;
   overflow-y: auto;
+  border-top: 1px solid #222;
+  padding-top: 6px;
+  margin-top: 2px;
+  scrollbar-width: thin;
+  scrollbar-color: #444 transparent;
 }
+
+#card-preview .preview-stats {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 7px;
+  padding-top: 6px;
+  border-top: 1px solid #222;
+}
+
+#card-preview .preview-stats span {
+  font-family: var(--font-heading);
+  font-size: 12px;
+  font-weight: 700;
+  color: #fff;
+  background: rgba(255,255,255,0.06);
+  padding: 3px 8px;
+  border-radius: 4px;
+}
+
+#card-preview .preview-stats span.atk { color: #ff6b6b; }
+#card-preview .preview-stats span.def { color: #6bcaff; }
+
+/* Pin hint */
+#card-preview .preview-pin-hint {
+  font-size: 9px;
+  color: #555;
+  text-align: center;
+  padding: 4px 0 2px;
+  font-family: var(--font-heading);
+}
+#card-preview.pinned .preview-pin-hint { color: var(--gold); }
 
 /* ── LOG ────────────────────────────────────── */
 

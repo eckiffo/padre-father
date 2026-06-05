@@ -1711,6 +1711,8 @@ const G = {
     el.addEventListener('click', () => this._onHandCardClick(idx));
     el.addEventListener('mouseenter', () => this._showPreview(card));
     el.addEventListener('mouseleave', () => this._hidePreview());
+    // right-click or long-press to pin the preview
+    el.addEventListener('contextmenu', (e) => { e.preventDefault(); this._pinPreview(card); });
     return el;
   },
 
@@ -1943,6 +1945,7 @@ const G = {
 
     el.addEventListener('mouseenter', () => this._showPreview(card));
     el.addEventListener('mouseleave', () => this._hidePreview());
+    el.addEventListener('contextmenu', (e) => { e.preventDefault(); this._pinPreview(card); });
 
     if (isPlayer && this.state.turn === 'player') {
       el.addEventListener('click', (e) => {
@@ -2186,20 +2189,76 @@ const G = {
 
   _showPreview(card) {
     const p = document.getElementById('card-preview');
-    p.querySelector('img').src = card.image || 'img/cards/card-back.jpg';
-    p.querySelector('.preview-name').textContent = card.name;
-    const typeStr = card.type === 'monster'
-      ? `[${card.attribute || ''} ★${card.stars}] ${(card.subtype||'').toUpperCase()}`
-      : `[${card.type.toUpperCase()}] ${(card.subtype||'').toUpperCase()}`;
-    p.querySelector('.preview-type').textContent = typeStr;
-    const stats = p.querySelector('.preview-stats');
-    stats.innerHTML = card.atk != null ? `<span>ATK/${card.atk}</span><span>DEF/${card.def}</span>` : '';
-    p.querySelector('.preview-effect').textContent = card.effect || '';
-    p.classList.add('visible');
+    if (p.classList.contains('pinned')) return; // don't overwrite pinned card
+
+    const isMonster = card.type === 'monster';
+    const isSpell   = card.type === 'spell'   || card.type === 'blessing';
+    const isTrap    = card.type === 'trap'     || card.type === 'confession';
+
+    p.className = 'visible' + (isMonster ? ' type-monster' : isSpell ? ' type-spell' : isTrap ? ' type-trap' : '');
+
+    const imgSrc = card.image || 'img/cards/card-back.jpg';
+    const stars  = isMonster && card.stars ? '★'.repeat(card.stars) : '';
+
+    const attrBadges = [card.attribute, card.subtype ? card.subtype.toUpperCase() : null]
+      .filter(Boolean)
+      .map(a => `<span class="attr-badge">${a}</span>`)
+      .join('');
+
+    const typeLabel = isMonster ? 'Monster' : isSpell ? 'Spell Card' : 'Trap Card';
+
+    const statsHtml = card.atk != null
+      ? `<div class="preview-stats">
+           <span class="atk">ATK / ${card._atk ?? card.atk}</span>
+           <span class="def">DEF / ${card._def ?? card.def}</span>
+         </div>`
+      : '';
+
+    p.innerHTML = `
+      <div class="preview-img-wrap">
+        <img src="${imgSrc}" onerror="this.src='img/cards/card-back.jpg'" alt="${card.name}">
+      </div>
+      <div class="preview-body">
+        <div class="preview-name">${card.name}</div>
+        ${stars ? `<div class="preview-stars">${stars}</div>` : ''}
+        <div class="preview-type">${attrBadges}<span style="color:#777">${typeLabel}</span></div>
+        <div class="preview-effect">${card.effect || '<em style="color:#555">No effect text</em>'}</div>
+        ${statsHtml}
+        <div class="preview-pin-hint">Right-click to pin ∙ right-click again to close</div>
+      </div>
+    `;
+
+    // Smart positioning — keep inside viewport
+    const W = window.innerWidth, H = window.innerHeight;
+    const PW = 220, PH = 420;
+    const right = 14;
+    const bottom = 150;
+    p.style.right  = right + 'px';
+    p.style.bottom = bottom + 'px';
+    p.style.left   = 'auto';
+    p.style.top    = 'auto';
+    // if it would go off the top, anchor to top instead
+    if (H - bottom - PH < 0) {
+      p.style.bottom = 'auto';
+      p.style.top = '8px';
+    }
+  },
+
+  _pinPreview(card) {
+    const p = document.getElementById('card-preview');
+    if (p.classList.contains('pinned')) {
+      // unpin
+      p.classList.remove('pinned');
+      p.classList.remove('visible');
+    } else {
+      this._showPreview(card);
+      p.classList.add('pinned');
+    }
   },
 
   _hidePreview() {
-    document.getElementById('card-preview').classList.remove('visible');
+    const p = document.getElementById('card-preview');
+    if (!p.classList.contains('pinned')) p.classList.remove('visible');
   },
 
   // ── UI HELPERS ────────────────────────────────
