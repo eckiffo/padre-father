@@ -157,7 +157,7 @@ window.PADRE_CARDS = {
     def: 2500,
     rarity: 'secret',
     deck: 'dev',
-    image: 'img/cards/sigma_dev.jpg',
+    image: 'img/cards/SigmaDev.png',
     effect: 'Requires 2 Tributes. Cannot be targeted by card effects. When this card destroys a monster in battle: your opponent loses 500 Faith.'
   },
 
