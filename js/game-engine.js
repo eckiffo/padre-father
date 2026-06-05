@@ -196,19 +196,26 @@ const G = {
   },
 
   _doStandbyPhase() {
-    // handle continuous effects (Viral World cost, Viral Post cost)
     const s = this.state;
     const me = s[s.turn === 'player' ? 'player' : 'opponent'];
+    const opp = s[s.turn === 'player' ? 'opponent' : 'player'];
     let cost = 0;
+
     me.field.monsters.forEach(card => {
       if (!card) return;
       if (card.id === 'viral_post' || card.id === 'viral_thread') cost += 500;
       if (card.id === 'the_believer') {
-        card.atk = (card._base_atk || card.atk) + 200;
-        card._base_atk = card._base_atk || (card.atk - 200);
+        card._base_atk = card._base_atk || card.atk;
+        card.atk = card._base_atk + 200 * (s.turnNum - 1);
         this._log(`${card.name} grows stronger (${card.atk} ATK)`, 'summon');
       }
+      // Snatch Steal: original owner gains 1000 LP each Standby Phase
+      if (card._snatchStealed) {
+        opp.faith = Math.min(8000, opp.faith + 1000);
+        this._log(`Snatch Steal: ${opp.who} gains 1000 Faith`, 'heal');
+      }
     });
+
     if (me.field.fieldSpell && me.field.fieldSpell.id === 'viral_world') cost += 500 * me.field.monsters.filter(Boolean).length;
     if (cost > 0) {
       me.faith = Math.max(0, me.faith - cost);
@@ -216,12 +223,26 @@ const G = {
       this._renderTopbar();
       if (me.faith <= 0) { this._endGame(s.turn === 'player' ? 'opponent' : 'player', 'maintenance cost'); return; }
     }
+    this._renderTopbar();
     setTimeout(() => this._setPhase('main1'), 300);
   },
 
   _doEndPhase() {
     const s = this.state;
     const me = s[s.turn === 'player' ? 'player' : 'opponent'];
+    const opp = s[s.turn === 'player' ? 'opponent' : 'player'];
+
+    // Return Change of Heart monsters to original owner
+    me.field.monsters.forEach((card, i) => {
+      if (!card || !card._returnAtEndPhase) return;
+      const returnTo = s[card._returnAtEndPhase];
+      delete card._returnAtEndPhase;
+      me.field.monsters[i] = null;
+      const slot = returnTo.field.monsters.findIndex(m => !m);
+      if (slot > -1) { returnTo.field.monsters[slot] = card; this._log(`${card.name} returned to ${card._returnAtEndPhase}`, 'phase'); }
+      else { returnTo.graveyard.push(card); }
+    });
+
     // discard to 6
     while (me.hand.length > 6) {
       const disc = me.hand.pop();
@@ -423,6 +444,13 @@ const G = {
 
   // ── SPELL EFFECTS ─────────────────────────────
 
+  // Returns true if a monster is protected from spells/traps by Lord of D.
+  _isDragonProtected(monster, ownerSide) {
+    if (!ownerSide._dragonLordActive) return false;
+    const n = (monster.name || '').toLowerCase();
+    return n.includes('dragon') || monster.id?.includes('dragon');
+  },
+
   _applySpellEffect(card, side) {
     const s = this.state;
     const me = side === 'player' ? s.player : s.opponent;
@@ -502,11 +530,8 @@ const G = {
 
       case 'market_crash':
       case 'dark_hole':
-        [...s.player.field.monsters,...s.opponent.field.monsters].forEach((c,i)=>{
-          if(!c) return;
-          if(i<5) { s.player.field.monsters[i]=null; s.player.graveyard.push(c); }
-          else { s.opponent.field.monsters[i-5]=null; s.opponent.graveyard.push(c); }
-        });
+        s.player.field.monsters.forEach((c,i)=>{ if(c && !this._isDragonProtected(c, s.player)){ s.player.field.monsters[i]=null; s.player.graveyard.push(c); this._onDestroyEffect(c,'player'); } });
+        s.opponent.field.monsters.forEach((c,i)=>{ if(c && !this._isDragonProtected(c, s.opponent)){ s.opponent.field.monsters[i]=null; s.opponent.graveyard.push(c); this._onDestroyEffect(c,'opponent'); } });
         this._log('Dark Hole — all monsters destroyed!','destroy');
         this._renderField();
         break;
@@ -519,25 +544,33 @@ const G = {
 
       case 'narrative_shift':
       case 'change_of_heart': {
-        const targets = opp.field.monsters.filter(Boolean);
-        if(targets.length===0){this._log('No targets','muted');break;}
+        const targets = opp.field.monsters.filter(c => c && !this._isDragonProtected(c, opp));
+        if(targets.length===0){this._log('No targets (Dragons are protected by Lord of D.!)','muted');break;}
         const stolen = targets.sort((a,b)=>(b.atk||0)-(a.atk||0))[0];
         const oi = opp.field.monsters.indexOf(stolen);
         opp.field.monsters[oi]=null;
         const slot = me.field.monsters.findIndex(m=>!m);
-        if(slot>-1){ me.field.monsters[slot]=stolen; this._log(`${stolen.name} stolen until End Phase!`,'summon'); }
+        if(slot>-1){
+          stolen._returnAtEndPhase = side === 'player' ? 'opponent' : 'player'; // return to original owner at End Phase
+          me.field.monsters[slot]=stolen;
+          this._log(`${stolen.name} stolen until End Phase!`,'summon');
+        }
         this._renderField();
         break;
       }
 
       case 'snatch_steal': {
-        const targets2 = opp.field.monsters.filter(Boolean);
+        const targets2 = opp.field.monsters.filter(c => c && !this._isDragonProtected(c, opp));
         if(!targets2.length){this._log('No targets','muted');break;}
         const stolen2 = targets2.sort((a,b)=>(b.atk||0)-(a.atk||0))[0];
         const oi2 = opp.field.monsters.indexOf(stolen2);
         opp.field.monsters[oi2]=null;
         const slot2 = me.field.monsters.findIndex(m=>!m);
-        if(slot2>-1){ me.field.monsters[slot2]=stolen2; this._log(`${stolen2.name} permanently stolen! (Opponent gains 1000 LP per turn)`,'summon'); opp.faith=Math.min(8000,opp.faith+1000); }
+        if(slot2>-1){
+          stolen2._snatchStealed = side === 'player' ? 'opponent' : 'player'; // track original owner for LP gain
+          me.field.monsters[slot2]=stolen2;
+          this._log(`${stolen2.name} stolen by Snatch Steal! (Opponent gains 1000 Faith each Standby)`, 'summon');
+        }
         this._renderField();
         break;
       }
@@ -580,18 +613,6 @@ const G = {
         break;
       }
 
-      case 'green_candle': {
-        const target = me.field.monsters.find(Boolean);
-        if(!target){this._log('No monsters to buff','muted');break;}
-        const roll = Math.ceil(Math.random()*6);
-        const old = target.atk;
-        target.atk = target.atk * roll;
-        target._tempAtk = target.atk;
-        this._log(`Green Candle! Rolled ${roll}. ${target.name} ATK: ${old} → ${target.atk}`,'summon');
-        this._renderField();
-        break;
-      }
-
       case 'two_x_leverage': {
         const target = me.field.monsters.find(Boolean);
         if(!target) break;
@@ -603,7 +624,7 @@ const G = {
 
       case 'paper_bag':
       case 'shrink': {
-        const target = opp.field.monsters.filter(Boolean).sort((a,b)=>(b.atk||0)-(a.atk||0))[0];
+        const target = opp.field.monsters.filter(c => c && !this._isDragonProtected(c, opp)).sort((a,b)=>(b.atk||0)-(a.atk||0))[0];
         if(!target){this._log('No targets','muted');break;}
         target.atk=Math.floor((target._atk||target.atk)/2);
         this._log(`Shrink: ${target.name} ATK halved to ${target.atk}`,'destroy');
@@ -628,9 +649,11 @@ const G = {
         const target = me.field.monsters.find(Boolean);
         if(!target){this._log('No monsters to buff','muted');break;}
         const roll = Math.ceil(Math.random()*6);
-        const old = target._atk || target.atk;
-        target.atk = old * roll; target._atk = target.atk;
-        this._log(`Graceful Dice! Rolled ${roll}. ${target.name} ATK: ${old} → ${target.atk}`,'summon');
+        const oldAtk = target._baseAtk || target.atk;
+        target._baseAtk = oldAtk; // preserve original for reset
+        target.atk = oldAtk * roll;
+        target._atk = target.atk;
+        this._log(`${card.id==='green_candle'?'Green Candle':'Graceful Dice'}! Rolled ${roll}. ${target.name} ATK: ${oldAtk} → ${target.atk}`,'summon');
         this._renderField();
         break;
       }
@@ -689,22 +712,6 @@ const G = {
         break;
       }
 
-      case 'elegant_algorithm': {
-        const hasCT = me.field.monsters.some(c=>c&&c.id==='ct_lady');
-        if(!hasCT){this._log('Need CT Lady on field','muted');break;}
-        const trinity = me.hand.findIndex(c=>c.id==='ct_trinity');
-        if(trinity===-1){this._log('CT Trinity not in Bag','muted');break;}
-        const slot=me.field.monsters.findIndex(m=>!m);
-        if(slot===-1) break;
-        const t = me.hand.splice(trinity,1)[0];
-        t.position='attack'; t.faceDown=false;
-        me.field.monsters[slot]=t;
-        this._log('CT Trinity special summoned!','summon');
-        this._renderField();
-        if(side==='player') this._renderHand();
-        break;
-      }
-
       case 'triangle_chart': {
         me.field.monsters.filter(c=>c&&c.attribute==='VIRAL').forEach(c=>{ c.atk+=500; });
         opp.field.spells.forEach((c,i)=>{ if(c&&c.subtype==='continuous'){ opp.graveyard.push(c); opp.field.spells[i]=null; } });
@@ -715,25 +722,13 @@ const G = {
 
       case 'rug_virus':
       case 'crush_card_virus': {
-        // destroy all opponent monsters with 1500+ ATK (simplified — real card looks at hand/deck too)
-        opp.field.monsters.forEach((c,i)=>{ if(c&&(c.atk||0)>=1500){ opp.graveyard.push(c); opp.field.monsters[i]=null; this._log(`Crush Card Virus destroyed ${c.name}`,'destroy'); } });
-        // also destroy from hand
+        // destroy all opponent monsters with 1500+ ATK on field, in hand, and in deck (dragons protected by Lord of D.)
+        opp.field.monsters.forEach((c,i)=>{ if(c&&(c.atk||0)>=1500&&!this._isDragonProtected(c,opp)){ opp.graveyard.push(c); opp.field.monsters[i]=null; this._log(`Crush Card Virus destroyed ${c.name} (field)`,'destroy'); } });
         for(let i=opp.hand.length-1;i>=0;i--){ if((opp.hand[i].atk||0)>=1500){ opp.graveyard.push(opp.hand.splice(i,1)[0]); } }
+        let deckKills=0;
+        for(let i=opp.deck.length-1;i>=0;i--){ if((opp.deck[i].atk||0)>=1500){ opp.graveyard.push(opp.deck.splice(i,1)[0]); deckKills++; } }
+        if(deckKills>0) this._log(`Crush Card Virus wiped ${deckKills} monster(s) from opponent's deck!`,'destroy');
         this._renderField(); this._renderOppHand();
-        break;
-      }
-
-      case 'ring_of_destruction': {
-        const biggest = opp.field.monsters.filter(Boolean).sort((a,b)=>(b.atk||0)-(a.atk||0))[0];
-        if(!biggest){this._log('No targets','muted');break;}
-        const dmg = biggest.atk||0;
-        opp.field.monsters[opp.field.monsters.indexOf(biggest)]=null;
-        opp.graveyard.push(biggest);
-        me.faith=Math.max(0,me.faith-dmg);
-        opp.faith=Math.max(0,opp.faith-dmg);
-        this._log(`Ring of Destruction! ${biggest.name} destroyed — both take ${dmg} damage!`,'damage');
-        this._flashDamage('player'); this._flashDamage('opponent');
-        this._renderField();
         break;
       }
 
@@ -886,7 +881,9 @@ const G = {
       me.positionChangedThisTurn.add(slotIdx);
       this._log(`${card.name} switched to ${card.position} position`, 'phase');
     } else {
-      // Flip Summon: face-down → face-up attack, triggers FLIP effect, does NOT use normal summon
+      // Flip Summon: cannot flip a card set this same turn
+      if (card._setTurnNum === s.turnNum) { this._toast('Cannot Flip Summon a card set this turn'); card.faceDown = true; return; }
+      // face-down → face-up attack, triggers FLIP effect, does NOT use normal summon
       card.position = 'attack';
       this._log(`Flip Summon! ${card.name}!`, 'summon');
       this._onFlipEffect(card, 'player');
@@ -949,6 +946,7 @@ const G = {
     const s = this.state;
     if (s.phase !== 'battle') { this._toast('Can only attack during Battle Phase'); return; }
     if (s.turn !== 'player') return;
+    if (s.turnNum === 1) { this._toast('Cannot attack on the first turn'); return; }
     const me = s.player;
     const card = me.field.monsters[slotIdx];
     if (!card) return;
@@ -1043,6 +1041,14 @@ const G = {
       }
     } // end doResolve
 
+    // Goblin Attack Force: forced into Defense Position after attacking
+    const attackerAfter = aSide.field.monsters[attackerIdx];
+    if (attackerAfter && attackerAfter._goblin && attackerAfter.position !== 'defense') {
+      attackerAfter.position = 'defense';
+      aSide.positionChangedThisTurn.add(attackerIdx);
+      this._log(`Goblin Attack Force forced into Defense Position!`, 'phase');
+    }
+
     this._renderTopbar();
     this._checkWin();
     this.mode = null;
@@ -1094,6 +1100,19 @@ const G = {
           this._renderTopbar();
         }
         break;
+      case 'thousand_eyes_restrict':
+      case 'relinquished_narrative': {
+        // Remove attack lock from all monsters when TER is destroyed
+        [...me.field.monsters, ...opp.field.monsters].filter(Boolean).forEach(c => { delete c._lockAttacks; });
+        this._log('Thousand-Eyes Restrict destroyed — monsters are free to move!', 'summon');
+        break;
+      }
+      case 'lord_of_d_': {
+        // Dragon protection ends when Lord of D. leaves the field
+        me._dragonLordActive = false;
+        this._log("Lord of D. destroyed — Dragon protection lifted!", 'destroy');
+        break;
+      }
     }
   },
 
@@ -1205,6 +1224,7 @@ const G = {
     const ai = s.opponent;
     const player = s.player;
 
+    if (s.turnNum === 1) { setTimeout(() => this._setPhase('main2'), 300); return; }
     if (ai._lockTurns > 0) {
       this._log(`Opponent is locked (Diamond Hands Lock)`, 'summon');
       setTimeout(() => this._setPhase('main2'), 500);
@@ -2146,7 +2166,9 @@ const G = {
     menu.appendChild(cancel);
 
     menu.classList.add('visible');
-    const rect = document.getElementById(`${who}-m-${idx}`).getBoundingClientRect();
+    const zoneType = (card.type === 'monster') ? 'm' : 's';
+    const zoneEl = document.getElementById(`${who}-${zoneType}-${idx}`);
+    const rect = zoneEl ? zoneEl.getBoundingClientRect() : { top: 400, bottom: 406, left: window.innerWidth / 2 };
     menu.style.bottom = 'auto';
     menu.style.top = (rect.bottom + 6) + 'px';
     menu.style.left = rect.left + 'px';
