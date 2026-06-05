@@ -1361,7 +1361,7 @@ const G = {
       // highlight logic
       slot.classList.remove('highlight', 'attack-target', 'droppable');
 
-      const oppHasMonsters = !isPlayer && s.opponent.field.monsters.some(Boolean);
+      const oppHasMonsters = !isPlayer && this.state.opponent.field.monsters.some(Boolean);
 
       if (isPlayer && this.mode === 'summon-target' && !card) slot.classList.add('highlight');
       if (isPlayer && this.mode === 'set-target' && !card) slot.classList.add('highlight');
