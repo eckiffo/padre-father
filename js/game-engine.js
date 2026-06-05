@@ -1696,31 +1696,28 @@ const G = {
     const count = cards.length;
     if (!count) return;
 
-    // Available width (subtract padding)
     const availW = area.offsetWidth - 48;
-    // Max card width we want at any count
-    const maxCardW = Math.min(110, Math.floor(availW / Math.min(count, 4)));
-    // Card width scales down beyond 5 cards to keep things tidy
-    const cardW = count <= 5 ? Math.min(110, Math.floor((availW - count * 8) / count))
-                             : Math.max(60, Math.floor((availW * 0.82) / count));
-    const cardH = Math.round(cardW * 1.455); // standard YGO card ratio ≈ 1:1.455
+    // Derive card height from the container so cards always fit vertically
+    const areaH = area.offsetHeight;
+    const cardH = Math.min(145, Math.max(80, areaH - 32));
+    const cardW = Math.round(cardH / 1.455);
 
-    // Overlap: when cards exceed available space, fan them
-    const totalNatural = count * cardW + (count - 1) * 8;
+    // Use overlap (negative margin) to fit all cards horizontally when needed
+    const gap = 6;
+    const totalNatural = count * cardW + Math.max(0, count - 1) * gap;
     const overlapNeeded = Math.max(0, totalNatural - availW);
     const overlapPerCard = count > 1 ? Math.ceil(overlapNeeded / (count - 1)) : 0;
 
     cards.forEach((el, i) => {
       el.style.width  = cardW + 'px';
       el.style.height = cardH + 'px';
-      el.style.zIndex = i + 1;   // left cards under right cards
-      // apply negative right-margin to create fan overlap
-      if (i < count - 1 && overlapPerCard > 0) {
-        el.style.marginRight = `-${overlapPerCard}px`;
+      el.style.zIndex = i + 1;
+      if (i < count - 1) {
+        const m = overlapPerCard > 0 ? -overlapPerCard : gap;
+        el.style.marginRight = m + 'px';
       } else {
         el.style.marginRight = '';
       }
-      // slight rotation for organic feel
       if (count >= 4) {
         const mid = (count - 1) / 2;
         const rot = (i - mid) * 1.5;
