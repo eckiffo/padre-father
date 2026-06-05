@@ -9,12 +9,17 @@ const G = {
 
   state: null,
   selectedHandIdx: null,
-  selectedFieldZone: null, // { side, row, idx }
+  selectedFieldZone: null,
   pendingTributes: [],
   tributesNeeded: 0,
   pendingCard: null,
   attackSource: null,
-  mode: null, // 'summon-target' | 'attack-target' | 'tribute' | 'spell-target'
+  mode: null, // 'summon-target' | 'attack-target' | 'tribute' | 'spell-target' | 'set-target' | 'trap-target'
+
+  // ── TIMER ─────────────────────────────────────
+  _turnTimer: null,
+  _turnTimeLeft: 60,
+  TURN_SECONDS: 60,
 
   // ── INIT ──────────────────────────────────────
 
@@ -156,11 +161,17 @@ const G = {
         this._phaseAnnounce('MAIN 2');
         this._renderHand();
         this._renderField();
-        if (s.turn === 'opponent') setTimeout(() => this._endTurn(), 500);
+        if (s.turn === 'opponent') setTimeout(() => this._setPhase('end'), 500);
         break;
       case 'end':
+        this._stopTimer();
         this._doEndPhase();
         break;
+    }
+
+    // start/stop timer based on whose turn it is and what phase
+    if (s.turn === 'player' && (phase === 'main1' || phase === 'battle' || phase === 'main2')) {
+      if (phase === 'main1') this._startTimer(); // only reset on main1 entry
     }
   },
 
@@ -216,6 +227,8 @@ const G = {
       me.graveyard.push(disc);
       if (s.turn === 'player') this._log(`Discarded ${disc.name} (hand limit)`, 'destroy');
     }
+    // decrement lock turns
+    if (me._lockTurns > 0) me._lockTurns--;
     // reset
     me.normalSummonUsed = false;
     me.attackedThisTurn = new Set();
@@ -224,10 +237,43 @@ const G = {
     s.turnNum++;
     this._renderTopbar();
     this._renderHand();
+    this._renderOppHand();
     this._renderField();
 
     const name = s.turn === 'player' ? 'YOUR TURN' : `${s.opponent.deckName.toUpperCase()}'S TURN`;
     this._showTurnOverlay(name, 'DRAW PHASE', () => this._setPhase('draw'));
+  },
+
+  // ── TIMER ─────────────────────────────────────
+
+  _startTimer() {
+    this._stopTimer();
+    this._turnTimeLeft = this.TURN_SECONDS;
+    this._updateTimerUI();
+    this._turnTimer = setInterval(() => {
+      this._turnTimeLeft--;
+      this._updateTimerUI();
+      if (this._turnTimeLeft <= 0) {
+        this._stopTimer();
+        this._log('Time up! Turn ended automatically', 'phase');
+        this._setPhase('end');
+      }
+    }, 1000);
+  },
+
+  _stopTimer() {
+    clearInterval(this._turnTimer);
+    this._turnTimer = null;
+    this._updateTimerUI();
+  },
+
+  _updateTimerUI() {
+    const el = document.getElementById('turn-timer');
+    if (!el) return;
+    const s = this.state;
+    const active = this._turnTimer !== null;
+    el.textContent = active ? `${this._turnTimeLeft}s` : '';
+    el.className = 'turn-timer' + (this._turnTimeLeft <= 10 && active ? ' urgent' : '');
   },
 
   // ── TRIBUTE SUMMON ────────────────────────────
@@ -787,14 +833,16 @@ const G = {
   _aiMainPhase() {
     const s = this.state;
     const ai = s.opponent;
-    const delay = (fn, ms) => setTimeout(fn, ms);
 
-    let d = 600;
+    // Build action queue upfront (snapshot the hand so indices stay valid)
+    const actions = [];
 
-    // Play spells from hand
-    ai.hand.forEach((card, i) => {
+    // 1. Play normal spells (limit 2 to avoid stalling)
+    let spellsPlayed = 0;
+    for (const card of [...ai.hand]) {
+      if (spellsPlayed >= 2) break;
       if (card.type === 'blessing' && card.subtype === 'normal') {
-        delay(() => {
+        actions.push(() => {
           const idx = ai.hand.indexOf(card);
           if (idx === -1) return;
           ai.hand.splice(idx, 1);
@@ -802,77 +850,69 @@ const G = {
           this._log(`Opponent activated ${card.name}`, 'summon');
           this._applySpellEffect(card, 'opponent');
           this._renderOppHand();
-        }, d);
-        d += 400;
-      }
-    });
-
-    // Summon monsters
-    if (!ai.normalSummonUsed) {
-      const summmonable = ai.hand.filter(c => c.type === 'monster');
-      if (summmonable.length > 0) {
-        const best = summmonable.sort((a,b) => (b.atk||0)-(a.atk||0))[0];
-        const slot = ai.field.monsters.findIndex(m => !m);
-        if (slot > -1) {
-          delay(() => {
-            const idx = ai.hand.indexOf(best);
-            if (idx === -1) return;
-            // tributes
-            if (best.stars >= 5) {
-              const needed = best.stars <= 6 ? 1 : 2;
-              const tributes = ai.field.monsters.map((c,i)=>c?i:null).filter(i=>i!==null);
-              if (tributes.length >= needed) {
-                for (let t = 0; t < needed; t++) {
-                  const ti = tributes[t];
-                  ai.graveyard.push(ai.field.monsters[ti]);
-                  ai.field.monsters[ti] = null;
-                }
-                best.position = 'attack'; best.faceDown = false;
-                ai.field.monsters[slot] = best;
-                ai.hand.splice(idx, 1);
-                ai.normalSummonUsed = true;
-                this._log(`Opponent tribute summoned ${best.name}!`, 'summon');
-                this._onSummonEffect(best, 'opponent');
-                this._renderField();
-                this._renderOppHand();
-              }
-            } else {
-              best.position = 'attack'; best.faceDown = false;
-              ai.field.monsters[slot] = best;
-              ai.hand.splice(idx, 1);
-              ai.normalSummonUsed = true;
-              this._log(`Opponent summoned ${best.name} (${best.atk}/${best.def})`, 'summon');
-              this._onSummonEffect(best, 'opponent');
-              this._renderField();
-              this._renderOppHand();
-            }
-          }, d);
-          d += 400;
-        }
+        });
+        spellsPlayed++;
       }
     }
 
-    // Set traps
-    ai.hand.forEach(card => {
-      if (card.type === 'confession') {
-        const slot = ai.field.spells.findIndex(s => !s);
-        if (slot > -1) {
-          delay(() => {
-            const idx = ai.hand.indexOf(card);
-            if (idx === -1) return;
+    // 2. Summon best monster
+    if (!ai.normalSummonUsed) {
+      const summonable = ai.hand.filter(c => c.type === 'monster');
+      if (summonable.length > 0) {
+        const best = summonable.sort((a,b) => (b.atk||0)-(a.atk||0))[0];
+        actions.push(() => {
+          const slot = ai.field.monsters.findIndex(m => !m);
+          if (ai.normalSummonUsed || slot === -1) return;
+          const idx = ai.hand.indexOf(best);
+          if (idx === -1) return;
+          if (best.stars >= 5) {
+            const needed = best.stars <= 6 ? 1 : 2;
+            const tributes = ai.field.monsters.map((c,ti)=>c?ti:null).filter(ti=>ti!==null);
+            if (tributes.length < needed) return; // can't tribute
+            for (let t = 0; t < needed; t++) {
+              ai.graveyard.push(ai.field.monsters[tributes[t]]);
+              ai.field.monsters[tributes[t]] = null;
+            }
+            best.position = 'attack'; best.faceDown = false;
+            ai.field.monsters[slot] = best;
             ai.hand.splice(idx, 1);
-            card.faceDown = true;
-            ai.field.spells[slot] = card;
-            this._log(`Opponent set a card face-down`, 'summon');
-            this._renderField();
-            this._renderOppHand();
-          }, d);
-          d += 300;
-        }
+            ai.normalSummonUsed = true;
+            this._log(`Opponent tribute summoned ${best.name}!`, 'summon');
+            this._onSummonEffect(best, 'opponent');
+          } else {
+            best.position = 'attack'; best.faceDown = false;
+            ai.field.monsters[slot] = best;
+            ai.hand.splice(idx, 1);
+            ai.normalSummonUsed = true;
+            this._log(`Opponent summoned ${best.name} (${best.atk}/${best.def})`, 'summon');
+            this._onSummonEffect(best, 'opponent');
+          }
+          this._renderField();
+          this._renderOppHand();
+        });
       }
-    });
+    }
 
-    delay(() => this._setPhase('battle'), d + 400);
+    // 3. Set one trap
+    const trap = ai.hand.find(c => c.type === 'confession');
+    if (trap) {
+      actions.push(() => {
+        const slot = ai.field.spells.findIndex(sp => !sp);
+        const idx = ai.hand.indexOf(trap);
+        if (idx === -1 || slot === -1) return;
+        ai.hand.splice(idx, 1);
+        trap.faceDown = true;
+        ai.field.spells[slot] = trap;
+        this._log(`Opponent set a card face-down`, 'summon');
+        this._renderField();
+        this._renderOppHand();
+      });
+    }
+
+    // Execute actions with 500ms gaps, then advance to battle
+    let d = 500;
+    actions.forEach(fn => { setTimeout(fn, d); d += 500; });
+    setTimeout(() => this._setPhase('battle'), d + 300);
   },
 
   _aiBattlePhase() {
@@ -926,6 +966,7 @@ const G = {
   },
 
   _endGame(winner, reason) {
+    this._stopTimer();
     const isPlayer = winner === 'player';
     const modal = document.getElementById('modal-game-over');
     modal.querySelector('h2').textContent = isPlayer ? 'VICTORY' : 'DEFEATED';
