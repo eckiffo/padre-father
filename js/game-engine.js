@@ -361,9 +361,11 @@ const G = {
     me.normalSummonUsed = true;
     this.selectedHandIdx = null;
     this._log(`You summoned ${card.name} (${card.atk}/${card.def})`, 'summon');
-    this._onSummonEffect(card, 'player');
     this._renderField();
     this._renderHand();
+    const slotEl = document.getElementById(`player-m-${slotIdx}`);
+    if (slotEl) this._animSummon(slotEl, card.attribute === 'DARK' ? 'red' : card.attribute === 'LIGHT' ? '' : 'blue');
+    this._onSummonEffect(card, 'player');
   },
 
   _setMonster(handIdx, slotIdx) {
@@ -437,8 +439,12 @@ const G = {
     const me = side === 'player' ? s.player : s.opponent;
     const opp = side === 'player' ? s.opponent : s.player;
 
+    // Show visual effect for famous spells
+    this._animEffect(card.id);
+
     switch(card.id) {
       case 'ape_in':
+      case 'pot_of_greed':
         for(let i=0;i<2;i++) {
           if(me.deck.length>0) me.hand.push(me.deck.splice(0,1)[0]);
         }
@@ -720,12 +726,17 @@ const G = {
 
     aSide.attackedThisTurn.add(attackerIdx);
 
+    const attackerSlot = document.getElementById(`${attackerSide}-m-${attackerIdx}`);
+    const defenderSlot = defenderIdx !== 'direct' ? document.getElementById(`${defenderSide}-m-${defenderIdx}`) : null;
+    const isPlayer = attackerSide === 'player';
+
+    const doResolve = () => {
     if (defenderIdx === 'direct') {
-      // direct attack
       const dmg = attacker.atk;
       dSide.faith = Math.max(0, dSide.faith - dmg);
       this._log(`${attacker.name} attacks directly! ${defenderSide} takes ${dmg} damage`, 'damage');
       this._flashDamage(defenderSide);
+      this._animDamage(defenderSide, dmg);
     } else {
       const defender = dSide.field.monsters[defenderIdx];
       if (!defender) return;
@@ -738,54 +749,67 @@ const G = {
       }
 
       if (defender.position === 'attack') {
-        // ATK vs ATK
         const diff = attacker.atk - defender.atk;
         if (diff > 0) {
-          dSide.field.monsters[defenderIdx] = null;
-          dSide.graveyard.push(defender);
+          this._animDestroy(defenderSlot, () => {
+            dSide.field.monsters[defenderIdx] = null;
+            dSide.graveyard.push(defender);
+            this._onDestroyEffect(defender, defenderSide);
+            this._renderField();
+          });
           dSide.faith = Math.max(0, dSide.faith - diff);
-          this._log(`${attacker.name} (${attacker.atk}) destroyed ${defender.name} (${defender.atk})! ${defenderSide} -${diff} Faith`, 'damage');
+          this._log(`${attacker.name} (${attacker.atk}) destroyed ${defender.name} (${defender.atk})! -${diff} Faith`, 'damage');
           this._flashDamage(defenderSide);
-          this._onDestroyEffect(defender, defenderSide);
+          this._animDamage(defenderSide, diff);
         } else if (diff < 0) {
-          aSide.field.monsters[attackerIdx] = null;
-          aSide.graveyard.push(attacker);
+          this._animDestroy(attackerSlot, () => {
+            aSide.field.monsters[attackerIdx] = null;
+            aSide.graveyard.push(attacker);
+            this._onDestroyEffect(attacker, attackerSide);
+            this._renderField();
+          });
           aSide.faith = Math.max(0, aSide.faith - Math.abs(diff));
-          this._log(`${attacker.name} was destroyed by ${defender.name}! ${attackerSide} -${Math.abs(diff)} Faith`, 'damage');
+          this._log(`${attacker.name} was destroyed by ${defender.name}! -${Math.abs(diff)} Faith`, 'damage');
           this._flashDamage(attackerSide);
-          this._onDestroyEffect(attacker, attackerSide);
+          this._animDamage(attackerSide, Math.abs(diff));
         } else {
-          aSide.field.monsters[attackerIdx] = null;
-          dSide.field.monsters[defenderIdx] = null;
-          aSide.graveyard.push(attacker);
-          dSide.graveyard.push(defender);
+          this._animDestroy(attackerSlot, () => { aSide.field.monsters[attackerIdx] = null; aSide.graveyard.push(attacker); this._onDestroyEffect(attacker, attackerSide); this._renderField(); });
+          this._animDestroy(defenderSlot, () => { dSide.field.monsters[defenderIdx] = null; dSide.graveyard.push(defender); this._onDestroyEffect(defender, defenderSide); this._renderField(); });
           this._log(`Both ${attacker.name} and ${defender.name} destroyed!`, 'destroy');
-          this._onDestroyEffect(attacker, attackerSide);
-          this._onDestroyEffect(defender, defenderSide);
         }
       } else {
-        // ATK vs DEF
         const diff = attacker.atk - defender.def;
         if (diff > 0) {
-          dSide.field.monsters[defenderIdx] = null;
-          dSide.graveyard.push(defender);
-          this._log(`${attacker.name} (${attacker.atk}) destroyed ${defender.name} in defense (DEF:${defender.def})`, 'destroy');
-          this._onDestroyEffect(defender, defenderSide);
+          this._animDestroy(defenderSlot, () => {
+            dSide.field.monsters[defenderIdx] = null;
+            dSide.graveyard.push(defender);
+            this._onDestroyEffect(defender, defenderSide);
+            this._renderField();
+          });
+          this._log(`${attacker.name} destroyed ${defender.name} in defense`, 'destroy');
         } else if (diff < 0) {
           aSide.faith = Math.max(0, aSide.faith - Math.abs(diff));
-          this._log(`${attacker.name} attacks ${defender.name} in defense. ${attackerSide} -${Math.abs(diff)} Faith`, 'damage');
+          this._log(`${attacker.name} hits ${defender.name}'s defense. -${Math.abs(diff)} Faith`, 'damage');
           this._flashDamage(attackerSide);
+          this._animDamage(attackerSide, Math.abs(diff));
         } else {
           this._log(`${attacker.name} vs ${defender.name} — no damage`, 'summon');
         }
       }
-    }
+    } // end doResolve
 
-    this._renderField();
     this._renderTopbar();
     this._checkWin();
     this.mode = null;
     this.attackSource = null;
+    }; // end doResolve
+
+    // Play attack animation first, then resolve
+    if (defenderIdx === 'direct') {
+      this._animDirectAttack(attackerSlot, defenderSide, doResolve);
+    } else {
+      this._animAttack(attackerSlot, defenderSlot, isPlayer, doResolve);
+    }
   },
 
   _onDestroyEffect(card, side) {
@@ -897,6 +921,8 @@ const G = {
           }
           this._renderField();
           this._renderOppHand();
+          const oppSlotEl = document.getElementById(`opponent-m-${slot}`);
+          if (oppSlotEl) this._animSummon(oppSlotEl, best.attribute === 'DARK' ? 'red' : 'blue');
           // response window for summon traps
           this._triggerResponseWindow('summon', best, () => setTimeout(next, 300));
         });
@@ -1164,6 +1190,111 @@ const G = {
     }
 
     return negated;
+  },
+
+  // ── ANIMATION ENGINE ──────────────────────────
+
+  _animSummon(slotEl, color = '') {
+    const ring = document.createElement('div');
+    ring.className = 'anim-summon-ring' + (color ? ' ' + color : '');
+    slotEl.style.position = 'relative';
+    slotEl.appendChild(ring);
+    setTimeout(() => ring.remove(), 520);
+  },
+
+  _animDestroy(slotEl, cb) {
+    slotEl.classList.add('destroying');
+    setTimeout(() => { slotEl.classList.remove('destroying'); if (cb) cb(); }, 480);
+  },
+
+  _animAttack(attackerSlotEl, targetSlotEl, isPlayer, cb) {
+    const lungeClass = isPlayer ? 'attack-lunge-up' : 'attack-lunge-down';
+    attackerSlotEl.classList.add(lungeClass);
+    setTimeout(() => {
+      attackerSlotEl.classList.remove(lungeClass);
+      if (targetSlotEl) targetSlotEl.classList.add('impact-flash');
+      setTimeout(() => {
+        if (targetSlotEl) targetSlotEl.classList.remove('impact-flash');
+        if (cb) cb();
+      }, 500);
+    }, 280);
+  },
+
+  _animDirectAttack(attackerSlotEl, targetSide, cb) {
+    const ar = attackerSlotEl.getBoundingClientRect();
+    const tf = document.getElementById(targetSide === 'player' ? 'player-faith' : 'opp-faith');
+    const tr = tf ? tf.getBoundingClientRect() : { left: window.innerWidth / 2, top: window.innerHeight / 2 };
+
+    const beam = document.createElement('div');
+    beam.className = 'anim-beam';
+    const x1 = ar.left + ar.width / 2;
+    const y1 = ar.top + ar.height / 2;
+    const x2 = tr.left + tr.width / 2;
+    const y2 = tr.top + tr.height / 2;
+    const len = Math.hypot(x2 - x1, y2 - y1);
+    const angle = Math.atan2(y2 - y1, x2 - x1) * 180 / Math.PI;
+    beam.style.cssText = `left:${x1}px;top:${y1}px;width:${len}px;transform-origin:left center;transform:rotate(${angle}deg);`;
+    document.getElementById('anim-layer').appendChild(beam);
+
+    // lunge the attacker
+    const lungeClass = targetSide === 'player' ? 'attack-lunge-down' : 'attack-lunge-up';
+    attackerSlotEl.classList.add(lungeClass);
+    setTimeout(() => { attackerSlotEl.classList.remove(lungeClass); beam.remove(); if (cb) cb(); }, 600);
+  },
+
+  _animDamage(side, amount) {
+    const el = document.getElementById(side === 'player' ? 'player-faith' : 'opp-faith');
+    if (!el) return;
+    const r = el.getBoundingClientRect();
+    const num = document.createElement('div');
+    num.className = 'anim-float-num damage';
+    num.textContent = `-${amount}`;
+    num.style.cssText = `left:${r.left + r.width/2}px;top:${r.top}px;transform:translateX(-50%);`;
+    document.getElementById('anim-layer').appendChild(num);
+    setTimeout(() => num.remove(), 1200);
+  },
+
+  _animHeal(side, amount) {
+    const el = document.getElementById(side === 'player' ? 'player-faith' : 'opp-faith');
+    if (!el) return;
+    const r = el.getBoundingClientRect();
+    const num = document.createElement('div');
+    num.className = 'anim-float-num heal';
+    num.textContent = `+${amount}`;
+    num.style.cssText = `left:${r.left + r.width/2}px;top:${r.top}px;transform:translateX(-50%);`;
+    document.getElementById('anim-layer').appendChild(num);
+    setTimeout(() => num.remove(), 1200);
+  },
+
+  _animEffect(cardId, cb) {
+    const EFFECTS = {
+      dark_hole:              { inner: '<div class="ef-dark-hole"></div>', bg: 'rgba(20,0,40,0.7)', name: 'DARK HOLE',              color: '#aa44ff' },
+      monster_reborn:         { inner: '<div class="ef-reborn">✝</div>',   bg: 'rgba(0,20,10,0.7)', name: 'MONSTER REBORN',          color: '#00ff88' },
+      mirror_force:           { inner: '<div class="ef-mirror-force"></div>', bg: 'rgba(20,15,0,0.6)', name: 'MIRROR FORCE',          color: '#ffd700' },
+      swords_of_revealing_light: { inner: '<div class="ef-swords">⚔️</div>', bg: 'rgba(0,10,25,0.65)', name: 'SWORDS OF REVEALING LIGHT', color: '#88ddff' },
+      change_of_heart:        { inner: '<div class="ef-change-heart">♥</div>', bg: 'rgba(30,0,15,0.65)', name: 'CHANGE OF HEART',     color: '#ff4488' },
+      crush_card_virus:       { inner: '<div class="ef-virus">☣</div>',   bg: 'rgba(25,0,0,0.7)',  name: 'CRUSH CARD VIRUS',        color: '#ff2200' },
+      pot_of_greed:           { inner: '<div class="ef-pot">🏺</div>',    bg: 'rgba(0,20,10,0.6)', name: 'POT OF GREED',            color: '#00ff88' },
+      graceful_charity:       { inner: '<div class="ef-pot">👼</div>',    bg: 'rgba(0,10,25,0.6)', name: 'GRACEFUL CHARITY',        color: '#aaddff' },
+      heavy_storm:            { inner: '<div class="ef-swords">🌪️</div>', bg: 'rgba(5,5,20,0.65)', name: 'HEAVY STORM',            color: '#88aaff' },
+      mystical_space_typhoon: { inner: '<div class="ef-swords">🌀</div>', bg: 'rgba(5,5,20,0.65)', name: 'MYSTICAL SPACE TYPHOON', color: '#44aaff' },
+      harpie_s_feather_duster:{ inner: '<div class="ef-swords">🪶</div>', bg: 'rgba(20,0,20,0.65)','name': "HARPIE'S FEATHER DUSTER", color: '#ff88ff' },
+      card_destruction:       { inner: '<div class="ef-virus">💥</div>',  bg: 'rgba(20,5,0,0.7)', name: 'CARD DESTRUCTION',        color: '#ff8800' },
+      ring_of_destruction:    { inner: '<div class="ef-virus">💣</div>',  bg: 'rgba(20,0,0,0.7)', name: 'RING OF DESTRUCTION',     color: '#ff2200' },
+    };
+
+    const def = EFFECTS[cardId];
+    if (!def) { if (cb) setTimeout(cb, 100); return; }
+
+    const ov = document.getElementById('effect-overlay');
+    ov.style.background = def.bg;
+    ov.innerHTML = `
+      <div class="effect-visual" style="color:${def.color}">
+        ${def.inner}
+        <div class="ef-name" style="color:${def.color}">${def.name}</div>
+      </div>`;
+
+    setTimeout(() => { ov.style.background = ''; ov.innerHTML = ''; if (cb) cb(); }, 1300);
   },
 
   // ── WIN CHECK ─────────────────────────────────
