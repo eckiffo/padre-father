@@ -1685,6 +1685,51 @@ const G = {
       const el = this._buildHandCard(card, i);
       area.appendChild(el);
     });
+    // fan layout runs after DOM paint so offsetWidth is available
+    requestAnimationFrame(() => this._fanHand());
+  },
+
+  _fanHand() {
+    const area = document.getElementById('hand-area');
+    if (!area) return;
+    const cards = Array.from(area.querySelectorAll('.hand-card'));
+    const count = cards.length;
+    if (!count) return;
+
+    // Available width (subtract padding)
+    const availW = area.offsetWidth - 48;
+    // Max card width we want at any count
+    const maxCardW = Math.min(110, Math.floor(availW / Math.min(count, 4)));
+    // Card width scales down beyond 5 cards to keep things tidy
+    const cardW = count <= 5 ? Math.min(110, Math.floor((availW - count * 8) / count))
+                             : Math.max(60, Math.floor((availW * 0.82) / count));
+    const cardH = Math.round(cardW * 1.455); // standard YGO card ratio ≈ 1:1.455
+
+    // Overlap: when cards exceed available space, fan them
+    const totalNatural = count * cardW + (count - 1) * 8;
+    const overlapNeeded = Math.max(0, totalNatural - availW);
+    const overlapPerCard = count > 1 ? Math.ceil(overlapNeeded / (count - 1)) : 0;
+
+    cards.forEach((el, i) => {
+      el.style.width  = cardW + 'px';
+      el.style.height = cardH + 'px';
+      el.style.zIndex = i + 1;   // left cards under right cards
+      // apply negative right-margin to create fan overlap
+      if (i < count - 1 && overlapPerCard > 0) {
+        el.style.marginRight = `-${overlapPerCard}px`;
+      } else {
+        el.style.marginRight = '';
+      }
+      // slight rotation for organic feel
+      if (count >= 4) {
+        const mid = (count - 1) / 2;
+        const rot = (i - mid) * 1.5;
+        const yOff = Math.abs(i - mid) * 1.5;
+        el.style.transform = `rotate(${rot}deg) translateY(${yOff}px)`;
+      } else {
+        el.style.transform = '';
+      }
+    });
   },
 
   _buildHandCard(card, idx) {
@@ -1709,9 +1754,17 @@ const G = {
     `;
 
     el.addEventListener('click', () => this._onHandCardClick(idx));
-    el.addEventListener('mouseenter', () => this._showPreview(card));
-    el.addEventListener('mouseleave', () => this._hidePreview());
-    // right-click or long-press to pin the preview
+    el.addEventListener('mouseenter', (e) => {
+      this._showPreview(card);
+      // override fan rotation on hover so card lifts straight up
+      e.currentTarget.style.transform = 'translateY(-28px) scale(1.12)';
+      e.currentTarget.style.zIndex = 100;
+    });
+    el.addEventListener('mouseleave', (e) => {
+      this._hidePreview();
+      // restore fan layout
+      requestAnimationFrame(() => this._fanHand());
+    });
     el.addEventListener('contextmenu', (e) => { e.preventDefault(); this._pinPreview(card); });
     return el;
   },
@@ -2354,6 +2407,11 @@ const G = {
       if (!e.target.closest('#action-menu') && !e.target.closest('.hand-card') && !e.target.closest('.field-card')) {
         this._hideActionMenu();
       }
+    });
+
+    // reflow hand on window resize
+    window.addEventListener('resize', () => {
+      if (this.state) this._fanHand();
     });
   },
 
