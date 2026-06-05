@@ -274,23 +274,26 @@ body {
 #battlefield {
   flex: 1;
   display: grid;
-  grid-template-rows: 1fr 32px 1fr;
-  padding: 8px 12px;
+  grid-template-rows: 1fr 28px 1fr;
+  padding: 6px 8px;
   gap: 4px;
   overflow: hidden;
+  min-height: 0;
 }
 
 .field-side {
   display: grid;
   grid-template-rows: 1fr 1fr;
   gap: 4px;
+  min-height: 0;
 }
 
 .field-row {
   display: flex;
-  align-items: center;
+  align-items: stretch;
   gap: 6px;
   justify-content: center;
+  min-height: 0;
 }
 
 .field-row .row-label {
@@ -298,21 +301,26 @@ body {
   color: #333;
   letter-spacing: 1px;
   writing-mode: vertical-rl;
-  width: 14px;
+  width: 12px;
   text-align: center;
   flex-shrink: 0;
+  align-self: center;
 }
 
 .zones {
   display: flex;
   gap: 6px;
   align-items: center;
+  flex: 1;
+  justify-content: center;
 }
 
-/* field slot */
+/* field slot — fully responsive */
 .field-slot {
-  width: 72px;
-  height: 100px;
+  flex: 1;
+  max-width: 100px;
+  min-width: 56px;
+  aspect-ratio: 0.72;
   border: 1px dashed #222;
   border-radius: 4px;
   display: flex;
@@ -321,7 +329,6 @@ body {
   position: relative;
   transition: all 0.15s;
   cursor: default;
-  flex-shrink: 0;
 }
 
 .field-slot.droppable { border-color: #444; border-style: solid; }
@@ -341,49 +348,53 @@ body {
   pointer-events: none;
 }
 
-/* field card */
+/* field card — fills its slot */
 .field-card {
-  width: 68px;
-  height: 96px;
-  border-radius: 3px;
   position: absolute;
+  inset: 2px;
+  border-radius: 3px;
   cursor: pointer;
   transition: transform 0.15s;
   overflow: hidden;
   border: 1px solid #444;
+  display: flex;
+  flex-direction: column;
 }
 
-.field-card:hover { transform: scale(1.05); z-index: 5; }
+.field-card:hover { transform: scale(1.06); z-index: 5; }
 .field-card.defense { transform: rotate(90deg); }
-.field-card.defense:hover { transform: rotate(90deg) scale(1.05); }
+.field-card.defense:hover { transform: rotate(90deg) scale(1.06); }
 .field-card.face-down { background: repeating-linear-gradient(45deg, #1a0a00, #1a0a00 4px, #0d0500 4px, #0d0500 8px); }
 .field-card.face-down::after { content: ''; position: absolute; inset: 0; border: 2px solid #8B4513; border-radius: 2px; }
 
 .field-card img {
   width: 100%;
-  height: 60%;
+  flex: 1;
+  min-height: 0;
   object-fit: cover;
   display: block;
 }
 
 .field-card .fc-name {
-  font-size: 7px;
+  font-size: clamp(6px, 0.8vw, 8px);
   color: var(--text);
-  padding: 2px 3px;
-  background: rgba(0,0,0,0.8);
+  padding: 1px 3px;
+  background: rgba(0,0,0,0.85);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
   font-family: var(--font-heading);
+  flex-shrink: 0;
 }
 
 .field-card .fc-stats {
-  font-size: 7px;
+  font-size: clamp(6px, 0.7vw, 8px);
   padding: 1px 3px;
   background: rgba(0,0,0,0.9);
   color: var(--gold);
   display: flex;
   justify-content: space-between;
+  flex-shrink: 0;
 }
 
 .field-card .fc-pos {
@@ -419,14 +430,15 @@ body {
 
 /* field zone — the big center card */
 .field-zone {
-  width: 72px;
-  height: 100px;
+  width: clamp(56px, 6vw, 90px);
+  aspect-ratio: 0.72;
   border: 1px dashed #1a1a1a;
   border-radius: 4px;
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+  align-self: center;
 }
 
 /* ── HAND ───────────────────────────────────── */
@@ -435,12 +447,14 @@ body {
   flex-shrink: 0;
   background: #090909;
   border-top: 1px solid #1a1a1a;
-  padding: 8px 12px;
+  padding: 8px 16px 12px;
   display: flex;
-  gap: 8px;
-  align-items: center;
+  gap: clamp(4px, 1vw, 10px);
+  align-items: flex-end;
+  justify-content: center;
   overflow-x: auto;
-  min-height: 130px;
+  min-height: 140px;
+  max-height: 160px;
 }
 
 #hand-area::-webkit-scrollbar { height: 4px; }
@@ -449,8 +463,8 @@ body {
 
 /* card in hand */
 .hand-card {
-  width: 80px;
-  height: 112px;
+  width: clamp(72px, 7.5vw, 100px);
+  height: clamp(100px, 10.5vw, 140px);
   border-radius: 4px;
   overflow: hidden;
   cursor: pointer;
@@ -462,7 +476,7 @@ body {
 }
 
 .hand-card:hover {
-  transform: translateY(-12px) scale(1.08);
+  transform: translateY(-14px) scale(1.08);
   border-color: var(--gold);
   z-index: 10;
   box-shadow: 0 8px 20px rgba(0,0,0,0.8), 0 0 15px rgba(255,215,0,0.3);
@@ -470,7 +484,7 @@ body {
 
 .hand-card.selected {
   border-color: var(--gold);
-  transform: translateY(-16px);
+  transform: translateY(-18px);
   box-shadow: 0 0 20px rgba(255,215,0,0.5);
 }
 
@@ -479,13 +493,13 @@ body {
 
 .hand-card img {
   width: 100%;
-  height: 58%;
+  height: 56%;
   object-fit: cover;
   display: block;
 }
 
 .hand-card .hc-name {
-  font-size: 7px;
+  font-size: clamp(6px, 0.7vw, 8px);
   padding: 2px 3px;
   background: rgba(0,0,0,0.9);
   color: var(--text);
@@ -497,14 +511,14 @@ body {
 }
 
 .hand-card .hc-type {
-  font-size: 7px;
+  font-size: clamp(6px, 0.65vw, 7px);
   padding: 1px 3px;
   color: var(--muted);
   background: rgba(0,0,0,0.7);
 }
 
 .hand-card .hc-stats {
-  font-size: 7px;
+  font-size: clamp(6px, 0.65vw, 8px);
   padding: 1px 3px;
   color: var(--gold);
   background: rgba(0,0,0,0.9);
@@ -519,7 +533,7 @@ body {
   background: rgba(0,0,0,0.8);
   line-height: 1.3;
   overflow: hidden;
-  max-height: 24px;
+  max-height: 22px;
 }
 
 /* rarity borders */
